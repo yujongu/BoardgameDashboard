@@ -41,6 +41,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
   bool get wantKeepAlive => true;
   final Set<int> _selectedNumbers = {};
   int _handshakeCount = 0;
+  int? _pressedHandshakeIndex;
 
   void _toggleNumber(int number) {
     setState(() {
@@ -157,25 +158,38 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(3, (index) {
                         final active = index < _handshakeCount;
+                        final pressed = _pressedHandshakeIndex == index;
                         return GestureDetector(
-                          onTap: () => _toggleHandshake(index),
-                          child: Container(
+                          onTapDown: (_) =>
+                              setState(() => _pressedHandshakeIndex = index),
+                          onTapUp: (_) {
+                            setState(() => _pressedHandshakeIndex = null);
+                            _toggleHandshake(index);
+                          },
+                          onTapCancel: () =>
+                              setState(() => _pressedHandshakeIndex = null),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 80),
                             width: 52,
                             height: 52,
                             margin: const EdgeInsets.symmetric(horizontal: 8),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: active
-                                  ? color.withAlpha(25)
-                                  : const Color(0xFF16130B),
+                                  ? color.withAlpha(pressed ? 45 : 25)
+                                  : color.withAlpha(pressed ? 20 : 0),
                               border: Border.all(
-                                color: active ? color : kColorOutlineVariant,
+                                color: active || pressed
+                                    ? color
+                                    : kColorOutlineVariant,
                                 width: 1.5,
                               ),
-                              boxShadow: active
+                              boxShadow: active || pressed
                                   ? [
                                       BoxShadow(
-                                        color: color.withAlpha(60),
+                                        color: color.withAlpha(
+                                          pressed ? 80 : 60,
+                                        ),
                                         blurRadius: 10,
                                       ),
                                     ]
@@ -183,7 +197,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                             ),
                             child: Icon(
                               Icons.handshake,
-                              color: active ? color : kColorOutline,
+                              color: active || pressed ? color : kColorOutline,
                               size: 22,
                             ),
                           ),
@@ -235,7 +249,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
   }
 }
 
-class _NumberButton extends StatelessWidget {
+class _NumberButton extends StatefulWidget {
   final int number;
   final Color color;
   final bool isSelected;
@@ -249,24 +263,49 @@ class _NumberButton extends StatelessWidget {
   });
 
   @override
+  State<_NumberButton> createState() => _NumberButtonState();
+}
+
+class _NumberButtonState extends State<_NumberButton> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
+    final color = widget.color;
+    final isSelected = widget.isSelected;
+
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 80),
         decoration: BoxDecoration(
-          color: isSelected ? color.withAlpha(220) : const Color(0xFF1A1510),
+          color: isSelected
+              ? color.withAlpha(_pressed ? 170 : 220)
+              : _pressed
+              ? color.withAlpha(35)
+              : const Color(0xFF1A1510),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? color : kColorOutlineVariant,
+            color: isSelected || _pressed ? color : kColorOutlineVariant,
             width: isSelected ? 1.5 : 1,
           ),
-          boxShadow: isSelected
-              ? [BoxShadow(color: color.withAlpha(70), blurRadius: 10)]
+          boxShadow: isSelected || _pressed
+              ? [
+                  BoxShadow(
+                    color: color.withAlpha(_pressed ? 100 : 70),
+                    blurRadius: 10,
+                  ),
+                ]
               : null,
         ),
         alignment: Alignment.center,
         child: Text(
-          '$number',
+          '${widget.number}',
           style: GoogleFonts.newsreader(
             color: isSelected ? Colors.black87 : kColorOnSurface,
             fontSize: 26,

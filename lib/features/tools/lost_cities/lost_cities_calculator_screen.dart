@@ -139,6 +139,7 @@ class _LostCitiesCalculatorScreenState
           Expanded(
             child: PageView.builder(
               controller: _pageController,
+              physics: const _HighThresholdScrollPhysics(),
               itemCount: _expeditions.length,
               itemBuilder: (context, index) {
                 final exp = _expeditions[index];
@@ -188,4 +189,15 @@ class _LostCitiesCalculatorScreenState
       ),
     );
   }
+}
+
+class _HighThresholdScrollPhysics extends ScrollPhysics {
+  const _HighThresholdScrollPhysics({super.parent});
+
+  @override
+  _HighThresholdScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      _HighThresholdScrollPhysics(parent: buildParent(ancestor));
+
+  @override
+  double get dragStartDistanceMotionThreshold => 20.0;
 }
