@@ -200,4 +200,10 @@ class _HighThresholdScrollPhysics extends ScrollPhysics {
 
   @override
   double get dragStartDistanceMotionThreshold => 20.0;
+
+  // Stiffer spring (400 vs default 100) with critical damping so the page
+  // snaps to its final position ~4x faster, freeing tap events sooner.
+  @override
+  SpringDescription get spring =>
+      SpringDescription.withDampingRatio(mass: 0.5, stiffness: 400.0);
 }
