@@ -14,11 +14,11 @@ class LostCitiesCalculatorScreen extends StatefulWidget {
 class _LostCitiesCalculatorScreenState
     extends State<LostCitiesCalculatorScreen> {
   static const _expeditions = [
-    (title: 'Red', color: Color(0xFFE32636)),
-    (title: 'Green', color: Color(0xFF50C878)),
-    (title: 'Purple', color: Color(0xFF9B59B6)),
+    (title: 'Gold', color: Color(0xFFF2CA50)),
     (title: 'Blue', color: Color(0xFF4A90E2)),
-    (title: 'Yellow', color: Color(0xFFF2CA50)),
+    (title: 'Purple', color: Color(0xFF9B59B6)),
+    (title: 'Green', color: Color(0xFF50C878)),
+    (title: 'Red', color: Color(0xFFE32636)),
   ];
 
   late final List<int> _scores;
