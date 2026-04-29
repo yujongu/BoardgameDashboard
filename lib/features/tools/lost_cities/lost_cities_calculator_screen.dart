@@ -64,9 +64,13 @@ class _LostCitiesCalculatorScreenState
       backgroundColor: kColorBackground,
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A0905),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         ),
         title: Text(
           'LOST CITIES',
@@ -79,15 +83,18 @@ class _LostCitiesCalculatorScreenState
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: _reset,
-            child: Text(
-              'RESET',
-              style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.5,
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: _reset,
+              child: Text(
+                'RESET',
+                style: GoogleFonts.spaceGrotesk(
+                  color: kColorOutline,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.5,
+                ),
               ),
             ),
           ),
