@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../shared/theme/app_theme.dart';
 
 int calculateExpeditionScore(List<int> selectedNumbers, int handshakeCount) {
-  if (selectedNumbers.isEmpty) return 0;
+  if (selectedNumbers.isEmpty && handshakeCount == 0) return 0;
 
   int total = -20;
   for (int number in selectedNumbers) {
@@ -76,7 +76,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
   int get _currentScore =>
       calculateExpeditionScore(_selectedNumbers.toList(), _handshakeCount);
 
-  bool get _isStarted => _selectedNumbers.isNotEmpty;
+  bool get _isStarted => _selectedNumbers.isNotEmpty || _handshakeCount > 0;
 
   @override
   Widget build(BuildContext context) {
