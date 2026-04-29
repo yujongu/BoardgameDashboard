@@ -147,101 +147,85 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
             ),
 
             // ── Body ──────────────────────────────────────
-            // LayoutBuilder scopes constraints to the body width only,
-            // avoiding the PageView's loose-height constraint problem.
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      // Keep content vertically centered when it fits;
-                      // allow scrolling when it overflows (small screens).
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Wager buttons
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(3, (index) {
-                                final active = index < _handshakeCount;
-                                return GestureDetector(
-                                  onTap: () => _toggleHandshake(index),
-                                  child: Container(
-                                    width: 52,
-                                    height: 52,
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: active
-                                          ? color.withAlpha(25)
-                                          : const Color(0xFF16130B),
-                                      border: Border.all(
-                                        color: active
-                                            ? color
-                                            : kColorOutlineVariant,
-                                        width: 1.5,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                child: Column(
+                  children: [
+                    // Wager buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (index) {
+                        final active = index < _handshakeCount;
+                        return GestureDetector(
+                          onTap: () => _toggleHandshake(index),
+                          child: Container(
+                            width: 52,
+                            height: 52,
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: active
+                                  ? color.withAlpha(25)
+                                  : const Color(0xFF16130B),
+                              border: Border.all(
+                                color: active ? color : kColorOutlineVariant,
+                                width: 1.5,
+                              ),
+                              boxShadow: active
+                                  ? [
+                                      BoxShadow(
+                                        color: color.withAlpha(60),
+                                        blurRadius: 10,
                                       ),
-                                      boxShadow: active
-                                          ? [
-                                              BoxShadow(
-                                                color: color.withAlpha(60),
-                                                blurRadius: 10,
-                                              ),
-                                            ]
-                                          : null,
-                                    ),
-                                    child: Icon(
-                                      Icons.handshake,
-                                      color: active ? color : kColorOutline,
-                                      size: 22,
-                                    ),
-                                  ),
-                                );
-                              }),
+                                    ]
+                                  : null,
                             ),
+                            child: Icon(
+                              Icons.handshake,
+                              color: active ? color : kColorOutline,
+                              size: 22,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
 
-                            const SizedBox(height: 28),
+                    const SizedBox(height: 16),
 
-                            // Number grid — 3 rows × 3 columns.
-                            // Expanded + AspectRatio makes each button square
-                            // without needing an explicit pixel size.
-                            for (int row = 0; row < 3; row++) ...[
-                              if (row > 0) const SizedBox(height: 10),
-                              Row(
+                    // Number grid — 3 rows × 3 columns, each row Expanded so
+                    // the grid fills remaining height without scrolling.
+                    Expanded(
+                      child: Column(
+                        children: [
+                          for (int row = 0; row < 3; row++) ...[
+                            if (row > 0) const SizedBox(height: 10),
+                            Expanded(
+                              child: Row(
                                 children: [
                                   for (int col = 0; col < 3; col++) ...[
                                     if (col > 0) const SizedBox(width: 10),
                                     Expanded(
-                                      child: AspectRatio(
-                                        aspectRatio: 1.0,
-                                        child: _NumberButton(
-                                          number: row * 3 + col + 2,
-                                          color: color,
-                                          isSelected: _selectedNumbers.contains(
-                                            row * 3 + col + 2,
-                                          ),
-                                          onTap: () =>
-                                              _toggleNumber(row * 3 + col + 2),
+                                      child: _NumberButton(
+                                        number: row * 3 + col + 2,
+                                        color: color,
+                                        isSelected: _selectedNumbers.contains(
+                                          row * 3 + col + 2,
                                         ),
+                                        onTap: () =>
+                                            _toggleNumber(row * 3 + col + 2),
                                       ),
                                     ),
                                   ],
                                 ],
                               ),
-                            ],
+                            ),
                           ],
-                        ),
+                        ],
                       ),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
             ),
           ],
