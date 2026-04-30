@@ -1,5 +1,9 @@
 # Board Game Dashboard — Flutter App
 
+## App Name
+
+**Gameshelf** — the display name shown below the app icon on iOS and Android.
+
 ## Project Overview
 
 A Flutter "super app" dashboard for tracking board game history and scores. Users can log games they've played, track win counts per player, and access game-specific utility tools (e.g., score calculators).

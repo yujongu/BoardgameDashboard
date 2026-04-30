@@ -2,6 +2,12 @@
 
 ## What Was Done
 
+### App Display Name
+- Decided on **Gameshelf** as the app name shown below the icon.
+- Updated `CFBundleDisplayName` in `ios/Runner/Info.plist` to `Gameshelf`.
+- Updated `android:label` in `android/app/src/main/AndroidManifest.xml` to `Gameshelf`.
+- Requires a rebuild and reinstall on device/simulator to take effect.
+
 ### Lost Cities Calculator — UX & Layout
 - **App bar button margins**: Added 8px left margin to the back button and 8px right margin to the Reset button so neither touches the screen edge.
 - **No-scroll layout**: Replaced `SingleChildScrollView` + `AspectRatio(1.0)` with `Expanded` rows inside the number grid. The grid now fills available height proportionally and no vertical or horizontal scrolling occurs inside the colored expedition container.
