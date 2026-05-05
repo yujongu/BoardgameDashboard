@@ -1,0 +1,366 @@
+import {
+  clearDb,
+  db,
+  getStats,
+  getGameStats,
+  getLibrary,
+  getParticipants,
+} from "./setup";
+import {
+  callCreatePlay,
+  callCreatePlayNoAuth,
+  type CreatePlayInput,
+} from "./helpers/callables";
+
+// ─── Shared fixture ───────────────────────────────────────────────────────────
+
+const CHESS: Pick<CreatePlayInput, "gameId" | "gameName"> = {
+  gameId: "chess",
+  gameName: "Chess",
+};
+
+const PLAYED_AT = "2024-01-15T10:00:00.000Z";
+
+function oneWinner(uid: string, name: string): CreatePlayInput {
+  return {
+    ...CHESS,
+    playedAt: PLAYED_AT,
+    participants: [{ userId: uid, name, isWinner: true }],
+  };
+}
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+describe("createPlay", () => {
+  afterEach(clearDb);
+
+  // ── Happy-path: document creation ──────────────────────────────────────────
+
+  it("returns a playId and persists the play document", async () => {
+    const result = await callCreatePlay(oneWinner("u1", "Alice"), "u1");
+
+    expect(typeof result.playId).toBe("string");
+    expect(result.playId.length).toBeGreaterThan(0);
+
+    const snap = await db.collection("plays").doc(result.playId).get();
+    expect(snap.exists).toBe(true);
+    expect(snap.data()).toMatchObject({
+      gameId: "chess",
+      gameName: "Chess",
+      createdBy: "u1",
+      participantCount: 1,
+      participantIds: ["u1"],
+    });
+    // createdAt must be a Firestore Timestamp
+    expect(snap.data()!.createdAt).toBeDefined();
+  });
+
+  it("creates participants in the subcollection", async () => {
+    const { playId } = await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: true },
+          { userId: "u2", name: "Bob", isWinner: false },
+        ],
+      },
+      "u1"
+    );
+
+    const parts = await getParticipants(playId);
+    expect(parts).toHaveLength(2);
+    const names = parts.map((p) => p.name as string).sort();
+    expect(names).toEqual(["Alice", "Bob"]);
+
+    const alice = parts.find((p) => p.name === "Alice")!;
+    expect(alice.userId).toBe("u1");
+    expect(alice.isWinner).toBe(true);
+
+    const bob = parts.find((p) => p.name === "Bob")!;
+    expect(bob.isWinner).toBe(false);
+  });
+
+  it("stores score on participant when provided", async () => {
+    const { playId } = await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [{ userId: "u1", name: "Alice", isWinner: true, score: 42 }],
+      },
+      "u1"
+    );
+
+    const [part] = await getParticipants(playId);
+    expect(part.score).toBe(42);
+  });
+
+  // ── Stats ──────────────────────────────────────────────────────────────────
+
+  it("increments totalGamesPlayed and totalWins for the winner", async () => {
+    await callCreatePlay(oneWinner("u1", "Alice"), "u1");
+
+    const stats = await getStats("u1");
+    expect(stats).toMatchObject({ totalGamesPlayed: 1, totalWins: 1 });
+  });
+
+  it("increments totalGamesPlayed but NOT totalWins for a loser", async () => {
+    await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: true },
+          { userId: "u2", name: "Bob", isWinner: false },
+        ],
+      },
+      "u1"
+    );
+
+    const stats = await getStats("u2");
+    expect(stats).toMatchObject({ totalGamesPlayed: 1, totalWins: 0 });
+  });
+
+  it("accumulates stats across multiple plays", async () => {
+    await callCreatePlay(oneWinner("u1", "Alice"), "u1");
+    await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: false },
+          { userId: "u2", name: "Bob", isWinner: true },
+        ],
+      },
+      "u1"
+    );
+
+    const stats = await getStats("u1");
+    expect(stats).toMatchObject({ totalGamesPlayed: 2, totalWins: 1 });
+  });
+
+  // ── GameStats ──────────────────────────────────────────────────────────────
+
+  it("creates gameStats with correct playCount and winCount", async () => {
+    await callCreatePlay(oneWinner("u1", "Alice"), "u1");
+
+    const gs = await getGameStats("u1", "chess");
+    expect(gs).toMatchObject({
+      gameId: "chess",
+      gameName: "Chess",
+      playCount: 1,
+      winCount: 1,
+    });
+  });
+
+  it("increments gameStats on repeated plays of the same game", async () => {
+    await callCreatePlay(oneWinner("u1", "Alice"), "u1");
+    await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: false },
+          { userId: "u2", name: "Bob", isWinner: true },
+        ],
+      },
+      "u1"
+    );
+
+    const gs = await getGameStats("u1", "chess");
+    expect(gs).toMatchObject({ playCount: 2, winCount: 1 });
+  });
+
+  it("tracks gameStats independently per game", async () => {
+    await callCreatePlay(oneWinner("u1", "Alice"), "u1");
+    await callCreatePlay(
+      {
+        gameId: "catan",
+        gameName: "Catan",
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: false },
+          { userId: "u2", name: "Bob", isWinner: true },
+        ],
+      },
+      "u1"
+    );
+
+    const chessGs = await getGameStats("u1", "chess");
+    const catanGs = await getGameStats("u1", "catan");
+
+    expect(chessGs).toMatchObject({ playCount: 1, winCount: 1 });
+    expect(catanGs).toMatchObject({ playCount: 1, winCount: 0 });
+  });
+
+  // ── Library ────────────────────────────────────────────────────────────────
+
+  it("creates a library entry on the first play", async () => {
+    await callCreatePlay(oneWinner("u1", "Alice"), "u1");
+
+    const lib = await getLibrary("u1", "chess");
+    expect(lib).toMatchObject({
+      gameId: "chess",
+      gameName: "Chess",
+      playCount: 1,
+      winCount: 1,
+      isOwned: false,
+    });
+    expect(lib!.firstPlayedAt).toBeDefined();
+    expect(lib!.lastPlayedAt).toBeDefined();
+  });
+
+  it("does NOT overwrite firstPlayedAt on subsequent plays", async () => {
+    await callCreatePlay(oneWinner("u1", "Alice"), "u1");
+    const lib1 = await getLibrary("u1", "chess");
+    const firstPlayedAt = lib1!.firstPlayedAt as { isEqual: (t: unknown) => boolean };
+
+    await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: "2024-02-01T10:00:00.000Z",
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: false },
+          { userId: "u2", name: "Bob", isWinner: true },
+        ],
+      },
+      "u1"
+    );
+    const lib2 = await getLibrary("u1", "chess");
+
+    expect(lib2).toMatchObject({ playCount: 2, winCount: 1 });
+    expect(firstPlayedAt.isEqual(lib2!.firstPlayedAt)).toBe(true);
+  });
+
+  // ── Guest handling ─────────────────────────────────────────────────────────
+
+  it("does not create stats or library for guest participants (userId null)", async () => {
+    const { playId } = await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: true },
+          { userId: null, name: "Guest Joe", isWinner: false },
+        ],
+      },
+      "u1"
+    );
+
+    // Play document should reflect guest in participantCount but not participantIds
+    const snap = await db.collection("plays").doc(playId).get();
+    expect(snap.data()!.participantCount).toBe(2);
+    expect(snap.data()!.participantIds).toEqual(["u1"]);
+
+    // Guest Joe has no stats
+    const guestStats = await db
+      .collection("stats")
+      .where("__name__", "!=", "u1")
+      .get();
+    expect(guestStats.empty).toBe(true);
+  });
+
+  // ── Multiple participants ──────────────────────────────────────────────────
+
+  it("handles three registered participants with correct win attribution", async () => {
+    await callCreatePlay(
+      {
+        gameId: "catan",
+        gameName: "Catan",
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: true },
+          { userId: "u2", name: "Bob", isWinner: false },
+          { userId: "u3", name: "Carol", isWinner: false },
+        ],
+      },
+      "u1"
+    );
+
+    const [s1, s2, s3] = await Promise.all([
+      getStats("u1"),
+      getStats("u2"),
+      getStats("u3"),
+    ]);
+
+    expect(s1).toMatchObject({ totalGamesPlayed: 1, totalWins: 1 });
+    expect(s2).toMatchObject({ totalGamesPlayed: 1, totalWins: 0 });
+    expect(s3).toMatchObject({ totalGamesPlayed: 1, totalWins: 0 });
+
+    const [l1, l2, l3] = await Promise.all([
+      getLibrary("u1", "catan"),
+      getLibrary("u2", "catan"),
+      getLibrary("u3", "catan"),
+    ]);
+
+    expect(l1).toMatchObject({ playCount: 1, winCount: 1 });
+    expect(l2).toMatchObject({ playCount: 1, winCount: 0 });
+    expect(l3).toMatchObject({ playCount: 1, winCount: 0 });
+  });
+
+  // ── Validation errors ──────────────────────────────────────────────────────
+
+  it("throws unauthenticated when called without auth", async () => {
+    await expect(callCreatePlayNoAuth(oneWinner("u1", "Alice"))).rejects.toMatchObject(
+      { code: "unauthenticated" }
+    );
+  });
+
+  it("throws invalid-argument when gameId is empty", async () => {
+    await expect(
+      callCreatePlay(
+        { gameId: "", gameName: "Chess", playedAt: PLAYED_AT,
+          participants: [{ userId: "u1", name: "Alice", isWinner: true }] },
+        "u1"
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("throws invalid-argument when no participants", async () => {
+    await expect(
+      callCreatePlay(
+        { ...CHESS, playedAt: PLAYED_AT, participants: [] },
+        "u1"
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("throws invalid-argument when no winner is set", async () => {
+    await expect(
+      callCreatePlay(
+        {
+          ...CHESS,
+          playedAt: PLAYED_AT,
+          participants: [{ userId: "u1", name: "Alice", isWinner: false }],
+        },
+        "u1"
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("throws invalid-argument when playedAt is not a valid date", async () => {
+    await expect(
+      callCreatePlay(
+        {
+          ...CHESS,
+          playedAt: "not-a-date",
+          participants: [{ userId: "u1", name: "Alice", isWinner: true }],
+        },
+        "u1"
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("throws invalid-argument when a participant has an empty name", async () => {
+    await expect(
+      callCreatePlay(
+        {
+          ...CHESS,
+          playedAt: PLAYED_AT,
+          participants: [{ userId: "u1", name: "", isWinner: true }],
+        },
+        "u1"
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+});
