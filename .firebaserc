@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-boardgame-test"
+    "default": "gameshelf-283dc",
+    "emulator": "demo-boardgame-test"
   }
 }

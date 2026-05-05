@@ -1,10 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../shared/models/dashboard_state.dart';
 import '../../shared/models/game.dart';
 import '../../shared/theme/app_theme.dart';
+import '../auth/profile_screen.dart';
+import '../plays/add_play_screen.dart';
 import '../tools/lost_cities/lost_cities_calculator_screen.dart';
-import 'add_game_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final DashboardState state;
@@ -30,10 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onStateChanged() => setState(() {});
 
-  void _openAddGame() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => AddGameScreen(state: widget.state)),
-    );
+  void _openAddPlay() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AddPlayScreen()));
   }
 
   void _openGame(GameStats stats) {
@@ -57,16 +59,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return games[bestIdx].winRate > 0.5 ? bestIdx : null;
   }
 
+  void _openProfile() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+  }
+
   @override
   Widget build(BuildContext context) {
     final games = widget.state.trackedGames;
     final featuredIdx = _featuredIndex(games);
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName ?? '';
 
     return Scaffold(
       backgroundColor: kColorBackground,
       body: CustomScrollView(
         slivers: [
-          _AppBar(),
+          _AppBar(displayName: displayName, onProfileTap: _openProfile),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -92,35 +102,53 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: _AddFab(onTap: _openAddGame),
+      floatingActionButton: _AddFab(onTap: _openAddPlay),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
 
 class _AppBar extends StatelessWidget {
+  final String displayName;
+  final VoidCallback onProfileTap;
+
+  const _AppBar({required this.displayName, required this.onProfileTap});
+
+  String get _initials {
+    final parts = displayName
+        .trim()
+        .split(' ')
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
       pinned: true,
       backgroundColor: const Color(0xFF0A0905),
-      expandedHeight: 64,
-      collapsedHeight: 64,
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: kColorAmberBorder, width: 1),
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      expandedHeight: kToolbarHeight,
+      collapsedHeight: kToolbarHeight,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: kColorAmberBorder),
+      ),
+      flexibleSpace: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Center(
             child: Row(
               children: [
-                _ProfileAvatar(),
+                GestureDetector(
+                  onTap: onProfileTap,
+                  child: _ProfileAvatar(initials: _initials),
+                ),
                 const SizedBox(width: 14),
                 Text(
-                  'ARCHEON',
+                  displayName.toUpperCase(),
                   style: GoogleFonts.newsreader(
                     color: kColorPrimary,
                     fontSize: 20,
@@ -139,6 +167,10 @@ class _AppBar extends StatelessWidget {
 }
 
 class _ProfileAvatar extends StatelessWidget {
+  final String initials;
+
+  const _ProfileAvatar({required this.initials});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -149,11 +181,14 @@ class _ProfileAvatar extends StatelessWidget {
         border: Border.all(color: kColorPrimary.withAlpha(140), width: 1.5),
         color: kColorSurfaceHigh,
       ),
-      child: ClipOval(
-        child: Icon(
-          Icons.person,
-          color: kColorPrimary.withAlpha(180),
-          size: 22,
+      child: Center(
+        child: Text(
+          initials,
+          style: GoogleFonts.newsreader(
+            color: kColorPrimary.withAlpha(180),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import {
   DocumentReference,
   DocumentSnapshot,
   FieldValue,
+  Timestamp,
   Transaction,
 } from "firebase-admin/firestore";
 import { db } from "./db";
@@ -61,14 +62,15 @@ export const userLibraryRef = (userId: string, gameId: string): DocumentReferenc
 export function incrementStats(
   tx: Transaction,
   ref: DocumentReference,
-  isWinner: boolean
+  isWinner: boolean,
+  playedAt: Timestamp
 ): void {
   tx.set(
     ref,
     {
       totalGamesPlayed: FieldValue.increment(1),
       totalWins: FieldValue.increment(isWinner ? 1 : 0),
-      lastPlayedAt: FieldValue.serverTimestamp(),
+      lastPlayedAt: playedAt,
     },
     { merge: true }
   );
@@ -110,7 +112,8 @@ export function incrementGameStats(
   tx: Transaction,
   ref: DocumentReference,
   gameName: string,
-  isWinner: boolean
+  isWinner: boolean,
+  playedAt: Timestamp
 ): void {
   tx.set(
     ref,
@@ -119,7 +122,7 @@ export function incrementGameStats(
       gameName,
       playCount: FieldValue.increment(1),
       winCount: FieldValue.increment(isWinner ? 1 : 0),
-      lastPlayedAt: FieldValue.serverTimestamp(),
+      lastPlayedAt: playedAt,
     },
     { merge: true }
   );
@@ -167,7 +170,8 @@ export function upsertUserLibrary(
   ref: DocumentReference,
   snap: DocumentSnapshot,
   gameName: string,
-  isWinner: boolean
+  isWinner: boolean,
+  playedAt: Timestamp
 ): void {
   if (!snap.exists) {
     tx.set(ref, {
@@ -175,18 +179,20 @@ export function upsertUserLibrary(
       gameName,
       playCount: 1,
       winCount: isWinner ? 1 : 0,
-      firstPlayedAt: FieldValue.serverTimestamp(),
-      lastPlayedAt: FieldValue.serverTimestamp(),
+      firstPlayedAt: playedAt,
+      lastPlayedAt: playedAt,
       isOwned: false,
     });
     return;
   }
 
+  const data = snap.data() as UserLibraryDocument;
   tx.update(ref, {
     gameName,
     playCount: FieldValue.increment(1),
     winCount: FieldValue.increment(isWinner ? 1 : 0),
-    lastPlayedAt: FieldValue.serverTimestamp(),
+    lastPlayedAt: playedAt,
+    ...(!data.firstPlayedAt && { firstPlayedAt: playedAt }),
   });
 }
 

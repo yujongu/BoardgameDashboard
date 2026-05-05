@@ -4,3 +4,4 @@ export { updatePlay } from "./plays/updatePlay";
 export { listMyPlays } from "./reads/listMyPlays";
 export { getPlay } from "./reads/getPlay";
 export { getMyLibrary } from "./reads/getMyLibrary";
+export { listBoardGames } from "./library/listBoardGames";

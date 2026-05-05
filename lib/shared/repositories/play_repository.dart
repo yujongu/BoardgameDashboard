@@ -10,7 +10,8 @@ class PlayRepository {
 
   Future<String> createPlay(CreatePlayInput input) async {
     final result = await _fn.httpsCallable('createPlay').call(input.toJson());
-    return (result.data as Map<String, dynamic>)['playId'] as String;
+    final data = Map<String, dynamic>.from(result.data as Map);
+    return data['playId'] as String;
   }
 
   Future<void> updatePlay(UpdatePlayInput input) async {
@@ -26,10 +27,10 @@ class PlayRepository {
       'limit': ?limit,
       'cursor': ?cursor,
     });
-    final data = result.data as Map<String, dynamic>;
+    final data = Map<String, dynamic>.from(result.data as Map);
     return ListMyPlaysResult(
       plays: (data['plays'] as List<dynamic>)
-          .map((p) => PlaySummary.fromJson(p as Map<String, dynamic>))
+          .map((p) => PlaySummary.fromJson(Map<String, dynamic>.from(p as Map)))
           .toList(),
       nextCursor: data['nextCursor'] as String?,
     );
@@ -37,14 +38,14 @@ class PlayRepository {
 
   Future<PlayDetail> getPlay(String playId) async {
     final result = await _fn.httpsCallable('getPlay').call({'playId': playId});
-    return PlayDetail.fromJson(result.data as Map<String, dynamic>);
+    return PlayDetail.fromJson(Map<String, dynamic>.from(result.data as Map));
   }
 
   Future<List<LibraryEntry>> getMyLibrary() async {
     final result = await _fn.httpsCallable('getMyLibrary').call({});
-    final data = result.data as Map<String, dynamic>;
+    final data = Map<String, dynamic>.from(result.data as Map);
     return (data['library'] as List<dynamic>)
-        .map((e) => LibraryEntry.fromJson(e as Map<String, dynamic>))
+        .map((e) => LibraryEntry.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
   }
 }

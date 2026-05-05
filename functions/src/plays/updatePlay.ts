@@ -141,13 +141,15 @@ function applyStatsDelta(
   tx: Transaction,
   ref: DocumentReference,
   deltaCount: number,
-  deltaWins: number
+  deltaWins: number,
+  playedAt: Timestamp
 ): void {
   tx.set(
     ref,
     {
       totalGamesPlayed: FieldValue.increment(deltaCount),
       totalWins: FieldValue.increment(deltaWins),
+      lastPlayedAt: playedAt,
     },
     { merge: true }
   );
@@ -163,7 +165,8 @@ function applyGameStatsDelta(
   ref: DocumentReference,
   gameName: string,
   deltaCount: number,
-  deltaWins: number
+  deltaWins: number,
+  playedAt: Timestamp
 ): void {
   tx.set(
     ref,
@@ -172,6 +175,7 @@ function applyGameStatsDelta(
       gameName,
       playCount: FieldValue.increment(deltaCount),
       winCount: FieldValue.increment(deltaWins),
+      lastPlayedAt: playedAt,
     },
     { merge: true }
   );
@@ -192,7 +196,8 @@ function applyLibraryDelta(
   snap: DocumentSnapshot,
   gameName: string,
   deltaCount: number,
-  deltaWins: number
+  deltaWins: number,
+  playedAt: Timestamp
 ): void {
   if (!snap.exists) {
     if (deltaCount <= 0) return;
@@ -201,8 +206,8 @@ function applyLibraryDelta(
       gameName,
       playCount: deltaCount,
       winCount: Math.max(0, deltaWins),
-      firstPlayedAt: FieldValue.serverTimestamp(),
-      lastPlayedAt: FieldValue.serverTimestamp(),
+      firstPlayedAt: playedAt,
+      lastPlayedAt: playedAt,
       isOwned: false,
     });
     return;
@@ -221,6 +226,8 @@ function applyLibraryDelta(
     gameName,
     playCount: newPlayCount,
     winCount: newWinCount,
+    lastPlayedAt: playedAt,
+    ...(!data.firstPlayedAt && { firstPlayedAt: playedAt }),
   });
 }
 
@@ -337,7 +344,7 @@ export const updatePlay = onCall<UpdatePlayData>(async (request) => {
 
     for (const [userId, { deltaCount, deltaWins }] of statsDeltaByUserId) {
       if (deltaCount !== 0 || deltaWins !== 0) {
-        applyStatsDelta(tx, statsRef(userId), deltaCount, deltaWins);
+        applyStatsDelta(tx, statsRef(userId), deltaCount, deltaWins, playedAt);
       }
     }
 
@@ -350,7 +357,8 @@ export const updatePlay = onCall<UpdatePlayData>(async (request) => {
         gameStatsRef(d.userId, d.gameId),
         d.gameName,
         d.deltaCount,
-        d.deltaWins
+        d.deltaWins,
+        playedAt
       );
       applyLibraryDelta(
         tx,
@@ -358,7 +366,8 @@ export const updatePlay = onCall<UpdatePlayData>(async (request) => {
         libSnapByKey.get(libKey)!,
         d.gameName,
         d.deltaCount,
-        d.deltaWins
+        d.deltaWins,
+        playedAt
       );
     }
 

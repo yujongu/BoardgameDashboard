@@ -25,6 +25,8 @@ interface CreatePlayData {
   /** ISO 8601 string — converted to Firestore Timestamp server-side. */
   playedAt: string;
   participants: ParticipantInput[];
+  location?: string;
+  notes?: string;
 }
 
 interface CreatePlayResult {
@@ -78,7 +80,7 @@ export const createPlay = onCall<CreatePlayData>(async (request) => {
   const data = request.data;
   validate(data);
 
-  const { gameId, gameName, participants } = data;
+  const { gameId, gameName, participants, location, notes } = data;
   const createdBy = request.auth.uid;
   const playedAt = Timestamp.fromDate(new Date(data.playedAt));
 
@@ -120,6 +122,8 @@ export const createPlay = onCall<CreatePlayData>(async (request) => {
       createdBy,
       participantCount: participants.length,
       participantIds,
+      ...(location && { location }),
+      ...(notes && { notes }),
       createdAt: FieldValue.serverTimestamp(),
     });
 
@@ -138,10 +142,10 @@ export const createPlay = onCall<CreatePlayData>(async (request) => {
       if (p.userId === null) continue;
 
       // 2b. Lifetime stats — write-only, FieldValue.increment creates on first call.
-      incrementStats(tx, statsRef(p.userId), p.isWinner);
+      incrementStats(tx, statsRef(p.userId), p.isWinner, playedAt);
 
       // 2c. Per-game stats — write-only, FieldValue.increment creates on first call.
-      incrementGameStats(tx, gameStatsRef(p.userId, gameId), gameName, p.isWinner);
+      incrementGameStats(tx, gameStatsRef(p.userId, gameId), gameName, p.isWinner, playedAt);
 
       // 2d. User library — upsert using the snapshot fetched in Phase 1.
       upsertUserLibrary(
@@ -149,7 +153,8 @@ export const createPlay = onCall<CreatePlayData>(async (request) => {
         userLibraryRef(p.userId, gameId),
         libSnapByUserId.get(p.userId)!,
         gameName,
-        p.isWinner
+        p.isWinner,
+        playedAt
       );
     }
   });

@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Node.js
+node_modules/
+functions/lib/
+
+# Android build cache
+android/.kotlin/
+
+# Claude Code assistant memory
+memory/

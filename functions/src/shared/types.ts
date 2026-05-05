@@ -1,6 +1,26 @@
 import { Timestamp } from "firebase-admin/firestore";
 
 // ---------------------------------------------------------------------------
+// Collection document types — shapes of documents stored in Firestore.
+// These reflect what is actually written to each collection.
+// ---------------------------------------------------------------------------
+
+/**
+ * Stored document at `boardGames/{gameId}`.
+ * Global read-only catalog of board games.
+ */
+export interface BoardGameDocument {
+  name: string;
+  thumbnailUrl?: string;
+  publisher?: string;
+  releaseYear?: number;
+  minPlayers?: number;
+  maxPlayers?: number;
+  playTimeMinutes?: number;
+  createdAt?: Timestamp;
+}
+
+// ---------------------------------------------------------------------------
 // Input types — data sent by the client to callable Cloud Functions.
 // Timestamps are ISO 8601 strings; the server converts them to Firestore
 // Timestamps. Server-derived fields (createdBy, createdAt, etc.) are absent.
