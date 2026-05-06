@@ -28,9 +28,9 @@ A Flutter "super app" dashboard for tracking board game history and scores. User
 
 - **Framework**: Flutter (Dart)
 - **Target platforms**: iOS and Android (primary); desktop/web optional
-- **State management**: TBD (prefer Riverpod or Bloc)
-- **Local persistence**: TBD (prefer Isar or SQLite via `drift`)
-- **Navigation**: `go_router`
+- **State management**: Riverpod
+- **Local persistence**: Firebase Firestore
+- **Navigation**: `Navigator.of(context).push` (imperative)
 
 ## Project Structure (planned)
 
@@ -79,7 +79,6 @@ A task is **not complete** until the UI has been visually confirmed. The `flutte
 ## Coding Conventions
 
 - Use `const` constructors wherever possible
-- Prefer named routes via `go_router`
 - Keep business logic out of widgets; use providers/blocs
 - One file per widget/screen for files over ~150 lines
 - No hardcoded strings in UI — use a constants file or l10n

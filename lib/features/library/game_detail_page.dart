@@ -5,6 +5,8 @@ import '../../shared/models/play.dart';
 import '../../shared/repositories/play_repository.dart';
 import '../../shared/theme/app_theme.dart';
 import '../plays/play_detail_page.dart';
+import '../tools/presentation/widgets/tool_card.dart';
+import '../tools/registry/game_tools_registry.dart';
 
 class GameDetailPage extends StatefulWidget {
   final String gameId;
@@ -204,6 +206,17 @@ class _GameDetailPageState extends State<GameDetailPage> {
                     ),
                   ),
                 ),
+
+          // Tools section header
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+              child: _ToolsSectionHeader(),
+            ),
+          ),
+
+          // Tools cards or empty state
+          SliverToBoxAdapter(child: _ToolsContent(gameId: widget.gameId)),
         ],
       ),
     );
@@ -444,6 +457,65 @@ class _EmptyView extends StatelessWidget {
             'Log a play to see it here',
             style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Tools section header ─────────────────────────────────────────────────────
+
+class _ToolsSectionHeader extends StatelessWidget {
+  const _ToolsSectionHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tools',
+          style: GoogleFonts.newsreader(
+            color: kColorPrimary,
+            fontSize: 22,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(height: 1, color: kColorAmberBorder),
+      ],
+    );
+  }
+}
+
+// ─── Tools content ────────────────────────────────────────────────────────────
+
+class _ToolsContent extends StatelessWidget {
+  final String gameId;
+
+  const _ToolsContent({required this.gameId});
+
+  @override
+  Widget build(BuildContext context) {
+    final tools = toolsForGame(gameId);
+    if (tools.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+        child: Text(
+          'No tools available yet.',
+          style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+      child: Column(
+        children: [
+          for (int i = 0; i < tools.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            ToolCard(tool: tools[i]),
+          ],
         ],
       ),
     );
