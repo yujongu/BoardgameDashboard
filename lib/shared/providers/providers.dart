@@ -1,14 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../services/functions_service.dart';
 import '../models/play.dart';
+import '../repositories/play_repository.dart';
 
-final recentPlaysProvider = FutureProvider.autoDispose<List<PlaySummary>>((
+final recentPlaysProvider = StreamProvider.autoDispose<List<PlaySummary>>((
   ref,
 ) {
-  return FunctionsService.instance.listMyPlays(limit: 10);
+  return PlayRepository.instance.watchRecentPlays(limit: 10);
 });
 
-final libraryProvider = FutureProvider.autoDispose<List<LibraryEntry>>((ref) {
-  return FunctionsService.instance.getMyLibrary();
+final libraryProvider = StreamProvider.autoDispose<List<LibraryEntry>>((ref) {
+  return PlayRepository.instance.watchLibrary();
 });

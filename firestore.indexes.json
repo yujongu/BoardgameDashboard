@@ -7,6 +7,15 @@
         { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" },
         { "fieldPath": "playedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "plays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "gameId", "order": "ASCENDING" },
+        { "fieldPath": "playedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

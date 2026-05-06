@@ -27,50 +27,26 @@ class FunctionsService {
     return user;
   }
 
-  Future<List<PlaySummary>> listMyPlays({
-    int limit = 20,
-    String? cursor,
-  }) async {
+  Future<PlayDetail> getPlay(String playId) async {
     _requireUser();
-
-    final payload = <String, dynamic>{'limit': limit};
-    if (cursor != null) payload['cursor'] = cursor;
-
     dev.log(
-      '[FunctionsService] listMyPlays → payload: $payload',
+      '[FunctionsService] getPlay → playId: $playId',
       name: 'FunctionsService',
     );
 
     try {
-      final result = await _fn.httpsCallable('listMyPlays').call(payload);
+      final result = await _fn.httpsCallable('getPlay').call({
+        'playId': playId,
+      });
       final data = Map<String, dynamic>.from(result.data as Map);
-
       dev.log(
-        '[FunctionsService] listMyPlays ← keys: ${data.keys}',
+        '[FunctionsService] getPlay ← keys: ${data.keys}',
         name: 'FunctionsService',
       );
-
-      final rawPlays = data['plays'] as List<dynamic>? ?? [];
-
-      if (rawPlays.isEmpty) {
-        dev.log(
-          '[FunctionsService] listMyPlays EMPTY RESULT — '
-          'check backend data for UID: ${FirebaseAuth.instance.currentUser?.uid}',
-          name: 'FunctionsService',
-        );
-      } else {
-        dev.log(
-          '[FunctionsService] listMyPlays ← ${rawPlays.length} plays',
-          name: 'FunctionsService',
-        );
-      }
-
-      return rawPlays
-          .map((p) => PlaySummary.fromJson(Map<String, dynamic>.from(p as Map)))
-          .toList();
+      return PlayDetail.fromJson(data);
     } on FirebaseFunctionsException catch (e) {
       dev.log(
-        '[FunctionsService] listMyPlays FirebaseFunctionsException\n'
+        '[FunctionsService] getPlay FirebaseFunctionsException\n'
         '  code    : ${e.code}\n'
         '  message : ${e.message}\n'
         '  details : ${e.details}',
@@ -79,88 +55,12 @@ class FunctionsService {
       rethrow;
     } catch (e, st) {
       dev.log(
-        '[FunctionsService] listMyPlays ERROR: $e',
+        '[FunctionsService] getPlay ERROR: $e',
         name: 'FunctionsService',
         error: e,
         stackTrace: st,
       );
       rethrow;
     }
-  }
-
-  Future<List<LibraryEntry>> getMyLibrary() async {
-    final user = _requireUser();
-    dev.log(
-      '[FunctionsService] getMyLibrary → UID: ${user.uid}',
-      name: 'FunctionsService',
-    );
-
-    try {
-      final result = await _fn.httpsCallable('getMyLibrary').call({});
-      final data = Map<String, dynamic>.from(result.data as Map);
-
-      dev.log(
-        '[FunctionsService] getMyLibrary ← keys: ${data.keys}',
-        name: 'FunctionsService',
-      );
-
-      final rawLibrary = data['library'] as List<dynamic>? ?? [];
-
-      if (rawLibrary.isEmpty) {
-        dev.log(
-          '[FunctionsService] getMyLibrary EMPTY RESULT — '
-          'check backend data for UID: ${user.uid}',
-          name: 'FunctionsService',
-        );
-      } else {
-        dev.log(
-          '[FunctionsService] getMyLibrary ← ${rawLibrary.length} entries',
-          name: 'FunctionsService',
-        );
-      }
-
-      return rawLibrary
-          .map(
-            (e) => LibraryEntry.fromJson(Map<String, dynamic>.from(e as Map)),
-          )
-          .toList();
-    } on FirebaseFunctionsException catch (e) {
-      dev.log(
-        '[FunctionsService] getMyLibrary FirebaseFunctionsException\n'
-        '  code    : ${e.code}\n'
-        '  message : ${e.message}\n'
-        '  details : ${e.details}',
-        name: 'FunctionsService',
-      );
-      rethrow;
-    } catch (e, st) {
-      dev.log(
-        '[FunctionsService] getMyLibrary ERROR: $e',
-        name: 'FunctionsService',
-        error: e,
-        stackTrace: st,
-      );
-      rethrow;
-    }
-  }
-
-  Future<void> debugListMyPlays() async {
-    dev.log('══════ debugListMyPlays START ══════', name: 'FunctionsService');
-    try {
-      final plays = await listMyPlays(limit: 5);
-      dev.log('Result count: ${plays.length}', name: 'FunctionsService');
-      if (plays.isNotEmpty) {
-        final first = plays.first;
-        dev.log(
-          'First play → game: "${first.gameName}" | '
-          'date: ${first.playedAt} | '
-          'players: ${first.participantCount}',
-          name: 'FunctionsService',
-        );
-      }
-    } catch (e) {
-      dev.log('debugListMyPlays FAILED: $e', name: 'FunctionsService');
-    }
-    dev.log('══════ debugListMyPlays END ══════', name: 'FunctionsService');
   }
 }

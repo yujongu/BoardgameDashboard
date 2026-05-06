@@ -1,6 +1,7 @@
 import 'dart:developer' as dev;
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
@@ -24,16 +25,22 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
   if (kDebugMode && _useEmulators) {
     final host = defaultTargetPlatform == TargetPlatform.android
         ? '10.0.2.2'
         : 'localhost';
     dev.log(
-      '[main] Firebase emulators ON — auth:9099, functions:5001 @ $host',
+      '[main] Firebase emulators ON — auth:9099, functions:5001, firestore:8080 @ $host',
       name: 'main',
     );
     await FirebaseAuth.instance.useAuthEmulator(host, 9099);
     FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
   } else if (kDebugMode) {
     dev.log('[main] Firebase emulators OFF — using production', name: 'main');
   }

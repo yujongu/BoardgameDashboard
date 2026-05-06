@@ -85,6 +85,13 @@ class PlaySummary {
   final DateTime playedAt;
   final int participantCount;
 
+  @override
+  bool operator ==(Object other) =>
+      other is PlaySummary && other.playId == playId;
+
+  @override
+  int get hashCode => playId.hashCode;
+
   factory PlaySummary.fromJson(Map<String, dynamic> json) => PlaySummary(
     playId: json['playId'] as String,
     gameId: json['gameId'] as String,
@@ -157,7 +164,10 @@ class PlayDetail {
     createdBy: json['createdBy'] as String,
     participantCount: json['participantCount'] as int,
     participants: (json['participants'] as List<dynamic>)
-        .map((p) => ParticipantResult.fromJson(p as Map<String, dynamic>))
+        .map(
+          (p) =>
+              ParticipantResult.fromJson(Map<String, dynamic>.from(p as Map)),
+        )
         .toList(),
     location: json['location'] as String?,
     notes: json['notes'] as String?,

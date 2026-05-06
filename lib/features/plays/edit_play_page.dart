@@ -1,50 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
-
 import '../../shared/models/play.dart';
-import '../../shared/repositories/play_repository.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
 
-// ─── Player entry (state holder, not a widget) ────────────────────────────────
+// ─── Player entry (local state holder) ───────────────────────────────────────
 
 class _PlayerEntry {
+  _PlayerEntry({this.userId, this.score});
+
   final TextEditingController nameController = TextEditingController();
   bool isWinner = false;
-  String? userId;
+  final String? userId;
+  final double? score; // preserved from original, not editable
 
   void dispose() => nameController.dispose();
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-class AddPlayScreen extends StatefulWidget {
-  const AddPlayScreen({super.key});
+class EditPlayPage extends StatefulWidget {
+  final PlayDetail detail;
+
+  const EditPlayPage({super.key, required this.detail});
 
   @override
-  State<AddPlayScreen> createState() => _AddPlayScreenState();
+  State<EditPlayPage> createState() => _EditPlayPageState();
 }
 
-class _AddPlayScreenState extends State<AddPlayScreen> {
-  String? _gameId;
-  String? _gameName;
-  DateTime _playedAt = DateTime.now();
-  final _locationController = TextEditingController();
-  final _notesController = TextEditingController();
+class _EditPlayPageState extends State<EditPlayPage> {
+  late String _gameId;
+  late String _gameName;
+  late DateTime _playedAt;
   final List<_PlayerEntry> _players = [];
-  bool _saving = false;
-
   @override
   void initState() {
     super.initState();
-    final user = FirebaseAuth.instance.currentUser;
-    final name = user?.displayName ?? '';
-    if (name.isNotEmpty) {
-      final entry = _PlayerEntry();
-      entry.nameController.text = name;
-      entry.userId = user?.uid;
+    _gameId = widget.detail.gameId;
+    _gameName = widget.detail.gameName;
+    _playedAt = widget.detail.playedAt.toLocal();
+
+    for (final p in widget.detail.participants) {
+      final entry = _PlayerEntry(userId: p.userId, score: p.score);
+      entry.nameController.text = p.name;
+      entry.isWinner = p.isWinner;
       entry.nameController.addListener(() => setState(() {}));
       _players.add(entry);
     }
@@ -52,8 +52,6 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
 
   @override
   void dispose() {
-    _locationController.dispose();
-    _notesController.dispose();
     for (final p in _players) {
       p.dispose();
     }
@@ -61,7 +59,6 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
   }
 
   bool get _canSave =>
-      _gameId != null &&
       _players.isNotEmpty &&
       _players.any((p) => p.nameController.text.trim().isNotEmpty) &&
       _players.any(
@@ -103,7 +100,18 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _playedAt = picked);
+    if (picked != null) {
+      setState(() {
+        _playedAt = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          _playedAt.hour,
+          _playedAt.minute,
+          _playedAt.second,
+        );
+      });
+    }
   }
 
   void _addPlayer() {
@@ -119,7 +127,7 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
     });
   }
 
-  Future<void> _save() async {
+  void _save() {
     final participants = _players
         .where((p) => p.nameController.text.trim().isNotEmpty)
         .map(
@@ -127,43 +135,23 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
             userId: p.userId,
             name: p.nameController.text.trim(),
             isWinner: p.isWinner,
+            score: p.score,
           ),
         )
         .toList();
 
-    if (_gameId == null || participants.isEmpty) return;
+    if (participants.isEmpty) return;
+    if (!participants.any((p) => p.isWinner)) return;
 
-    setState(() => _saving = true);
-    try {
-      await PlayRepository.instance.createPlay(
-        CreatePlayInput(
-          gameId: _gameId!,
-          gameName: _gameName!,
-          playedAt: _playedAt,
-          participants: participants,
-          location: _locationController.text.trim().isEmpty
-              ? null
-              : _locationController.text.trim(),
-          notes: _notesController.text.trim().isEmpty
-              ? null
-              : _notesController.text.trim(),
-        ),
-      );
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to save. Please try again.',
-              style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
-            ),
-            backgroundColor: kColorSurfaceHigh,
-          ),
-        );
-        setState(() => _saving = false);
-      }
-    }
+    Navigator.of(context).pop(
+      UpdatePlayInput(
+        playId: widget.detail.playId,
+        gameId: _gameId,
+        gameName: _gameName,
+        playedAt: _playedAt,
+        participants: participants,
+      ),
+    );
   }
 
   @override
@@ -178,7 +166,7 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'LOG A PLAY',
+          'EDIT PLAY',
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -207,19 +195,6 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
                   _SectionLabel('SESSION'),
                   const SizedBox(height: 8),
                   _DateRow(date: _playedAt, onTap: _pickDate),
-                  const SizedBox(height: 10),
-                  _StyledField(
-                    controller: _locationController,
-                    hint: 'Location (optional)',
-                    icon: Icons.location_on_outlined,
-                  ),
-                  const SizedBox(height: 10),
-                  _StyledField(
-                    controller: _notesController,
-                    hint: 'Notes (optional)',
-                    icon: Icons.notes_outlined,
-                    maxLines: 3,
-                  ),
                   const SizedBox(height: 24),
                   _SectionLabel('PLAYERS'),
                   const SizedBox(height: 8),
@@ -242,11 +217,7 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
               ),
             ),
           ),
-          _SaveBar(
-            enabled: _canSave && !_saving,
-            loading: _saving,
-            onTap: _save,
-          ),
+          _SaveBar(enabled: _canSave, loading: false, onTap: _save),
         ],
       ),
     );
@@ -282,7 +253,7 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _GamePicker extends StatelessWidget {
-  final String? gameName;
+  final String gameName;
   final VoidCallback onTap;
 
   const _GamePicker({required this.gameName, required this.onTap});
@@ -304,18 +275,12 @@ class _GamePicker extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                gameName ?? 'Select a game…',
-                style: gameName != null
-                    ? GoogleFonts.newsreader(
-                        color: kColorOnSurface,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      )
-                    : GoogleFonts.newsreader(
-                        color: kColorOutline,
-                        fontSize: 16,
-                        fontStyle: FontStyle.italic,
-                      ),
+                gameName,
+                style: GoogleFonts.newsreader(
+                  color: kColorOnSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             const Icon(Icons.chevron_right, color: kColorOutline, size: 20),
@@ -380,59 +345,6 @@ class _DateRow extends StatelessWidget {
             const Icon(Icons.chevron_right, color: kColorOutline, size: 20),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _StyledField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-  final IconData icon;
-  final int maxLines;
-
-  const _StyledField({
-    required this.controller,
-    required this.hint,
-    required this.icon,
-    this.maxLines = 1,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(icon, color: kColorOutline, size: 16),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              maxLines: maxLines,
-              style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
-                fontSize: 14,
-              ),
-              decoration: InputDecoration.collapsed(
-                hintText: hint,
-                hintStyle: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -580,7 +492,7 @@ class _SaveBar extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      'SAVE PLAY',
+                      'SAVE CHANGES',
                       style: GoogleFonts.spaceGrotesk(
                         color: enabled ? kColorOnPrimary : kColorOutline,
                         fontSize: 13,

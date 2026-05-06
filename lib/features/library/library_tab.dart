@@ -6,8 +6,9 @@ import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/profile_app_bar.dart';
+import 'game_detail_page.dart';
 
-class LibraryTab extends ConsumerWidget {
+class LibraryTab extends ConsumerStatefulWidget {
   final String displayName;
   final VoidCallback onProfileTap;
 
@@ -18,12 +19,29 @@ class LibraryTab extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LibraryTab> createState() => _LibraryTabState();
+}
+
+class _LibraryTabState extends ConsumerState<LibraryTab> {
+  void _openGame(LibraryEntry entry) {
+    Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            GameDetailPage(gameId: entry.gameId, gameName: entry.gameName),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final libraryAsync = ref.watch(libraryProvider);
 
     return CustomScrollView(
       slivers: [
-        ProfileAppBar(displayName: displayName, onProfileTap: onProfileTap),
+        ProfileAppBar(
+          displayName: widget.displayName,
+          onProfileTap: widget.onProfileTap,
+        ),
         libraryAsync.when(
           loading: () => const SliverToBoxAdapter(
             child: Padding(
@@ -41,7 +59,7 @@ class LibraryTab extends ConsumerWidget {
           ),
           data: (library) => library.isEmpty
               ? const SliverToBoxAdapter(child: _EmptyLibraryView())
-              : _LibraryList(library: library),
+              : _LibraryList(library: library, onCardTap: _openGame),
         ),
       ],
     );
@@ -52,8 +70,9 @@ class LibraryTab extends ConsumerWidget {
 
 class _LibraryList extends StatelessWidget {
   final List<LibraryEntry> library;
+  final void Function(LibraryEntry) onCardTap;
 
-  const _LibraryList({required this.library});
+  const _LibraryList({required this.library, required this.onCardTap});
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +90,10 @@ class _LibraryList extends StatelessWidget {
             delegate: SliverChildBuilderDelegate(
               (_, i) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: _LibraryCard(entry: library[i]),
+                child: _LibraryCard(
+                  entry: library[i],
+                  onTap: () => onCardTap(library[i]),
+                ),
               ),
               childCount: library.length,
             ),
@@ -129,8 +151,9 @@ class _SectionHeader extends StatelessWidget {
 
 class _LibraryCard extends StatelessWidget {
   final LibraryEntry entry;
+  final VoidCallback onTap;
 
-  const _LibraryCard({required this.entry});
+  const _LibraryCard({required this.entry, required this.onTap});
 
   List<Color> get _gradientColors {
     const palette = [
@@ -173,130 +196,136 @@ class _LibraryCard extends StatelessWidget {
     final colors = _gradientColors;
     final lastPlayed = entry.lastPlayedAt;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Game color swatch
-          Container(
-            width: 80,
-            height: 90,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(3),
-                bottomLeft: Radius.circular(3),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: kColorSurfaceHigh,
+          border: Border.all(color: kColorAmberBorder),
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Game color swatch
+            Container(
+              width: 80,
+              height: 90,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(3),
+                  bottomLeft: Radius.circular(3),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: colors,
+                ),
               ),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: colors,
+              child: Icon(
+                Icons.casino_outlined,
+                color: kColorPrimary.withAlpha(50),
+                size: 32,
               ),
             ),
-            child: Icon(
-              Icons.casino_outlined,
-              color: kColorPrimary.withAlpha(50),
-              size: 32,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          entry.gameName,
-                          style: GoogleFonts.newsreader(
-                            color: kColorOnSurface,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.gameName,
+                            style: GoogleFonts.newsreader(
+                              color: kColorOnSurface,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '$_winPercent%',
-                        style: GoogleFonts.spaceGrotesk(
-                          color: kColorPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  // Win rate bar
-                  Container(
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1510),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor: _winRate.clamp(0.0, 1.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: kColorPrimary,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        '${entry.winCount}W',
-                        style: GoogleFonts.spaceGrotesk(
-                          color: kColorPrimary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        ' / ${entry.playCount} plays',
-                        style: GoogleFonts.spaceGrotesk(
-                          color: kColorOutline,
-                          fontSize: 10,
-                        ),
-                      ),
-                      if (lastPlayed != null) ...[
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         Text(
-                          _formatLastPlayed(lastPlayed.toLocal()),
+                          '$_winPercent%',
                           style: GoogleFonts.spaceGrotesk(
-                            color: kColorOutlineVariant,
-                            fontSize: 9,
-                            letterSpacing: 0.3,
+                            color: kColorPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Win rate bar
+                    Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1510),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: _winRate.clamp(0.0, 1.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: kColorPrimary,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          '${entry.winCount}W',
+                          style: GoogleFonts.spaceGrotesk(
+                            color: kColorPrimary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          ' / ${entry.playCount} plays',
+                          style: GoogleFonts.spaceGrotesk(
+                            color: kColorOutline,
+                            fontSize: 10,
+                          ),
+                        ),
+                        if (lastPlayed != null) ...[
+                          const Spacer(),
+                          Text(
+                            _formatLastPlayed(lastPlayed.toLocal()),
+                            style: GoogleFonts.spaceGrotesk(
+                              color: kColorOutlineVariant,
+                              fontSize: 9,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

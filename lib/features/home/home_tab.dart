@@ -1,13 +1,12 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../services/functions_service.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/profile_app_bar.dart';
+import '../plays/play_detail_page.dart';
 
 class HomeTab extends ConsumerStatefulWidget {
   final String displayName;
@@ -24,17 +23,6 @@ class HomeTab extends ConsumerStatefulWidget {
 }
 
 class _HomeTabState extends ConsumerState<HomeTab> {
-  @override
-  void initState() {
-    super.initState();
-    if (kDebugMode) {
-      // Defer so it doesn't race with the provider fetches on the first frame.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        FunctionsService.instance.debugListMyPlays();
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final playsAsync = ref.watch(recentPlaysProvider);
@@ -96,7 +84,17 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                     delegate: SliverChildBuilderDelegate(
                       (_, i) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
-                        child: _PlayCard(play: plays[i]),
+                        child: _PlayCard(
+                          play: plays[i],
+                          onTap: () {
+                            Navigator.of(context).push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    PlayDetailPage(initialData: plays[i]),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                       childCount: plays.length,
                     ),
@@ -258,8 +256,9 @@ class _SectionHeader extends StatelessWidget {
 
 class _PlayCard extends StatelessWidget {
   final PlaySummary play;
+  final VoidCallback onTap;
 
-  const _PlayCard({required this.play});
+  const _PlayCard({required this.play, required this.onTap});
 
   static String _formatDate(DateTime dt) {
     const months = [
@@ -282,64 +281,67 @@ class _PlayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final local = play.playedAt.toLocal();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: kColorSurface,
-              border: Border.all(color: kColorOutlineVariant),
-              borderRadius: BorderRadius.circular(3),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: kColorSurfaceHigh,
+          border: Border.all(color: kColorAmberBorder),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: kColorSurface,
+                border: Border.all(color: kColorOutlineVariant),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: const Icon(
+                Icons.casino_outlined,
+                color: kColorOutline,
+                size: 18,
+              ),
             ),
-            child: const Icon(
-              Icons.casino_outlined,
-              color: kColorOutline,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  play.gameName,
-                  style: GoogleFonts.newsreader(
-                    color: kColorOnSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    play.gameName,
+                    style: GoogleFonts.newsreader(
+                      color: kColorOnSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '${play.participantCount} ${play.participantCount == 1 ? 'player' : 'players'}',
-                  style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
-                    fontSize: 11,
-                    letterSpacing: 0.3,
+                  const SizedBox(height: 3),
+                  Text(
+                    '${play.participantCount} ${play.participantCount == 1 ? 'player' : 'players'}',
+                    style: GoogleFonts.spaceGrotesk(
+                      color: kColorOutline,
+                      fontSize: 11,
+                      letterSpacing: 0.3,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Text(
-            _formatDate(local),
-            style: GoogleFonts.spaceGrotesk(
-              color: kColorOutline,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
+            Text(
+              _formatDate(local),
+              style: GoogleFonts.spaceGrotesk(
+                color: kColorOutline,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.5,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
