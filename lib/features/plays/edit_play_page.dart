@@ -71,10 +71,10 @@ class _EditPlayPageState extends State<EditPlayPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => GamePickerSheet(
-        onSelect: (id, name) {
+        onSelect: (game) {
           setState(() {
-            _gameId = id;
-            _gameName = name;
+            _gameId = game.gameId;
+            _gameName = game.name;
           });
           Navigator.of(context).pop();
         },

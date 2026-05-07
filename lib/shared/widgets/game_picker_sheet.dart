@@ -7,7 +7,7 @@ import '../providers/game_catalog_provider.dart';
 import '../theme/app_theme.dart';
 
 class GamePickerSheet extends ConsumerStatefulWidget {
-  final void Function(String gameId, String name) onSelect;
+  final void Function(CatalogGame game) onSelect;
 
   const GamePickerSheet({super.key, required this.onSelect});
 
@@ -102,7 +102,10 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
                         ),
                       ),
                     ),
-                    if (catalog.loading)
+                    // remoteLoading is true only while a background Firestore
+                    // fetch is in flight; local results are already visible so
+                    // we only need a subtle inline indicator, not a blocker.
+                    if (catalog.remoteLoading)
                       const SizedBox(
                         width: 14,
                         height: 14,
@@ -148,7 +151,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
               ),
               const SizedBox(height: 16),
               GestureDetector(
-                onTap: () => ref.read(gameCatalogProvider.notifier).search(''),
+                onTap: () => ref.read(gameCatalogProvider.notifier).reload(),
                 child: Text(
                   'RETRY',
                   style: GoogleFonts.spaceGrotesk(
@@ -182,10 +185,8 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       itemCount: games.length,
-      itemBuilder: (_, i) => _GameTile(
-        game: games[i],
-        onTap: () => widget.onSelect(games[i].gameId, games[i].name),
-      ),
+      itemBuilder: (_, i) =>
+          _GameTile(game: games[i], onTap: () => widget.onSelect(games[i])),
     );
   }
 }

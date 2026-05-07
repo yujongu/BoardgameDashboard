@@ -1,52 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
-
-import '../../shared/models/play.dart';
-import '../../shared/repositories/play_repository.dart';
+import '../../shared/models/catalog_game.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
-
-// ─── Player entry (state holder, not a widget) ────────────────────────────────
-
-class _PlayerEntry {
-  final TextEditingController nameController = TextEditingController();
-  bool isWinner = false;
-  String? userId;
-
-  void dispose() => nameController.dispose();
-}
+import 'add_play_notifier.dart';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-class AddPlayScreen extends StatefulWidget {
+class AddPlayScreen extends ConsumerStatefulWidget {
   const AddPlayScreen({super.key});
 
   @override
-  State<AddPlayScreen> createState() => _AddPlayScreenState();
+  ConsumerState<AddPlayScreen> createState() => _AddPlayScreenState();
 }
 
-class _AddPlayScreenState extends State<AddPlayScreen> {
-  String? _gameId;
-  String? _gameName;
-  DateTime _playedAt = DateTime.now();
+class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
   final _locationController = TextEditingController();
   final _notesController = TextEditingController();
-  final List<_PlayerEntry> _players = [];
-  bool _saving = false;
+
+  // Parallel list of name controllers mirroring state.participants.
+  // Invariant: _controllers.length == state.participants.length at all times
+  // during build(). Maintained by _onGameSelected, _addParticipant, and
+  // _removeParticipant, which update both the controller list and ViewModel
+  // atomically before the next frame.
+  final List<TextEditingController> _controllers = [];
 
   @override
   void initState() {
     super.initState();
-    final user = FirebaseAuth.instance.currentUser;
-    final name = user?.displayName ?? '';
-    if (name.isNotEmpty) {
-      final entry = _PlayerEntry();
-      entry.nameController.text = name;
-      entry.userId = user?.uid;
-      entry.nameController.addListener(() => setState(() {}));
-      _players.add(entry);
+    final initial = ref.read(addPlayProvider).participants;
+    for (final p in initial) {
+      _addController(initialText: p.name);
     }
   }
 
@@ -54,19 +40,26 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
   void dispose() {
     _locationController.dispose();
     _notesController.dispose();
-    for (final p in _players) {
-      p.dispose();
+    for (final c in _controllers) {
+      c.dispose();
     }
     super.dispose();
   }
 
-  bool get _canSave =>
-      _gameId != null &&
-      _players.isNotEmpty &&
-      _players.any((p) => p.nameController.text.trim().isNotEmpty) &&
-      _players.any(
-        (p) => p.isWinner && p.nameController.text.trim().isNotEmpty,
-      );
+  // Creates a controller whose listener always resolves its own current index,
+  // so removal from the middle of the list doesn't corrupt indices.
+  void _addController({String initialText = ''}) {
+    final ctrl = TextEditingController(text: initialText);
+    ctrl.addListener(() {
+      final idx = _controllers.indexOf(ctrl);
+      if (idx >= 0) {
+        ref
+            .read(addPlayProvider.notifier)
+            .updateParticipantName(idx, ctrl.text);
+      }
+    });
+    _controllers.add(ctrl);
+  }
 
   Future<void> _showGamePicker() async {
     await showModalBottomSheet<void>(
@@ -74,21 +67,33 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => GamePickerSheet(
-        onSelect: (id, name) {
-          setState(() {
-            _gameId = id;
-            _gameName = name;
-          });
+        onSelect: (game) {
+          _onGameSelected(game);
           Navigator.of(context).pop();
         },
       ),
     );
   }
 
+  void _onGameSelected(CatalogGame game) {
+    ref.read(addPlayProvider.notifier).onGameSelected(game);
+    final newLen = ref.read(addPlayProvider).participants.length;
+
+    // Remove excess controllers from the end, preserving existing text.
+    while (_controllers.length > newLen) {
+      _controllers.last.dispose();
+      _controllers.removeLast();
+    }
+    // Add empty controllers for auto-added participant slots.
+    while (_controllers.length < newLen) {
+      _addController();
+    }
+  }
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _playedAt,
+      initialDate: ref.read(addPlayProvider).playedAt,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
@@ -103,71 +108,51 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _playedAt = picked);
+    if (picked != null) {
+      ref.read(addPlayProvider.notifier).setPlayedAt(picked);
+    }
   }
 
-  void _addPlayer() {
-    final entry = _PlayerEntry();
-    entry.nameController.addListener(() => setState(() {}));
-    setState(() => _players.add(entry));
+  void _addParticipant() {
+    _addController();
+    ref.read(addPlayProvider.notifier).addParticipant();
   }
 
-  void _removePlayer(int index) {
-    setState(() {
-      _players[index].dispose();
-      _players.removeAt(index);
-    });
+  void _removeParticipant(int index) {
+    _controllers[index].dispose();
+    _controllers.removeAt(index);
+    ref.read(addPlayProvider.notifier).removeParticipant(index);
   }
 
   Future<void> _save() async {
-    final participants = _players
-        .where((p) => p.nameController.text.trim().isNotEmpty)
-        .map(
-          (p) => ParticipantInput(
-            userId: p.userId,
-            name: p.nameController.text.trim(),
-            isWinner: p.isWinner,
+    final notifier = ref.read(addPlayProvider.notifier);
+    // Flush any pending controller text to the ViewModel before saving.
+    for (var i = 0; i < _controllers.length; i++) {
+      notifier.updateParticipantName(i, _controllers[i].text);
+    }
+    final success = await notifier.save(
+      location: _locationController.text,
+      notes: _notesController.text,
+    );
+    if (!mounted) return;
+    if (success) {
+      Navigator.of(context).pop(true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to save. Please try again.',
+            style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
           ),
-        )
-        .toList();
-
-    if (_gameId == null || participants.isEmpty) return;
-
-    setState(() => _saving = true);
-    try {
-      await PlayRepository.instance.createPlay(
-        CreatePlayInput(
-          gameId: _gameId!,
-          gameName: _gameName!,
-          playedAt: _playedAt,
-          participants: participants,
-          location: _locationController.text.trim().isEmpty
-              ? null
-              : _locationController.text.trim(),
-          notes: _notesController.text.trim().isEmpty
-              ? null
-              : _notesController.text.trim(),
+          backgroundColor: kColorSurfaceHigh,
         ),
       );
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to save. Please try again.',
-              style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
-            ),
-            backgroundColor: kColorSurfaceHigh,
-          ),
-        );
-        setState(() => _saving = false);
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(addPlayProvider);
     return Scaffold(
       backgroundColor: kColorBackground,
       resizeToAvoidBottomInset: true,
@@ -202,11 +187,14 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
                 children: [
                   _SectionLabel('GAME'),
                   const SizedBox(height: 8),
-                  _GamePicker(gameName: _gameName, onTap: _showGamePicker),
+                  _GamePicker(
+                    gameName: state.selectedGame?.name,
+                    onTap: _showGamePicker,
+                  ),
                   const SizedBox(height: 24),
                   _SectionLabel('SESSION'),
                   const SizedBox(height: 8),
-                  _DateRow(date: _playedAt, onTap: _pickDate),
+                  _DateRow(date: state.playedAt, onTap: _pickDate),
                   const SizedBox(height: 10),
                   _StyledField(
                     controller: _locationController,
@@ -221,30 +209,37 @@ class _AddPlayScreenState extends State<AddPlayScreen> {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 24),
-                  _SectionLabel('PLAYERS'),
+                  _PlayersSectionHeader(countText: state.playerCountText),
                   const SizedBox(height: 8),
-                  ..._players.asMap().entries.map(
+                  ...state.participants.asMap().entries.map(
                     (e) => Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: _PlayerRow(
-                        entry: e.value,
-                        onToggleWinner: () => setState(
-                          () => e.value.isWinner = !e.value.isWinner,
-                        ),
-                        onRemove: () => _removePlayer(e.key),
+                        controller: _controllers[e.key],
+                        isWinner: e.value.isWinner,
+                        canRemove: e.key != 0,
+                        onToggleWinner: () => ref
+                            .read(addPlayProvider.notifier)
+                            .toggleWinner(e.key),
+                        onRemove: () => _removeParticipant(e.key),
                       ),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  _AddPlayerButton(onTap: _addPlayer),
+                  _AddParticipantButton(
+                    label: state.addButtonText,
+                    enabled: state.canAddParticipant,
+                    onTap: state.canAddParticipant ? _addParticipant : null,
+                  ),
                   const SizedBox(height: 32),
                 ],
               ),
             ),
           ),
           _SaveBar(
-            enabled: _canSave && !_saving,
-            loading: _saving,
+            enabled: state.canSave && !state.saving,
+            loading: state.saving,
+            buttonText: state.saveButtonText,
             onTap: _save,
           ),
         ],
@@ -273,6 +268,45 @@ class _SectionLabel extends StatelessWidget {
             fontWeight: FontWeight.w600,
             letterSpacing: 2,
           ),
+        ),
+        const SizedBox(height: 6),
+        Container(height: 1, color: kColorAmberBorder),
+      ],
+    );
+  }
+}
+
+class _PlayersSectionHeader extends StatelessWidget {
+  final String countText;
+
+  const _PlayersSectionHeader({required this.countText});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'PLAYERS',
+              style: GoogleFonts.spaceGrotesk(
+                color: kColorOutline,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 2,
+              ),
+            ),
+            Text(
+              countText,
+              style: GoogleFonts.spaceGrotesk(
+                color: kColorOutline,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         Container(height: 1, color: kColorAmberBorder),
@@ -439,14 +473,18 @@ class _StyledField extends StatelessWidget {
 }
 
 class _PlayerRow extends StatelessWidget {
-  final _PlayerEntry entry;
+  final TextEditingController controller;
+  final bool isWinner;
+  final bool canRemove;
   final VoidCallback onToggleWinner;
   final VoidCallback onRemove;
 
   const _PlayerRow({
-    required this.entry,
+    required this.controller,
+    required this.isWinner,
     required this.onToggleWinner,
     required this.onRemove,
+    this.canRemove = true,
   });
 
   @override
@@ -456,9 +494,7 @@ class _PlayerRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: kColorSurfaceHigh,
         border: Border.all(
-          color: entry.isWinner
-              ? kColorPrimary.withAlpha(120)
-              : kColorAmberBorder,
+          color: isWinner ? kColorPrimary.withAlpha(120) : kColorAmberBorder,
         ),
         borderRadius: BorderRadius.circular(4),
       ),
@@ -468,7 +504,7 @@ class _PlayerRow extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: TextField(
-              controller: entry.nameController,
+              controller: controller,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOnSurface,
                 fontSize: 14,
@@ -487,31 +523,38 @@ class _PlayerRow extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Icon(
-                entry.isWinner
-                    ? Icons.emoji_events
-                    : Icons.emoji_events_outlined,
-                color: entry.isWinner ? kColorPrimary : kColorOutline,
+                isWinner ? Icons.emoji_events : Icons.emoji_events_outlined,
+                color: isWinner ? kColorPrimary : kColorOutline,
                 size: 20,
               ),
             ),
           ),
-          GestureDetector(
-            onTap: onRemove,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
-              child: Icon(Icons.close, color: kColorOutline, size: 18),
-            ),
-          ),
+          if (canRemove)
+            GestureDetector(
+              onTap: onRemove,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
+                child: Icon(Icons.close, color: kColorOutline, size: 18),
+              ),
+            )
+          else
+            const SizedBox(width: 30),
         ],
       ),
     );
   }
 }
 
-class _AddPlayerButton extends StatelessWidget {
-  final VoidCallback onTap;
+class _AddParticipantButton extends StatelessWidget {
+  final String label;
+  final bool enabled;
+  final VoidCallback? onTap;
 
-  const _AddPlayerButton({required this.onTap});
+  const _AddParticipantButton({
+    required this.label,
+    required this.enabled,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -520,24 +563,23 @@ class _AddPlayerButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: BoxDecoration(
-          border: Border.all(color: kColorOutlineVariant),
+          border: Border.all(
+            color: enabled
+                ? kColorOutlineVariant
+                : kColorOutlineVariant.withAlpha(80),
+          ),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.add, color: kColorOutline, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              'ADD PLAYER',
-              style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.5,
-              ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.spaceGrotesk(
+              color: enabled ? kColorOutline : kColorOutlineVariant,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.5,
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -547,11 +589,13 @@ class _AddPlayerButton extends StatelessWidget {
 class _SaveBar extends StatelessWidget {
   final bool enabled;
   final bool loading;
+  final String buttonText;
   final VoidCallback onTap;
 
   const _SaveBar({
     required this.enabled,
     required this.loading,
+    required this.buttonText,
     required this.onTap,
   });
 
@@ -580,7 +624,7 @@ class _SaveBar extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      'SAVE PLAY',
+                      buttonText,
                       style: GoogleFonts.spaceGrotesk(
                         color: enabled ? kColorOnPrimary : kColorOutline,
                         fontSize: 13,
