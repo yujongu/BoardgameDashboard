@@ -8,22 +8,6 @@
 
 A Flutter "super app" dashboard for tracking board game history and scores. Users can log games they've played, track win counts per player, and access game-specific utility tools (e.g., score calculators).
 
-## Core Features
-
-### 1. Game Library
-- Display a list of board games the user has played
-- Each game has a detail view showing play history and stats
-
-### 2. Score Tracking
-- Record play sessions: date, players, and outcome
-- Track how many times each player has won per game
-- Leaderboard view per game showing win counts
-
-### 3. Game-Specific Tools
-- Some games have dedicated utility screens (e.g., in-game score calculators)
-- Tools are accessible from the game's detail page
-- Each tool is self-contained and scoped to its game
-
 ## Tech Stack
 
 - **Framework**: Flutter (Dart)
@@ -32,7 +16,7 @@ A Flutter "super app" dashboard for tracking board game history and scores. User
 - **Local persistence**: Firebase Firestore
 - **Navigation**: `Navigator.of(context).push` (imperative)
 
-## Project Structure (planned)
+## Project Structure
 
 ```
 lib/
@@ -49,21 +33,6 @@ lib/
     widgets/                # Reusable UI components
     theme/                  # App theme & colors
 ```
-
-## Data Models (rough)
-
-- **Game**: id, name, coverImageUrl, description, hasTools
-- **Player**: id, name, avatarColor
-- **Session**: id, gameId, date, playerResults (list of {playerId, score, isWinner})
-
-## Game-Specific Tools (examples)
-
-| Game | Tool |
-|------|------|
-| Wingspan | Score calculator (birds, eggs, food, bonuses) |
-| Catan | Resource tracker / point calculator |
-| Ticket to Ride | Score calculator (routes, longest road, tickets) |
-| *(more to be added)* | |
 
 ## UI Task Verification (Required)
 
@@ -83,8 +52,24 @@ A task is **not complete** until the UI has been visually confirmed. The `flutte
 - One file per widget/screen for files over ~150 lines
 - No hardcoded strings in UI — use a constants file or l10n
 
-## Out of Scope (for now)
+## Think Before Coding
 
-- Cloud sync / multi-device support
-- Online multiplayer
-- BGG (BoardGameGeek) API integration
+Before implementing, state assumptions explicitly — if uncertain, ask. If multiple interpretations exist, present them rather than picking silently. If a simpler approach exists, say so and push back when warranted. If something is unclear, stop and name what's confusing before proceeding.
+
+## Simplicity First
+
+Write the minimum code that solves the problem. No features beyond what was asked, no abstractions for single-use code, no unrequested flexibility or configurability, no error handling for impossible scenarios. If 200 lines could be 50, rewrite it. Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## Surgical Changes
+
+Touch only what is necessary. When editing existing code: don't improve adjacent code, comments, or formatting; don't refactor things that aren't broken; match existing style even if you'd do it differently. If you notice unrelated dead code, mention it — don't delete it. Remove imports/variables/functions that your changes made unused, but don't remove pre-existing dead code unless asked. Every changed line should trace directly to the request.
+
+## Goal-Driven Execution
+
+Transform tasks into verifiable goals before starting:
+- "Add validation" → write tests for invalid inputs, then make them pass
+- "Fix the bug" → write a test that reproduces it, then make it pass
+- "Refactor X" → ensure tests pass before and after
+
+For multi-step tasks, state a brief plan with a verify step for each stage. Strong success criteria allow independent looping; weak criteria ("make it work") require constant clarification.
+
