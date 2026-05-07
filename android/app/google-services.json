@@ -12,7 +12,20 @@
           "package_name": "com.yujongu.board_game_dashboard"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "295999324490-26508lv18fdgiq23be3q7in07bhu44rv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yujongu.board_game_dashboard",
+            "certificate_hash": "2bf43ee97839582e1dd3501c9d649a5b4f459a0e"
+          }
+        },
+        {
+          "client_id": "295999324490-988uf1c8jmrrcdu517imo511tl5cffq2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBe3oYiBHCpRKJd0jLoAhkXKepwfdFa0BU"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "295999324490-988uf1c8jmrrcdu517imo511tl5cffq2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "295999324490-s7e31mm8lo7vlsgioafk2fabd1nccdi3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.yujongu.boardGameDashboard"
+              }
+            }
+          ]
         }
       }
     }

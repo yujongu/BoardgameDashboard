@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../shared/theme/app_theme.dart';
 
@@ -26,6 +27,34 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      setState(() => _errorMessage = _friendlyError(e.code));
+    } catch (_) {
+      setState(
+        () => _errorMessage = 'Google sign-in failed. Please try again.',
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -97,6 +126,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 24),
                   if (_errorMessage != null) _buildError(),
                   _buildSubmitButton(),
+                  const SizedBox(height: 16),
+                  _buildDivider(),
+                  const SizedBox(height: 16),
+                  _buildGoogleButton(),
                   const SizedBox(height: 20),
                   _buildToggle(),
                 ],
@@ -274,6 +307,41 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: kColorOutlineVariant)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'or',
+            style: TextStyle(color: kColorOnSurfaceVariant, fontSize: 13),
+          ),
+        ),
+        const Expanded(child: Divider(color: kColorOutlineVariant)),
+      ],
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return SizedBox(
+      height: 50,
+      child: OutlinedButton(
+        onPressed: _isLoading ? null : _signInWithGoogle,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: kColorOnSurface,
+          side: const BorderSide(color: kColorOutlineVariant),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: GoogleFonts.workSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        child: const Text('Continue with Google'),
+      ),
     );
   }
 }
