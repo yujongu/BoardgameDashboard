@@ -15,10 +15,8 @@ Run these in parallel:
 
 ### 2. Decide what to stage
 
-- If there are already staged changes, commit only those (respect the user's intent).
-- If nothing is staged but there are modified tracked files, stage all modified tracked files with `git add -u` (do NOT use `git add .` or `git add -A` as they may sweep in untracked secrets or build artifacts).
-- If there are untracked files that look like they belong with the changes (e.g., a new feature file paired with a new test file), ask the user before staging them.
-- Never stage `.env`, credential files, or large binary files.
+- Stage all changes including untracked files with `git add -A`.
+- Never stage `.env`, credential files, or large binary files. If any are present, warn the user and exclude them.
 
 ### 3. Draft the commit message
 
@@ -67,6 +65,8 @@ git commit -m "$(cat <<'EOF'
 EOF
 )"
 ```
+
+Do not add any "Co-authored-by" or attribution lines to the commit message.
 
 Do NOT push. Do NOT amend a previous commit unless the user explicitly asks.
 
