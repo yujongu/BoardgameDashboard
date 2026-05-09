@@ -11,6 +11,8 @@ interface GetIncomingFriendRequestsData {
 interface IncomingRequestSummary {
   requestId: string;
   fromUserId: string;
+  fromUserName: string;
+  fromUserPhotoUrl: string | null;
   createdAt: string;
 }
 
@@ -63,9 +65,21 @@ export const getIncomingFriendRequests = onCall<GetIncomingFriendRequestsData>(a
         console.warn(`getIncomingFriendRequests: doc ${doc.id} missing required fields — skipping`);
         return [];
       }
+      let fromUserName: string;
+      let fromUserPhotoUrl: string | null;
+      if (typeof d.fromUserName === "string") {
+        fromUserName = d.fromUserName;
+        fromUserPhotoUrl = typeof d.fromUserPhotoUrl === "string" ? d.fromUserPhotoUrl : null;
+      } else {
+        console.warn(`getIncomingFriendRequests: doc ${doc.id} missing snapshot fields — falling back to legacy fields`);
+        fromUserName = typeof d.fromName === "string" && d.fromName ? d.fromName : "Unknown user";
+        fromUserPhotoUrl = typeof d.fromPhotoUrl === "string" ? d.fromPhotoUrl : null;
+      }
       return [{
         requestId: doc.id,
         fromUserId: d.fromUserId as string,
+        fromUserName,
+        fromUserPhotoUrl,
         createdAt: safeTimestampToISO(d.createdAt, "createdAt", doc.id),
       }];
     });

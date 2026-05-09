@@ -63,13 +63,34 @@ export const sendFriendRequest = onCall<SendFriendRequestData>(async (request) =
     throw new HttpsError("already-exists", "A pending friend request already exists.");
   }
 
-  const senderData = senderSnap.data() ?? {};
+  if (!senderSnap.exists) {
+    throw new HttpsError("failed-precondition", "Your profile is not set up yet.");
+  }
+
+  const senderData = senderSnap.data()!;
+  const targetData = targetSnap.data()!;
+
+  const fromUserName = typeof senderData.name === "string" ? senderData.name : "";
+  const toUserName = typeof targetData.name === "string" ? targetData.name : "";
+
+  if (!fromUserName) {
+    throw new HttpsError("failed-precondition", "Your profile is missing a name.");
+  }
+  if (!toUserName) {
+    throw new HttpsError("failed-precondition", "That user's profile is incomplete.");
+  }
+
+  const fromUserPhotoUrl = typeof senderData.photoUrl === "string" ? senderData.photoUrl : null;
+  const toUserPhotoUrl = typeof targetData.photoUrl === "string" ? targetData.photoUrl : null;
 
   await db.collection("friendRequests").add({
     fromUserId: uid,
     toUserId,
-    fromName: senderData.name ?? "",
-    ...(senderData.photoUrl ? { fromPhotoUrl: senderData.photoUrl } : {}),
+    // Snapshot fields — eliminates N+1 reads on the read path.
+    fromUserName,
+    fromUserPhotoUrl,
+    toUserName,
+    toUserPhotoUrl,
     status: "pending",
     createdAt: Timestamp.now(),
   });

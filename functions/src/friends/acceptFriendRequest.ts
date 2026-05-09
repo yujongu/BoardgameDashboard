@@ -63,9 +63,25 @@ export const acceptFriendRequest = onCall<AcceptFriendRequestData>(async (reques
     throw new HttpsError("invalid-argument", "Cannot accept a self-friend request.");
   }
 
+  // Snapshot fields written by sendFriendRequest — no users collection reads needed here.
+  // If they are absent, the doc predates this design; reject rather than fall back to a join.
+  if (typeof req.fromUserName !== "string" || typeof req.toUserName !== "string") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Friend request is missing snapshot fields — cannot accept without name data."
+    );
+  }
+
+  const fromUserName = req.fromUserName as string;
+  const fromUserPhotoUrl = typeof req.fromUserPhotoUrl === "string" ? req.fromUserPhotoUrl : null;
+  const toUserName = req.toUserName as string;
+  const toUserPhotoUrl = typeof req.toUserPhotoUrl === "string" ? req.toUserPhotoUrl : null;
+
   const now = Timestamp.now();
 
-  // ── Transaction: user/friend reads, then writes ───────────────────────────
+  // ── Transaction: friend subcollection reads, then writes ─────────────────
+  // This system intentionally avoids joins with users collection to minimize reads and latency.
+  // All name/photoUrl data comes from snapshot fields on the request document.
 
   await db.runTransaction(async (tx) => {
     // ── Phase 1: READ ─────────────────────────────────────────────────────────
@@ -75,35 +91,22 @@ export const acceptFriendRequest = onCall<AcceptFriendRequestData>(async (reques
     const fromFriendRef = fromUserRef.collection("friends").doc(toUserId);
     const toFriendRef = toUserRef.collection("friends").doc(fromUserId);
 
-    // Order: fromUser, toUser, fromFriend, toFriend
-    const [fromUserSnap, toUserSnap, fromFriendSnap, toFriendSnap] = await tx.getAll(
-      fromUserRef,
-      toUserRef,
-      fromFriendRef,
-      toFriendRef
-    );
-
-    if (!fromUserSnap.exists || !toUserSnap.exists) {
-      throw new HttpsError("not-found", "One or more users not found.");
-    }
+    const [fromFriendSnap, toFriendSnap] = await tx.getAll(fromFriendRef, toFriendRef);
 
     // ── Phase 2: WRITE — no reads past this point ─────────────────────────────
 
     if (!fromFriendSnap.exists || !toFriendSnap.exists) {
-      const fromUser = fromUserSnap.data()!;
-      const toUser = toUserSnap.data()!;
-
       tx.set(fromFriendRef, {
         userId: toUserId,
-        name: toUser.name,
-        photoUrl: toUser.photoUrl ?? null,
+        name: toUserName,
+        photoUrl: toUserPhotoUrl,
         createdAt: now,
       });
 
       tx.set(toFriendRef, {
         userId: fromUserId,
-        name: fromUser.name,
-        photoUrl: fromUser.photoUrl ?? null,
+        name: fromUserName,
+        photoUrl: fromUserPhotoUrl,
         createdAt: now,
       });
     }

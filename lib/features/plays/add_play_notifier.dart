@@ -95,24 +95,23 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
   }
 
   void onGameSelected(CatalogGame game) {
-    final min = game.minPlayers ?? 1;
-    final max = game.maxPlayers ?? 99;
-    var participants = List<ParticipantData>.from(state.participants);
-
-    while (participants.length > max) {
-      participants.removeLast();
-    }
-    while (participants.length < min) {
-      participants.add(const ParticipantData());
-    }
-
-    state = state.copyWith(selectedGame: game, participants: participants);
+    state = state.copyWith(selectedGame: game);
   }
 
   void addParticipant() {
     if (!state.canAddParticipant) return;
     state = state.copyWith(
       participants: [...state.participants, const ParticipantData()],
+    );
+  }
+
+  void addParticipantWithData(String name, {String? userId}) {
+    if (!state.canAddParticipant) return;
+    state = state.copyWith(
+      participants: [
+        ...state.participants,
+        ParticipantData(name: name, userId: userId),
+      ],
     );
   }
 

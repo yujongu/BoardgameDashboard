@@ -11,6 +11,8 @@ interface GetOutgoingFriendRequestsData {
 interface OutgoingRequestSummary {
   requestId: string;
   toUserId: string;
+  toUserName: string;
+  toUserPhotoUrl: string | null;
   createdAt: string;
 }
 
@@ -63,9 +65,21 @@ export const getOutgoingFriendRequests = onCall<GetOutgoingFriendRequestsData>(a
         console.warn(`getOutgoingFriendRequests: doc ${doc.id} missing required fields — skipping`);
         return [];
       }
+      let toUserName: string;
+      let toUserPhotoUrl: string | null;
+      if (typeof d.toUserName === "string") {
+        toUserName = d.toUserName;
+        toUserPhotoUrl = typeof d.toUserPhotoUrl === "string" ? d.toUserPhotoUrl : null;
+      } else {
+        console.warn(`getOutgoingFriendRequests: doc ${doc.id} missing snapshot fields — no legacy recipient name available`);
+        toUserName = "Unknown user";
+        toUserPhotoUrl = null;
+      }
       return [{
         requestId: doc.id,
         toUserId: d.toUserId as string,
+        toUserName,
+        toUserPhotoUrl,
         createdAt: safeTimestampToISO(d.createdAt, "createdAt", doc.id),
       }];
     });

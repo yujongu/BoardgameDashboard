@@ -5,6 +5,7 @@ export { listMyPlays } from "./reads/listMyPlays";
 export { getPlay } from "./reads/getPlay";
 export { getMyLibrary } from "./reads/getMyLibrary";
 export { listBoardGames } from "./library/listBoardGames";
+export { syncUserSearchOnCreate, syncUserSearchOnUpdate } from "./users/syncUserSearch";
 export { sendFriendRequest } from "./friends/sendFriendRequest";
 export { acceptFriendRequest } from "./friends/acceptFriendRequest";
 export { rejectFriendRequest } from "./friends/rejectFriendRequest";

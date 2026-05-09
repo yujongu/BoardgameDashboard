@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../shared/theme/app_theme.dart';
+import '../friends/friends_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -61,7 +62,41 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
             Container(height: 1, color: kColorOutlineVariant),
-            const SizedBox(height: 40),
+            GestureDetector(
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const FriendsScreen())),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.group_outlined,
+                      color: kColorOutline,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        'Friends',
+                        style: GoogleFonts.workSans(
+                          color: kColorOnSurface,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: kColorOutline,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(height: 1, color: kColorOutlineVariant),
+            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               height: 50,

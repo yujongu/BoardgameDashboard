@@ -6,6 +6,7 @@ import '../../shared/models/catalog_game.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
 import 'add_play_notifier.dart';
+import 'participant_picker_sheet.dart';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -21,10 +22,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
   final _notesController = TextEditingController();
 
   // Parallel list of name controllers mirroring state.participants.
-  // Invariant: _controllers.length == state.participants.length at all times
-  // during build(). Maintained by _onGameSelected, _addParticipant, and
-  // _removeParticipant, which update both the controller list and ViewModel
-  // atomically before the next frame.
+  // Invariant: _controllers.length == state.participants.length at all times.
   final List<TextEditingController> _controllers = [];
 
   @override
@@ -77,17 +75,6 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
 
   void _onGameSelected(CatalogGame game) {
     ref.read(addPlayProvider.notifier).onGameSelected(game);
-    final newLen = ref.read(addPlayProvider).participants.length;
-
-    // Remove excess controllers from the end, preserving existing text.
-    while (_controllers.length > newLen) {
-      _controllers.last.dispose();
-      _controllers.removeLast();
-    }
-    // Add empty controllers for auto-added participant slots.
-    while (_controllers.length < newLen) {
-      _addController();
-    }
   }
 
   Future<void> _pickDate() async {
@@ -113,9 +100,21 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     }
   }
 
-  void _addParticipant() {
-    _addController();
-    ref.read(addPlayProvider.notifier).addParticipant();
+  void _addParticipantFromPicker(String name, String? userId) {
+    _addController(initialText: name);
+    ref
+        .read(addPlayProvider.notifier)
+        .addParticipantWithData(name, userId: userId);
+  }
+
+  Future<void> _showParticipantPicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          ParticipantPickerBottomSheet(onAdd: _addParticipantFromPicker),
+    );
   }
 
   void _removeParticipant(int index) {
@@ -229,7 +228,9 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
                   _AddParticipantButton(
                     label: state.addButtonText,
                     enabled: state.canAddParticipant,
-                    onTap: state.canAddParticipant ? _addParticipant : null,
+                    onTap: state.canAddParticipant
+                        ? _showParticipantPicker
+                        : null,
                   ),
                   const SizedBox(height: 32),
                 ],

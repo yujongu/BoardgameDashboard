@@ -58,6 +58,8 @@ export const getMyFriends = onCall<GetMyFriendsData>(async (request) => {
     const snap = await query.get();
     console.log("Query result size:", snap.size);
 
+    // This system intentionally avoids joins with users collection to minimize reads and latency.
+    // Friend docs are the source of truth for name/photoUrl — missing fields are skipped, not repaired.
     const friends: FriendSummary[] = snap.docs.flatMap((doc) => {
       const d = doc.data();
       if (!d.userId || !d.name || !d.createdAt) {

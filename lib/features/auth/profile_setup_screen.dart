@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,10 +31,24 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     setState(() => _isLoading = true);
     try {
       final user = FirebaseAuth.instance.currentUser!;
-      await user.updateDisplayName(_nameController.text.trim());
+      final name = _nameController.text.trim();
+      await user.updateDisplayName(name);
       // Reload ensures the local cache reflects the new displayName before
       // the parent reads currentUser.displayName in HomeScreen.
       await user.reload();
+
+      // Write the Firestore user document so friend flows and search work.
+      final doc = {
+        'name': name,
+        'name_lower': name.toLowerCase(),
+        'photoUrl': user.photoURL,
+      };
+      final db = FirebaseFirestore.instance;
+      await Future.wait([
+        db.collection('users').doc(user.uid).set(doc),
+        db.collection('userSearch').doc(user.uid).set(doc),
+      ]);
+
       if (mounted) widget.onComplete();
     } catch (_) {
       if (mounted) {
