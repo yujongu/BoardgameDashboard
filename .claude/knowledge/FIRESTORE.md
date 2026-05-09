@@ -7,6 +7,10 @@ collections:
       name:
         type: string
         required: true
+      name_lower:
+        type: string
+        required: true
+        note: lowercase of name, used for case-insensitive search
       thumbnailUrl:
         type: string
         required: false
@@ -37,6 +41,10 @@ collections:
       name:
         type: string
         required: true
+      name_lower:
+        type: string
+        required: true
+        note: lowercase of name, used for case-insensitive search
       email:
         type: string
         required: false
@@ -149,6 +157,36 @@ collections:
         type: number
         required: true
       lastPlayedAt:
+        type: timestamp
+        required: false
+
+  friendRequests:
+    description: Friend requests between users
+    documentId: requestId
+    fields:
+      fromUserId:
+        type: string
+        required: true
+        ref: users.userId
+      toUserId:
+        type: string
+        required: true
+        ref: users.userId
+      fromName:
+        type: string
+        required: true
+        note: snapshot of sender's name at request time
+      fromPhotoUrl:
+        type: string
+        required: false
+      status:
+        type: string
+        required: true
+        enum: [pending, accepted, rejected]
+      createdAt:
+        type: timestamp
+        required: true
+      respondedAt:
         type: timestamp
         required: false
 
