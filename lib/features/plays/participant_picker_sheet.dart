@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,6 +23,8 @@ class ParticipantPickerBottomSheet extends ConsumerStatefulWidget {
 class _ParticipantPickerBottomSheetState
     extends ConsumerState<ParticipantPickerBottomSheet> {
   final _searchController = TextEditingController();
+  String? _addedGuestName;
+  Timer? _resetTimer;
 
   @override
   void initState() {
@@ -34,8 +38,21 @@ class _ParticipantPickerBottomSheetState
 
   @override
   void dispose() {
+    _resetTimer?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onAdd(String name, String? userId) {
+    widget.onAdd(name, userId);
+    if (userId == null) {
+      _searchController.clear();
+      _resetTimer?.cancel();
+      setState(() => _addedGuestName = name);
+      _resetTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (mounted) setState(() => _addedGuestName = null);
+      });
+    }
   }
 
   @override
@@ -68,7 +85,7 @@ class _ParticipantPickerBottomSheetState
                   ),
                 ),
               ),
-            Expanded(child: ParticipantListSection(onAdd: widget.onAdd)),
+            Expanded(child: ParticipantListSection(onAdd: _onAdd)),
           ],
         ),
       ),
@@ -85,16 +102,19 @@ class _ParticipantPickerBottomSheetState
     ),
   );
 
-  Widget _sheetTitle() => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Text(
-      'ADD PARTICIPANTS',
-      style: GoogleFonts.spaceGrotesk(
-        color: kColorOutline,
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 2,
+  Widget _sheetTitle() {
+    final guestName = _addedGuestName;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        guestName != null ? '$guestName ADDED' : 'ADD PARTICIPANTS',
+        style: GoogleFonts.spaceGrotesk(
+          color: guestName != null ? kColorPrimary : kColorOutline,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 2,
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

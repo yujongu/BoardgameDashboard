@@ -217,6 +217,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
                         controller: _controllers[e.key],
                         isWinner: e.value.isWinner,
                         canRemove: e.key != 0,
+                        readOnly: e.value.userId == state.currentUserId,
                         onToggleWinner: () => ref
                             .read(addPlayProvider.notifier)
                             .toggleWinner(e.key),
@@ -477,6 +478,7 @@ class _PlayerRow extends StatelessWidget {
   final TextEditingController controller;
   final bool isWinner;
   final bool canRemove;
+  final bool readOnly;
   final VoidCallback onToggleWinner;
   final VoidCallback onRemove;
 
@@ -486,6 +488,7 @@ class _PlayerRow extends StatelessWidget {
     required this.onToggleWinner,
     required this.onRemove,
     this.canRemove = true,
+    this.readOnly = false,
   });
 
   @override
@@ -506,6 +509,8 @@ class _PlayerRow extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              readOnly: readOnly,
+              enableInteractiveSelection: !readOnly,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOnSurface,
                 fontSize: 14,

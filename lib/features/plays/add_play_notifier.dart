@@ -26,6 +26,7 @@ class AddPlayState {
   final DateTime playedAt;
   final bool saving;
   final String? saveError;
+  final String? currentUserId;
 
   const AddPlayState({
     this.selectedGame,
@@ -33,6 +34,7 @@ class AddPlayState {
     required this.playedAt,
     this.saving = false,
     this.saveError,
+    this.currentUserId,
   });
 
   int get _effectiveMin => selectedGame?.minPlayers ?? 1;
@@ -79,20 +81,26 @@ class AddPlayState {
     playedAt: playedAt ?? this.playedAt,
     saving: saving ?? this.saving,
     saveError: clearSaveError ? null : saveError ?? this.saveError,
+    currentUserId: currentUserId,
   );
 }
 
 class AddPlayNotifier extends StateNotifier<AddPlayState> {
   AddPlayNotifier({String? currentUserName, String? currentUserId})
-    : super(AddPlayState(playedAt: DateTime.now())) {
-    if (currentUserId != null) {
-      state = state.copyWith(
-        participants: [
-          ParticipantData(name: currentUserName ?? '', userId: currentUserId),
-        ],
+    : super(
+        AddPlayState(
+          playedAt: DateTime.now(),
+          currentUserId: currentUserId,
+          participants: currentUserId != null
+              ? [
+                  ParticipantData(
+                    name: currentUserName ?? '',
+                    userId: currentUserId,
+                  ),
+                ]
+              : const [],
+        ),
       );
-    }
-  }
 
   void onGameSelected(CatalogGame game) {
     state = state.copyWith(selectedGame: game);
