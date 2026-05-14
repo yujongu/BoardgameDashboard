@@ -27,8 +27,29 @@ class PlayRepository {
   }
 
   Future<PlayDetail> getPlay(String playId) async {
-    final result = await _fn.httpsCallable('getPlay').call({'playId': playId});
-    return PlayDetail.fromJson(Map<String, dynamic>.from(result.data as Map));
+    final playRef = _db.collection('plays').doc(playId);
+    final playFuture = playRef.get();
+    final participantsFuture = playRef.collection('participants').get();
+
+    final playSnap = await playFuture;
+    if (!playSnap.exists) throw Exception('Play $playId not found');
+    final d = playSnap.data()!;
+
+    final participantsSnap = await participantsFuture;
+
+    return PlayDetail(
+      playId: playSnap.id,
+      gameId: d['gameId'] as String,
+      gameName: d['gameName'] as String,
+      playedAt: (d['playedAt'] as Timestamp).toDate(),
+      createdBy: d['createdBy'] as String,
+      participantCount: d['participantCount'] as int,
+      location: d['location'] as String?,
+      notes: d['notes'] as String?,
+      participants: participantsSnap.docs
+          .map((doc) => ParticipantResult.fromJson(doc.data()))
+          .toList(),
+    );
   }
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchPlayDoc(String playId) {
