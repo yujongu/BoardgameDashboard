@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../shared/models/play.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
+import 'participant_picker_sheet.dart';
 
 // ─── Player entry (local state holder) ───────────────────────────────────────
 
@@ -34,9 +36,12 @@ class _EditPlayPageState extends State<EditPlayPage> {
   late String _gameName;
   late DateTime _playedAt;
   final List<_PlayerEntry> _players = [];
+  String? _currentUserId;
+
   @override
   void initState() {
     super.initState();
+    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
     _gameId = widget.detail.gameId;
     _gameName = widget.detail.gameName;
     _playedAt = widget.detail.playedAt.toLocal();
@@ -114,10 +119,20 @@ class _EditPlayPageState extends State<EditPlayPage> {
     }
   }
 
-  void _addPlayer() {
-    final entry = _PlayerEntry();
-    entry.nameController.addListener(() => setState(() {}));
-    setState(() => _players.add(entry));
+  Future<void> _showParticipantPicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ParticipantPickerBottomSheet(
+        onAdd: (name, userId) {
+          final entry = _PlayerEntry(userId: userId);
+          entry.nameController.text = name;
+          entry.nameController.addListener(() => setState(() {}));
+          setState(() => _players.add(entry));
+        },
+      ),
+    );
   }
 
   void _removePlayer(int index) {
@@ -203,6 +218,10 @@ class _EditPlayPageState extends State<EditPlayPage> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: _PlayerRow(
                         entry: e.value,
+                        readOnly:
+                            e.value.userId != null &&
+                            e.value.userId == _currentUserId,
+                        canRemove: e.value.userId != _currentUserId,
                         onToggleWinner: () => setState(
                           () => e.value.isWinner = !e.value.isWinner,
                         ),
@@ -211,7 +230,7 @@ class _EditPlayPageState extends State<EditPlayPage> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  _AddPlayerButton(onTap: _addPlayer),
+                  _AddPlayerButton(onTap: _showParticipantPicker),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -352,6 +371,8 @@ class _DateRow extends StatelessWidget {
 
 class _PlayerRow extends StatelessWidget {
   final _PlayerEntry entry;
+  final bool readOnly;
+  final bool canRemove;
   final VoidCallback onToggleWinner;
   final VoidCallback onRemove;
 
@@ -359,6 +380,8 @@ class _PlayerRow extends StatelessWidget {
     required this.entry,
     required this.onToggleWinner,
     required this.onRemove,
+    this.readOnly = false,
+    this.canRemove = true,
   });
 
   @override
@@ -381,6 +404,8 @@ class _PlayerRow extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: entry.nameController,
+              readOnly: readOnly,
+              enableInteractiveSelection: !readOnly,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOnSurface,
                 fontSize: 14,
@@ -407,13 +432,16 @@ class _PlayerRow extends StatelessWidget {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: onRemove,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
-              child: Icon(Icons.close, color: kColorOutline, size: 18),
-            ),
-          ),
+          if (canRemove)
+            GestureDetector(
+              onTap: onRemove,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
+                child: Icon(Icons.close, color: kColorOutline, size: 18),
+              ),
+            )
+          else
+            const SizedBox(width: 30),
         ],
       ),
     );
