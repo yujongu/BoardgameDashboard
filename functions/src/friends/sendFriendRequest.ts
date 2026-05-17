@@ -1,5 +1,6 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { Timestamp } from "firebase-admin/firestore";
+import { logger } from "firebase-functions/v2";
 import { db } from "../shared/db";
 
 // ─── Input / output types ─────────────────────────────────────────────────────
@@ -33,23 +34,25 @@ export const sendFriendRequest = onCall<SendFriendRequestData>(async (request) =
     throw new HttpsError("invalid-argument", "Cannot send a friend request to yourself.");
   }
 
-  const [targetSnap, friendSnap, outboundSnap, inboundSnap, senderSnap] = await Promise.all([
-    db.collection("users").doc(toUserId).get(),
-    db.collection("users").doc(uid).collection("friends").doc(toUserId).get(),
-    db.collection("friendRequests")
-      .where("fromUserId", "==", uid)
-      .where("toUserId", "==", toUserId)
-      .where("status", "==", "pending")
-      .limit(1)
-      .get(),
-    db.collection("friendRequests")
-      .where("fromUserId", "==", toUserId)
-      .where("toUserId", "==", uid)
-      .where("status", "==", "pending")
-      .limit(1)
-      .get(),
-    db.collection("users").doc(uid).get(),
-  ]);
+  // Use the existing (fromUserId, status) and (toUserId, status) composite
+  // indexes and filter the counterpart user in code, avoiding a 3-field index.
+  const [targetSnap, friendSnap, senderSnap, outboundPendingSnap, inboundPendingSnap] =
+    await Promise.all([
+      db.collection("users").doc(toUserId).get(),
+      db.collection("users").doc(uid).collection("friends").doc(toUserId).get(),
+      db.collection("users").doc(uid).get(),
+      db.collection("friendRequests")
+        .where("fromUserId", "==", uid)
+        .where("status", "==", "pending")
+        .get(),
+      db.collection("friendRequests")
+        .where("toUserId", "==", uid)
+        .where("status", "==", "pending")
+        .get(),
+    ]).catch((err) => {
+      logger.error("sendFriendRequest: Firestore read failed", { error: String(err), uid, toUserId });
+      throw err;
+    });
 
   if (!targetSnap.exists) {
     throw new HttpsError("not-found", "User not found.");
@@ -59,7 +62,9 @@ export const sendFriendRequest = onCall<SendFriendRequestData>(async (request) =
     throw new HttpsError("already-exists", "You are already friends with this user.");
   }
 
-  if (!outboundSnap.empty || !inboundSnap.empty) {
+  const hasOutbound = outboundPendingSnap.docs.some((d) => d.data().toUserId === toUserId);
+  const hasInbound = inboundPendingSnap.docs.some((d) => d.data().fromUserId === toUserId);
+  if (hasOutbound || hasInbound) {
     throw new HttpsError("already-exists", "A pending friend request already exists.");
   }
 

@@ -123,30 +123,17 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     ref.read(addPlayProvider.notifier).removeParticipant(index);
   }
 
-  Future<void> _save() async {
+  void _save() {
     final notifier = ref.read(addPlayProvider.notifier);
-    // Flush any pending controller text to the ViewModel before saving.
     for (var i = 0; i < _controllers.length; i++) {
       notifier.updateParticipantName(i, _controllers[i].text);
     }
-    final success = await notifier.save(
-      location: _locationController.text,
-      notes: _notesController.text,
-    );
-    if (!mounted) return;
-    if (success) {
-      Navigator.of(context).pop(true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to save. Please try again.',
-            style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
-          ),
-          backgroundColor: kColorSurfaceHigh,
-        ),
-      );
-    }
+    // Fire and forget — the Cloud Function completes server-side regardless.
+    // The plays list updates automatically via its real-time listener.
+    notifier
+        .save(location: _locationController.text, notes: _notesController.text)
+        .ignore();
+    Navigator.of(context).pop(true);
   }
 
   @override

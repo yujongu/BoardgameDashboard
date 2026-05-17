@@ -9,6 +9,7 @@ import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/repositories/friend_repository.dart';
 import '../../shared/theme/app_theme.dart';
+import 'friend_requests_screen.dart';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -130,6 +131,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   @override
   Widget build(BuildContext context) {
     final query = _searchController.text.trim();
+    final incomingCount =
+        ref.watch(incomingRequestsProvider).valueOrNull?.length ?? 0;
     return Scaffold(
       backgroundColor: kColorBackground,
       appBar: AppBar(
@@ -148,6 +151,21 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             letterSpacing: 3,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Friend requests',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FriendRequestsScreen()),
+            ),
+            icon: Badge(
+              isLabelVisible: incomingCount > 0,
+              label: Text('$incomingCount'),
+              backgroundColor: kColorPrimary,
+              textColor: kColorBackground,
+              child: const Icon(Icons.inbox_outlined, color: kColorPrimary),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: kColorAmberBorder),

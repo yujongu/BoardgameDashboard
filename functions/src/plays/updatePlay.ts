@@ -270,7 +270,7 @@ function validate(data: UpdatePlayData): void {
 
 // ─── Callable function ────────────────────────────────────────────────────────
 
-export const updatePlay = onCall<UpdatePlayData>(async (request) => {
+export const updatePlay = onCall<UpdatePlayData>({ minInstances: 1 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Authentication required.");
   }
@@ -285,15 +285,16 @@ export const updatePlay = onCall<UpdatePlayData>(async (request) => {
   await db.runTransaction(async (tx) => {
     // ── Phase 1: READ ─────────────────────────────────────────────────────────
 
-    // Step 1: play document — confirms existence and provides old gameId/gameName.
-    const playSnap = await tx.get(playRef);
+    // Steps 1 & 2: fetch play doc and participants subcollection in parallel.
+    const [playSnap, participantsSnap] = await Promise.all([
+      tx.get(playRef),
+      tx.get(playRef.collection("participants")),
+    ]);
+
     if (!playSnap.exists) {
       throw new HttpsError("not-found", `Play ${playId} does not exist.`);
     }
     const oldPlay = playSnap.data() as PlayDocument;
-
-    // Step 2: participants subcollection — source of old aggregation.
-    const participantsSnap = await tx.get(playRef.collection("participants"));
 
     // Step 3: build old aggregate from existing participant docs.
     const oldAgg = buildAggregateMap(

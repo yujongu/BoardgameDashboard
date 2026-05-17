@@ -79,6 +79,22 @@ class OutgoingRequestsNotifier
   @override
   Future<List<FriendRequestSummary>> build() =>
       FriendRepository.instance.getOutgoingRequests();
+
+  Future<bool> cancel(String requestId) async {
+    final prev = state;
+    if (state.hasValue) {
+      state = AsyncData(
+        state.value!.where((r) => r.requestId != requestId).toList(),
+      );
+    }
+    try {
+      await FriendRepository.instance.cancelRequest(requestId);
+      return true;
+    } catch (_) {
+      state = prev;
+      return false;
+    }
+  }
 }
 
 final outgoingRequestsProvider =

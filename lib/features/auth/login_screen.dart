@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -45,7 +46,18 @@ class _LoginScreenState extends State<LoginScreen> {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final result = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
+      if (result.additionalUserInfo?.isNewUser == true) {
+        final user = result.user!;
+        final name = user.displayName ?? '';
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'name': name,
+          'name_lower': name.toLowerCase(),
+          'photoUrl': user.photoURL,
+        });
+      }
     } on FirebaseAuthException catch (e) {
       setState(() => _errorMessage = _friendlyError(e.code));
     } catch (_) {

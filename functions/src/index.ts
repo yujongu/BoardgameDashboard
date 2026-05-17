@@ -7,6 +7,7 @@ export { getMyLibrary } from "./reads/getMyLibrary";
 export { listBoardGames } from "./library/listBoardGames";
 export { syncUserSearchOnCreate, syncUserSearchOnUpdate } from "./users/syncUserSearch";
 export { sendFriendRequest } from "./friends/sendFriendRequest";
+export { cancelFriendRequest } from "./friends/cancelFriendRequest";
 export { acceptFriendRequest } from "./friends/acceptFriendRequest";
 export { rejectFriendRequest } from "./friends/rejectFriendRequest";
 export { getIncomingFriendRequests } from "./friends/getIncomingFriendRequests";

@@ -112,6 +112,12 @@ class FriendRepository {
     });
   }
 
+  Future<void> cancelRequest(String requestId) async {
+    await _fn.httpsCallable('cancelFriendRequest').call({
+      'requestId': requestId,
+    });
+  }
+
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   List<FriendRequestSummary> _parseRequests(
