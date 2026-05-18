@@ -4,23 +4,15 @@ import '../models/friend.dart';
 import '../models/friend_request.dart';
 import '../repositories/friend_repository.dart';
 
-class FriendListNotifier extends AutoDisposeAsyncNotifier<List<FriendSummary>> {
+class FriendListNotifier
+    extends AutoDisposeStreamNotifier<List<FriendSummary>> {
   @override
-  Future<List<FriendSummary>> build() =>
-      FriendRepository.instance.getMyFriends();
-
-  Future<void> retry() async {
-    // copyWithPrevious keeps the previous data visible while re-fetching,
-    // so the UI can use skipLoadingOnReload: true to avoid a full-screen flash.
-    state = AsyncLoading<List<FriendSummary>>().copyWithPrevious(state);
-    state = await AsyncValue.guard(
-      () => FriendRepository.instance.getMyFriends(),
-    );
-  }
+  Stream<List<FriendSummary>> build() =>
+      FriendRepository.instance.watchMyFriends();
 }
 
 final friendListProvider =
-    AsyncNotifierProvider.autoDispose<FriendListNotifier, List<FriendSummary>>(
+    StreamNotifierProvider.autoDispose<FriendListNotifier, List<FriendSummary>>(
       FriendListNotifier.new,
     );
 

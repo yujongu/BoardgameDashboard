@@ -9,6 +9,7 @@ import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/repositories/friend_repository.dart';
 import '../../shared/theme/app_theme.dart';
+import 'friend_profile_screen.dart';
 import 'friend_requests_screen.dart';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -279,13 +280,26 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ...friendsAsync.when<List<Widget>>(
           loading: () => [const _SectionLoadingTile()],
           error: (err, _) => [
-            _FriendErrorTile(
-              onRetry: () => ref.read(friendListProvider.notifier).retry(),
-            ),
+            _FriendErrorTile(onRetry: () => ref.invalidate(friendListProvider)),
           ],
           data: (friends) => friends.isEmpty
               ? [const _EmptyFriendsTile()]
-              : friends.map<Widget>((f) => _FriendRow(friend: f)).toList(),
+              : friends
+                    .map<Widget>(
+                      (f) => _FriendRow(
+                        friend: f,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => FriendProfileScreen(
+                              friendId: f.userId,
+                              friendName: f.name,
+                              friendPhotoUrl: f.photoUrl,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
         ),
       ],
     );
@@ -661,34 +675,44 @@ class _OutgoingRequestRow extends StatelessWidget {
 
 class _FriendRow extends StatelessWidget {
   final FriendSummary friend;
+  final VoidCallback onTap;
 
-  const _FriendRow({required this.friend});
+  const _FriendRow({required this.friend, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        children: [
-          _Avatar(name: friend.name, photoUrl: friend.photoUrl),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              friend.name,
-              style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: kColorSurfaceHigh,
+          border: Border.all(color: kColorAmberBorder),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            _Avatar(name: friend.name, photoUrl: friend.photoUrl),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                friend.name,
+                style: GoogleFonts.spaceGrotesk(
+                  color: kColorOnSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
-        ],
+            const Icon(
+              Icons.chevron_right,
+              color: kColorOutlineVariant,
+              size: 18,
+            ),
+          ],
+        ),
       ),
     );
   }

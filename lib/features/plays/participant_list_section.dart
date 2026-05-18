@@ -41,7 +41,7 @@ class ParticipantListSection extends ConsumerWidget {
           stackTrace: stack,
         );
         return _FriendsErrorPanel(
-          onRetry: () => ref.read(friendListProvider.notifier).retry(),
+          onRetry: () => ref.invalidate(friendListProvider),
         );
       },
       data: (friends) => _buildList(

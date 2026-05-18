@@ -14,6 +14,7 @@ const kColorOutline = Color(0xFF99907C);
 const kColorOutlineVariant = Color(0xFF4D4635);
 const kColorAmberBorder = Color(0x4DD4AF37);
 const kColorAmberGlow = Color(0x1AD4AF37);
+const kColorAppBarBackground = Color(0xFF0A0905);
 
 ThemeData buildAppTheme() {
   return ThemeData(
@@ -58,7 +59,7 @@ ThemeData buildAppTheme() {
           ),
         ),
     appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFF0A0905),
+      backgroundColor: kColorAppBarBackground,
       foregroundColor: kColorOnSurface,
       elevation: 0,
       titleTextStyle: GoogleFonts.newsreader(

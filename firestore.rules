@@ -2,6 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Returns true if the caller is in the target user's friends subcollection.
+    // Both sides of a friendship are always written symmetrically, so this is
+    // equivalent to checking the reverse direction.
+    function isFriendOf(userId) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(userId));
+    }
+
     // board games catalog — any authenticated user can read; writes are admin-only
     match /boardGames/{gameId} {
       allow read: if request.auth != null;
@@ -27,15 +34,34 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // user profile document — owner full access
+    // user profile document — owner full access; friends can read name/photoUrl
     match /users/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
+      allow read:  if request.auth != null
+                   && (request.auth.uid == userId || isFriendOf(userId));
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // friends subcollection — owner read only (direct client read, no Cloud Function needed)
+      match /friends/{friendId} {
+        allow read:  if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
 
       // library subcollection — owner read only; writes via Cloud Functions
       match /library/{gameId} {
+        allow read:  if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    // aggregated stats — owner or friend can read
+    match /stats/{userId} {
+      allow read:  if request.auth != null
+                   && (request.auth.uid == userId || isFriendOf(userId));
+      allow write: if false;
+
+      match /gameStats/{gameId} {
         allow read:  if request.auth != null
-                     && request.auth.uid == userId;
+                     && (request.auth.uid == userId || isFriendOf(userId));
         allow write: if false;
       }
     }

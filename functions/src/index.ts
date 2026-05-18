@@ -13,3 +13,4 @@ export { rejectFriendRequest } from "./friends/rejectFriendRequest";
 export { getIncomingFriendRequests } from "./friends/getIncomingFriendRequests";
 export { getOutgoingFriendRequests } from "./friends/getOutgoingFriendRequests";
 export { getMyFriends } from "./friends/getMyFriends";
+export { removeFriend } from "./friends/removeFriend";
