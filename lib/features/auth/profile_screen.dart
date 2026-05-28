@@ -205,14 +205,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class _EditNameDialog extends StatefulWidget {
   final TextEditingController controller;
   final GlobalKey<FormState> formKey;
-  final String initialName;
   final Future<void> Function(String) onSave;
   final void Function(String) onSuccess;
 
   const _EditNameDialog({
     required this.controller,
     required this.formKey,
-    required this.initialName,
     required this.onSave,
     required this.onSuccess,
   });
@@ -226,6 +224,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
 
   Future<void> _submit() async {
     if (!widget.formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
     try {
       final newName = widget.controller.text.trim();
