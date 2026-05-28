@@ -52,11 +52,16 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result.additionalUserInfo?.isNewUser == true) {
         final user = result.user!;
         final name = user.displayName ?? '';
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        final doc = {
           'name': name,
           'name_lower': name.toLowerCase(),
           'photoUrl': user.photoURL,
-        });
+        };
+        final db = FirebaseFirestore.instance;
+        await Future.wait([
+          db.collection('users').doc(user.uid).set(doc),
+          db.collection('userSearch').doc(user.uid).set(doc),
+        ]);
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _errorMessage = _friendlyError(e.code));

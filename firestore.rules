@@ -28,10 +28,11 @@ service cloud.firestore {
       }
     }
 
-    // user search index — any authenticated user can read (used for participant search)
+    // user search index — any authenticated user can read (used for participant search);
+    // owner can write their own doc (name/photoUrl updates from client)
     match /userSearch/{userId} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
     // user profile document — owner full access; friends can read name/photoUrl
