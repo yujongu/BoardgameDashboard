@@ -52,6 +52,10 @@ A task is **not complete** until the UI has been visually confirmed. The `flutte
 - One file per widget/screen for files over ~150 lines
 - No hardcoded strings in UI — use a constants file or l10n
 
+## Firestore Rules
+
+Always check `firestore.rules` when implementing any feature that reads from or writes to Firestore. Verify that the security rules permit the intended operations for the authenticated user before writing client-side code. If a required permission is missing, update `firestore.rules` and deploy with `firebase deploy --only firestore:rules` as part of the same task.
+
 ## Think Before Coding
 
 Before implementing, state assumptions explicitly — if uncertain, ask. If multiple interpretations exist, present them rather than picking silently. If a simpler approach exists, say so and push back when warranted. If something is unclear, stop and name what's confusing before proceeding.
