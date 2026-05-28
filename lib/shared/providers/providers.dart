@@ -1,7 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/play.dart';
 import '../repositories/play_repository.dart';
+
+final currentUserProvider = StreamProvider<User?>((ref) {
+  return FirebaseAuth.instance.userChanges();
+});
 
 final recentPlaysProvider = StreamProvider.autoDispose<List<PlaySummary>>((
   ref,
