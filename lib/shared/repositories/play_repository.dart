@@ -53,7 +53,14 @@ class PlayRepository {
   }
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchPlayDoc(String playId) {
-    return _db.collection('plays').doc(playId).snapshots();
+    return _db
+        .collection('plays')
+        .doc(playId)
+        .snapshots()
+        .handleError(
+          (_) {},
+          test: (e) => e is FirebaseException && e.code == 'permission-denied',
+        );
   }
 
   Future<List<PlaySummary>> fetchPlaysByGame(String gameId) async {
@@ -77,7 +84,11 @@ class PlayRepository {
         .orderBy('playedAt', descending: true)
         .limit(limit)
         .snapshots()
-        .map((qs) => qs.docs.map(_playSummaryFromDoc).toList());
+        .map((qs) => qs.docs.map(_playSummaryFromDoc).toList())
+        .handleError(
+          (_) {},
+          test: (e) => e is FirebaseException && e.code == 'permission-denied',
+        );
   }
 
   Stream<List<LibraryEntry>> watchLibrary() {
@@ -96,7 +107,11 @@ class PlayRepository {
             return b.lastPlayedAt!.compareTo(a.lastPlayedAt!);
           });
           return entries;
-        });
+        })
+        .handleError(
+          (_) {},
+          test: (e) => e is FirebaseException && e.code == 'permission-denied',
+        );
   }
 
   static PlaySummary _playSummaryFromDoc(

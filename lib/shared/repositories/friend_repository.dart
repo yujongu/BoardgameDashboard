@@ -86,6 +86,10 @@ class FriendRepository {
               })
               .whereType<FriendSummary>()
               .toList(),
+        )
+        .handleError(
+          (_) {},
+          test: (e) => e is FirebaseException && e.code == 'permission-denied',
         );
   }
 

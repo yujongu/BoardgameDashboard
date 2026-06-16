@@ -42,6 +42,7 @@ class ProfileAppBar extends StatelessWidget {
             child: Row(
               children: [
                 GestureDetector(
+                  key: const Key('profileAvatarBtn'),
                   onTap: onProfileTap,
                   child: _ProfileAvatar(initials: _initials),
                 ),
