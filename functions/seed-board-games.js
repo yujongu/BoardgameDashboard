@@ -40,7 +40,7 @@ function buildDoc(game) {
     throw new Error(`Missing required field "name" on gameId: "${game.gameId}"`);
   }
 
-  const doc = { name: game.name };
+  const doc = { name: game.name, name_lower: game.name.toLowerCase() };
 
   if (game.thumbnailUrl    != null) doc.thumbnailUrl    = game.thumbnailUrl;
   if (game.publisher       != null) doc.publisher       = game.publisher;
