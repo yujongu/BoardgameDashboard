@@ -28,13 +28,16 @@ void main() {
     );
 
     setUp(() {
-      // No currentUserName → starts with empty participants (no Firebase needed).
+      // No currentUserId → starts with empty participants (no Firebase needed).
       notifier = AddPlayNotifier();
     });
 
     tearDown(() {
       notifier.dispose();
     });
+
+    // Local terse helper for adding named participants.
+    void addNamed(String n) => notifier.addParticipantWithData(n);
 
     // ── initial state ────────────────────────────────────────────────────────
 
@@ -43,92 +46,63 @@ void main() {
       expect(notifier.state.selectedGame, isNull);
     });
 
-    // ── onGameSelected: auto-add minPlayers ──────────────────────────────────
+    // ── onGameSelected: sets game only ───────────────────────────────────────
 
-    test('auto-adds minPlayers empty slots on first game selection', () {
+    test('onGameSelected sets the game without adding participants', () {
       notifier.onGameSelected(game3to6);
 
-      expect(notifier.state.participants.length, 3);
+      expect(notifier.state.participants, isEmpty);
       expect(notifier.state.selectedGame, game3to6);
-      // Auto-added slots are empty
-      expect(notifier.state.participants.every((p) => p.name.isEmpty), isTrue);
+    });
+
+    test('onGameSelected preserves existing participants', () {
+      addNamed('Alice');
+
+      notifier.onGameSelected(game3to6);
+
+      expect(notifier.state.participants.length, 1);
+      expect(notifier.state.participants[0].name, 'Alice');
     });
 
     test(
-      'does not overwrite existing participants when auto-adding to min',
+      'onGameSelected does not trim participants when switching to a smaller-max game',
       () {
-        // Start with one named participant, then select game requiring 3
-        notifier.addParticipant();
-        notifier.updateParticipantName(0, 'Alice');
-
         notifier.onGameSelected(game3to6);
+        addNamed('Alice');
+        addNamed('Bob');
+        addNamed('Carol');
+
+        // Switch to a game that caps at 2; participants must be untouched.
+        notifier.onGameSelected(game2to2);
 
         expect(notifier.state.participants.length, 3);
         expect(notifier.state.participants[0].name, 'Alice');
-        expect(notifier.state.participants[1].name, '');
-        expect(notifier.state.participants[2].name, '');
+        expect(notifier.state.participants[1].name, 'Bob');
+        expect(notifier.state.participants[2].name, 'Carol');
       },
     );
-
-    // ── onGameSelected: remove overflow participants ──────────────────────────
-
-    test('removes overflow participants from the end on game change', () {
-      // Seed 5 named participants via a permissive game
-      notifier.onGameSelected(game3to6); // auto-adds 3
-      notifier.addParticipant(); // 4
-      notifier.addParticipant(); // 5
-      notifier.updateParticipantName(0, 'Alice');
-      notifier.updateParticipantName(1, 'Bob');
-      notifier.updateParticipantName(2, 'Carol');
-      notifier.updateParticipantName(3, 'Dave');
-      notifier.updateParticipantName(4, 'Eve');
-
-      // Switch to a game that caps at 2
-      notifier.onGameSelected(game2to2);
-
-      expect(notifier.state.participants.length, 2);
-      expect(notifier.state.participants[0].name, 'Alice');
-      expect(notifier.state.participants[1].name, 'Bob');
-    });
-
-    test(
-      'only removes from the end, never reorders remaining participants',
-      () {
-        notifier.onGameSelected(game3to6);
-        notifier.updateParticipantName(0, 'First');
-        notifier.updateParticipantName(1, 'Second');
-        notifier.updateParticipantName(2, 'Third');
-
-        // Trim to max=2 (Chess)
-        notifier.onGameSelected(game2to2);
-
-        expect(notifier.state.participants[0].name, 'First');
-        expect(notifier.state.participants[1].name, 'Second');
-      },
-    );
-
-    // ── onGameSelected: preserve data without overflow ───────────────────────
 
     test('preserves all existing participant data when no overflow', () {
       notifier.onGameSelected(game2to4);
-      notifier.updateParticipantName(0, 'Alice');
-      notifier.updateParticipantName(1, 'Bob');
+      addNamed('Alice');
+      addNamed('Bob');
       notifier.toggleWinner(0);
 
-      // Switch to a different game with same min (2)
-      notifier.onGameSelected(game3to6); // min=3, adds one empty slot
+      // Switch to a different game; participant data is preserved as-is.
+      notifier.onGameSelected(game3to6);
 
+      expect(notifier.state.participants.length, 2);
       expect(notifier.state.participants[0].name, 'Alice');
       expect(notifier.state.participants[0].isWinner, isTrue);
       expect(notifier.state.participants[1].name, 'Bob');
-      expect(notifier.state.participants[2].name, '');
-      expect(notifier.state.participants.length, 3);
     });
 
     // ── canAddParticipant / addButtonText ────────────────────────────────────
 
     test('canAddParticipant is false at maxPlayers', () {
-      notifier.onGameSelected(game2to2); // auto-adds 2; max is 2
+      notifier.onGameSelected(game2to2);
+      notifier.addParticipant();
+      notifier.addParticipant();
 
       expect(notifier.state.participants.length, 2);
       expect(notifier.state.canAddParticipant, isFalse);
@@ -136,6 +110,8 @@ void main() {
 
     test('addButtonText is "Max players added" when at maxPlayers', () {
       notifier.onGameSelected(game2to2);
+      notifier.addParticipant();
+      notifier.addParticipant();
 
       expect(notifier.state.addButtonText, 'Max players added');
     });
@@ -148,7 +124,9 @@ void main() {
     });
 
     test('addParticipant is a no-op when already at maxPlayers', () {
-      notifier.onGameSelected(game2to2); // 2 participants, max=2
+      notifier.onGameSelected(game2to2);
+      notifier.addParticipant();
+      notifier.addParticipant();
 
       notifier.addParticipant(); // should be ignored
 
@@ -159,29 +137,35 @@ void main() {
 
     test('canSave is false when participant count is below minPlayers', () {
       notifier.onGameSelected(game3to6);
-      notifier.removeParticipant(2); // down to 2, below min=3
+      addNamed('Alice');
+      addNamed('Bob');
+      notifier.toggleWinner(
+        0,
+      ); // names + winner present; only count is below min
 
       expect(notifier.state.canSave, isFalse);
     });
 
     test('saveButtonText shows minimum count when below minPlayers', () {
       notifier.onGameSelected(game3to6);
-      notifier.removeParticipant(2); // 2 participants, min=3
+      notifier.addParticipant();
+      notifier.addParticipant();
 
       expect(notifier.state.saveButtonText, 'Minimum 3 players needed');
     });
 
     test('saveButtonText is "Save Play" when at or above minPlayers', () {
       notifier.onGameSelected(game2to2);
-      // Still 2 participants; min=2 is satisfied
+      notifier.addParticipant();
+      notifier.addParticipant();
 
       expect(notifier.state.saveButtonText, 'Save Play');
     });
 
     test('canSave is false when no winner is marked', () {
       notifier.onGameSelected(game2to2);
-      notifier.updateParticipantName(0, 'Alice');
-      notifier.updateParticipantName(1, 'Bob');
+      addNamed('Alice');
+      addNamed('Bob');
       // No winner toggled
 
       expect(notifier.state.canSave, isFalse);
@@ -189,8 +173,8 @@ void main() {
 
     test('canSave is true when conditions are met', () {
       notifier.onGameSelected(game2to2);
-      notifier.updateParticipantName(0, 'Alice');
-      notifier.updateParticipantName(1, 'Bob');
+      addNamed('Alice');
+      addNamed('Bob');
       notifier.toggleWinner(0);
 
       expect(notifier.state.canSave, isTrue);
@@ -200,7 +184,9 @@ void main() {
 
     test('playerCountText shows count and max when game has maxPlayers', () {
       notifier.onGameSelected(game2to4);
-      notifier.addParticipant(); // 3 participants
+      notifier.addParticipant();
+      notifier.addParticipant();
+      notifier.addParticipant();
 
       expect(notifier.state.playerCountText, 'Players: 3 / 4');
     });
