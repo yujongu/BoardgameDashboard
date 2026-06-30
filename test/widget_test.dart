@@ -1,9 +1,21 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:board_game_dashboard/main.dart';
+
+import 'package:board_game_dashboard/features/tools/seven_wonders_duel/seven_wonders_duel_calculator_screen.dart';
+import 'package:board_game_dashboard/features/tools/seven_wonders_duel/score_row.dart';
 
 void main() {
-  testWidgets('App renders smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(const BoardGameApp());
-    expect(find.text('ARCHEON'), findsOneWidget);
+  testWidgets('SevenWondersDuelCalculatorScreen renders', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: SevenWondersDuelCalculatorScreen()),
+    );
+
+    expect(find.byType(SevenWondersDuelCalculatorScreen), findsOneWidget);
+    expect(
+      find.byType(ScoreRow),
+      findsNWidgets(SevenWondersCategory.values.length),
+    );
   });
 }
