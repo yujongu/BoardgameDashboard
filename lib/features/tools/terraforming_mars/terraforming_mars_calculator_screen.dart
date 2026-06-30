@@ -1,0 +1,439 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../shared/theme/app_theme.dart';
+
+class TerraformingMarsCalculatorScreen extends StatefulWidget {
+  const TerraformingMarsCalculatorScreen({super.key});
+
+  @override
+  State<TerraformingMarsCalculatorScreen> createState() =>
+      _TerraformingMarsCalculatorScreenState();
+}
+
+class _TerraformingMarsCalculatorScreenState
+    extends State<TerraformingMarsCalculatorScreen> {
+  static const _marsRed = Color(0xFFD95B2B);
+
+  int _tr = 20;
+  int _milestones = 0;
+  int _awardVp = 0;
+  int _greeneries = 0;
+  int _cityPoints = 0;
+  int _cardVp = 0;
+
+  int get _total =>
+      _tr + _milestones * 5 + _awardVp + _greeneries + _cityPoints + _cardVp;
+
+  void _reset() {
+    setState(() {
+      _tr = 20;
+      _milestones = 0;
+      _awardVp = 0;
+      _greeneries = 0;
+      _cityPoints = 0;
+      _cardVp = 0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kColorBackground,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0A0905),
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        title: Text(
+          'TERRAFORMING MARS',
+          style: GoogleFonts.newsreader(
+            color: kColorPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            fontStyle: FontStyle.italic,
+            letterSpacing: 2,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: _reset,
+              child: Text(
+                'RESET',
+                style: GoogleFonts.spaceGrotesk(
+                  color: kColorOutline,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: kColorAmberBorder),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              children: [
+                _ScoreRow(
+                  label: 'Terraform Rating',
+                  hint: '1 VP each',
+                  value: _tr,
+                  vp: _tr,
+                  min: 0,
+                  max: 63,
+                  color: _marsRed,
+                  onChanged: (v) => setState(() => _tr = v),
+                ),
+                _ScoreRow(
+                  label: 'Milestones Claimed',
+                  hint: '5 VP each · max 3',
+                  value: _milestones,
+                  vp: _milestones * 5,
+                  min: 0,
+                  max: 3,
+                  color: _marsRed,
+                  onChanged: (v) => setState(() => _milestones = v),
+                ),
+                _ScoreRow(
+                  label: 'Award Points',
+                  hint: '1st place: 5 VP · 2nd place: 2 VP',
+                  value: _awardVp,
+                  vp: _awardVp,
+                  min: 0,
+                  max: 15,
+                  color: _marsRed,
+                  onChanged: (v) => setState(() => _awardVp = v),
+                ),
+                _ScoreRow(
+                  label: 'Greenery Tiles',
+                  hint: '1 VP each',
+                  value: _greeneries,
+                  vp: _greeneries,
+                  min: 0,
+                  max: 50,
+                  color: _marsRed,
+                  onChanged: (v) => setState(() => _greeneries = v),
+                ),
+                _ScoreRow(
+                  label: 'City Adjacency',
+                  hint: '1 VP per adjacent greenery',
+                  value: _cityPoints,
+                  vp: _cityPoints,
+                  min: 0,
+                  max: 50,
+                  color: _marsRed,
+                  onChanged: (v) => setState(() => _cityPoints = v),
+                ),
+                _ScoreRow(
+                  label: 'Card VP',
+                  hint: 'VP icons on played cards',
+                  value: _cardVp,
+                  vp: _cardVp,
+                  min: 0,
+                  max: 100,
+                  color: _marsRed,
+                  onChanged: (v) => setState(() => _cardVp = v),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0A0905),
+              border: Border(top: BorderSide(color: kColorOutlineVariant)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'TOTAL',
+                  style: GoogleFonts.spaceGrotesk(
+                    color: kColorOnSurfaceVariant,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2,
+                  ),
+                ),
+                Text(
+                  '$_total',
+                  style: GoogleFonts.newsreader(
+                    color: kColorPrimary,
+                    fontSize: 38,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScoreRow extends StatelessWidget {
+  final String label;
+  final String hint;
+  final int value;
+  final int vp;
+  final int min;
+  final int max;
+  final Color color;
+  final ValueChanged<int> onChanged;
+
+  const _ScoreRow({
+    required this.label,
+    required this.hint,
+    required this.value,
+    required this.vp,
+    required this.min,
+    required this.max,
+    required this.color,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: kColorSurface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: kColorOutlineVariant),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.newsreader(
+                    color: kColorOnSurface,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hint,
+                  style: GoogleFonts.spaceGrotesk(
+                    color: kColorOutline,
+                    fontSize: 10,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 44,
+            child: Text(
+              '+$vp',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.spaceGrotesk(
+                color: vp > 0 ? color : kColorOutline,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _StepperControl(
+            value: value,
+            min: min,
+            max: max,
+            color: color,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepperControl extends StatefulWidget {
+  final int value;
+  final int min;
+  final int max;
+  final Color color;
+  final ValueChanged<int> onChanged;
+
+  const _StepperControl({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.color,
+    required this.onChanged,
+  });
+
+  @override
+  State<_StepperControl> createState() => _StepperControlState();
+}
+
+class _StepperControlState extends State<_StepperControl> {
+  late final TextEditingController _controller;
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: '${widget.value}');
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_StepperControl old) {
+    super.didUpdateWidget(old);
+    if (old.value != widget.value) {
+      _controller.text = '${widget.value}';
+      if (_focusNode.hasFocus) {
+        _controller.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _controller.text.length,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      _controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _controller.text.length,
+      );
+    } else {
+      _commit();
+    }
+  }
+
+  void _commit() {
+    final parsed = int.tryParse(_controller.text);
+    if (parsed != null) {
+      final clamped = parsed.clamp(widget.min, widget.max);
+      widget.onChanged(clamped);
+    } else {
+      _controller.text = '${widget.value}';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _StepButton(
+          icon: Icons.remove,
+          color: widget.color,
+          enabled: widget.value > widget.min,
+          onTap: () => widget.onChanged(widget.value - 1),
+        ),
+        SizedBox(
+          width: 44,
+          child: TextField(
+            controller: _controller,
+            focusNode: _focusNode,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            textAlign: TextAlign.center,
+            style: GoogleFonts.newsreader(
+              color: kColorOnSurface,
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+            onSubmitted: (_) {
+              _commit();
+              _focusNode.unfocus();
+            },
+          ),
+        ),
+        _StepButton(
+          icon: Icons.add,
+          color: widget.color,
+          enabled: widget.value < widget.max,
+          onTap: () => widget.onChanged(widget.value + 1),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepButton extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _StepButton({
+    required this.icon,
+    required this.color,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  State<_StepButton> createState() => _StepButtonState();
+}
+
+class _StepButtonState extends State<_StepButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.enabled ? widget.color : kColorOutlineVariant;
+    return GestureDetector(
+      onTapDown: widget.enabled ? (_) => setState(() => _pressed = true) : null,
+      onTapUp: widget.enabled
+          ? (_) {
+              setState(() => _pressed = false);
+              widget.onTap();
+            }
+          : null,
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 80),
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: _pressed && widget.enabled
+              ? widget.color.withAlpha(30)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color),
+        ),
+        child: Icon(widget.icon, color: color, size: 16),
+      ),
+    );
+  }
+}
