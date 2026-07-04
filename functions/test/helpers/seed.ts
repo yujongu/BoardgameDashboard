@@ -7,6 +7,28 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../setup";
 
+// ─── User seeding ─────────────────────────────────────────────────────────────
+
+export interface SeedUserOptions {
+  name: string;
+  photoUrl?: string;
+}
+
+/**
+ * Seeds a dummy user account (users/{uid} profile doc) for friend-flow tests.
+ * sendFriendRequest requires both sender and target profiles to exist with a name.
+ */
+export async function seedUser(uid: string, opts: SeedUserOptions): Promise<void> {
+  await db
+    .collection("users")
+    .doc(uid)
+    .set({
+      name: opts.name,
+      ...(opts.photoUrl !== undefined && { photoUrl: opts.photoUrl }),
+      createdAt: FieldValue.serverTimestamp(),
+    });
+}
+
 // ─── Play seeding ─────────────────────────────────────────────────────────────
 
 export interface SeedPlayOptions {

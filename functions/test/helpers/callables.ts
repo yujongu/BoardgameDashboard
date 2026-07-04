@@ -16,6 +16,14 @@ import { deletePlay }    from "../../src/plays/deletePlay";
 import { listMyPlays }   from "../../src/reads/listMyPlays";
 import { getPlay }       from "../../src/reads/getPlay";
 import { getMyLibrary }  from "../../src/reads/getMyLibrary";
+import { sendFriendRequest }        from "../../src/friends/sendFriendRequest";
+import { acceptFriendRequest }      from "../../src/friends/acceptFriendRequest";
+import { rejectFriendRequest }      from "../../src/friends/rejectFriendRequest";
+import { cancelFriendRequest }      from "../../src/friends/cancelFriendRequest";
+import { removeFriend }             from "../../src/friends/removeFriend";
+import { getMyFriends }             from "../../src/friends/getMyFriends";
+import { getIncomingFriendRequests } from "../../src/friends/getIncomingFriendRequests";
+import { getOutgoingFriendRequests } from "../../src/friends/getOutgoingFriendRequests";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -123,6 +131,69 @@ export const callGetMyLibrary = (uid: string) =>
     }>;
   }>;
 
+// ─── Friend callables ─────────────────────────────────────────────────────────
+
+export const callSendFriendRequest = (toUserId: string, uid: string) =>
+  (sendFriendRequest as unknown as AnyCallable).run(makeReq({ toUserId }, uid));
+
+export const callAcceptFriendRequest = (requestId: string, uid: string) =>
+  (acceptFriendRequest as unknown as AnyCallable).run(
+    makeReq({ requestId }, uid)
+  ) as Promise<{ success: true }>;
+
+export const callRejectFriendRequest = (requestId: string, uid: string) =>
+  (rejectFriendRequest as unknown as AnyCallable).run(
+    makeReq({ requestId }, uid)
+  ) as Promise<{ success: true }>;
+
+export const callCancelFriendRequest = (requestId: string, uid: string) =>
+  (cancelFriendRequest as unknown as AnyCallable).run(
+    makeReq({ requestId }, uid)
+  ) as Promise<{ success: true }>;
+
+export const callRemoveFriend = (friendId: string, uid: string) =>
+  (removeFriend as unknown as AnyCallable).run(
+    makeReq({ friendId }, uid)
+  ) as Promise<{ success: true }>;
+
+export const callGetMyFriends = (uid: string, limit?: number) =>
+  (getMyFriends as unknown as AnyCallable).run(
+    makeReq(limit !== undefined ? { limit } : {}, uid)
+  ) as Promise<{
+    friends: Array<{
+      userId: string;
+      name: string;
+      photoUrl: string | null;
+      createdAt: string;
+    }>;
+  }>;
+
+export const callGetIncomingFriendRequests = (uid: string, limit?: number) =>
+  (getIncomingFriendRequests as unknown as AnyCallable).run(
+    makeReq(limit !== undefined ? { limit } : {}, uid)
+  ) as Promise<{
+    requests: Array<{
+      requestId: string;
+      fromUserId: string;
+      fromUserName: string;
+      fromUserPhotoUrl: string | null;
+      createdAt: string;
+    }>;
+  }>;
+
+export const callGetOutgoingFriendRequests = (uid: string, limit?: number) =>
+  (getOutgoingFriendRequests as unknown as AnyCallable).run(
+    makeReq(limit !== undefined ? { limit } : {}, uid)
+  ) as Promise<{
+    requests: Array<{
+      requestId: string;
+      toUserId: string;
+      toUserName: string;
+      toUserPhotoUrl: string | null;
+      createdAt: string;
+    }>;
+  }>;
+
 // ─── No-auth variants (for validation tests) ──────────────────────────────────
 
 export const callCreatePlayNoAuth = (data: CreatePlayInput) =>
@@ -133,3 +204,9 @@ export const callDeletePlayNoAuth = (playId: string) =>
 
 export const callGetMyLibraryNoAuth = () =>
   (getMyLibrary as unknown as AnyCallable).run(makeReqNoAuth({}));
+
+export const callSendFriendRequestNoAuth = (toUserId: string) =>
+  (sendFriendRequest as unknown as AnyCallable).run(makeReqNoAuth({ toUserId }));
+
+export const callGetMyFriendsNoAuth = () =>
+  (getMyFriends as unknown as AnyCallable).run(makeReqNoAuth({}));
