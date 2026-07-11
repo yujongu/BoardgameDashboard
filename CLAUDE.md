@@ -21,18 +21,34 @@ A Flutter "super app" dashboard for tracking board game history and scores. User
 ```
 lib/
   main.dart
-  app.dart                  # Root widget, router setup
   features/
+    auth/                   # Login & profile setup
+    friends/                # Friend management
     games/                  # Game library & detail views
+    home/                   # Home dashboard
+    library/                # Game library browsing
+    plays/                  # Play logging
     sessions/               # Play session logging & history
-    players/                # Player management
+    shell/                  # Main navigation shell
     tools/                  # Game-specific utility tools
       <game_name>/          # One subfolder per game with tools
+      registry/             # game_tools_registry.dart — new tools MUST be registered here
   shared/
     models/                 # Data models (Game, Session, Player, etc.)
+    providers/              # Riverpod providers
+    repositories/           # Firestore data access
     widgets/                # Reusable UI components
     theme/                  # App theme & colors
+functions/                  # Cloud Functions (TypeScript) — own package.json, jest tests
 ```
+
+## Commands
+
+- `flutter run` / `flutter test` / `flutter analyze` — app dev loop
+- `flutter test integration_test` — integration tests
+- `firebase emulators:start` — Firestore :8080, Functions :5001, Auth :9099, UI :4000
+- In `functions/`: `npm run build`, `npm test`, `npm run deploy`
+- `node functions/seed-board-games.js` — seed game data (also `clear-firestore.js`, `backfill-user-search.js`)
 
 ## UI Task Verification (Required)
 
@@ -56,24 +72,10 @@ A task is **not complete** until the UI has been visually confirmed. The `flutte
 
 Always check `firestore.rules` when implementing any feature that reads from or writes to Firestore. Verify that the security rules permit the intended operations for the authenticated user before writing client-side code. If a required permission is missing, update `firestore.rules` and deploy with `firebase deploy --only firestore:rules` as part of the same task.
 
-## Think Before Coding
+## Gotchas
 
-Before implementing, state assumptions explicitly — if uncertain, ask. If multiple interpretations exist, present them rather than picking silently. If a simpler approach exists, say so and push back when warranted. If something is unclear, stop and name what's confusing before proceeding.
-
-## Simplicity First
-
-Write the minimum code that solves the problem. No features beyond what was asked, no abstractions for single-use code, no unrequested flexibility or configurability, no error handling for impossible scenarios. If 200 lines could be 50, rewrite it. Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-## Surgical Changes
-
-Touch only what is necessary. When editing existing code: don't improve adjacent code, comments, or formatting; don't refactor things that aren't broken; match existing style even if you'd do it differently. If you notice unrelated dead code, mention it — don't delete it. Remove imports/variables/functions that your changes made unused, but don't remove pre-existing dead code unless asked. Every changed line should trace directly to the request.
-
-## Goal-Driven Execution
-
-Transform tasks into verifiable goals before starting:
-- "Add validation" → write tests for invalid inputs, then make them pass
-- "Fix the bug" → write a test that reproduces it, then make it pass
-- "Refactor X" → ensure tests pass before and after
-
-For multi-step tasks, state a brief plan with a verify step for each stage. Strong success criteria allow independent looping; weak criteria ("make it work") require constant clarification.
+- `lib/main.dart` has `const bool _useEmulators = false`. Set to `true` ONLY while
+  `firebase emulators:start` is running. Auth and Functions emulators must BOTH be on
+  or BOTH off — mixing emulator auth tokens with production Functions causes INTERNAL errors.
+- Session hand-offs go in `HANDOVER.md` at the repo root.
 
