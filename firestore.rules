@@ -52,6 +52,11 @@ service cloud.firestore {
         allow read:  if request.auth != null && request.auth.uid == userId;
         allow write: if false;
       }
+
+      // campaign record sheets (e.g. The Crew) — owner full access, written from client
+      match /campaigns/{gameId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // aggregated stats — owner or friend can read

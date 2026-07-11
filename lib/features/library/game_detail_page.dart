@@ -6,6 +6,7 @@ import '../../shared/repositories/play_repository.dart';
 import '../../shared/theme/app_theme.dart';
 import '../plays/play_detail_page.dart';
 import '../tools/presentation/widgets/tool_card.dart';
+import 'crew_record_section.dart';
 import '../tools/registry/game_tools_registry.dart';
 
 class GameDetailPage extends StatefulWidget {
@@ -179,6 +180,15 @@ class _GameDetailPageState extends State<GameDetailPage> {
               child: _StatsBox(playCount: plays.length),
             ),
           ),
+
+          // Campaign record sheet (The Crew only)
+          if (widget.gameId == kTheCrewPlanetNineGameId)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+                child: CrewRecordSection(gameId: widget.gameId),
+              ),
+            ),
 
           // Section header
           SliverToBoxAdapter(
