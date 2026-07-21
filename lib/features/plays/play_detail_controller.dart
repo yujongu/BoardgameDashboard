@@ -131,8 +131,8 @@ class PlayDetailNotifier extends StateNotifier<PlayDetailState> {
       gameName: input.gameName,
       playedAt: input.playedAt,
       participantCount: input.participants.length,
-      location: state.location,
-      notes: state.notes,
+      location: input.location,
+      notes: input.notes,
       createdBy: state.createdBy,
       participants: _sorted(
         input.participants

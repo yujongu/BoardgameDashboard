@@ -10,15 +10,27 @@ import 'participant_picker_sheet.dart';
 // ─── Player entry (local state holder) ───────────────────────────────────────
 
 class _PlayerEntry {
-  _PlayerEntry({this.userId, this.score});
+  _PlayerEntry({this.userId, double? score}) {
+    if (score != null) scoreController.text = _formatScore(score);
+  }
 
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController scoreController = TextEditingController();
   bool isWinner = false;
   final String? userId;
-  final double? score; // preserved from original, not editable
 
-  void dispose() => nameController.dispose();
+  double? get score => double.tryParse(scoreController.text.trim());
+
+  void dispose() {
+    nameController.dispose();
+    scoreController.dispose();
+  }
 }
+
+/// Renders a score as an int when whole (12 not 12.0), else with its decimals.
+String _formatScore(double score) => score == score.truncateToDouble()
+    ? score.toInt().toString()
+    : score.toString();
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -35,6 +47,8 @@ class _EditPlayPageState extends State<EditPlayPage> {
   late String _gameId;
   late String _gameName;
   late DateTime _playedAt;
+  final _locationController = TextEditingController();
+  final _notesController = TextEditingController();
   final List<_PlayerEntry> _players = [];
   String? _currentUserId;
 
@@ -45,6 +59,8 @@ class _EditPlayPageState extends State<EditPlayPage> {
     _gameId = widget.detail.gameId;
     _gameName = widget.detail.gameName;
     _playedAt = widget.detail.playedAt.toLocal();
+    _locationController.text = widget.detail.location ?? '';
+    _notesController.text = widget.detail.notes ?? '';
 
     for (final p in widget.detail.participants) {
       final entry = _PlayerEntry(userId: p.userId, score: p.score);
@@ -57,6 +73,8 @@ class _EditPlayPageState extends State<EditPlayPage> {
 
   @override
   void dispose() {
+    _locationController.dispose();
+    _notesController.dispose();
     for (final p in _players) {
       p.dispose();
     }
@@ -158,6 +176,8 @@ class _EditPlayPageState extends State<EditPlayPage> {
     if (participants.isEmpty) return;
     if (!participants.any((p) => p.isWinner)) return;
 
+    final location = _locationController.text.trim();
+    final notes = _notesController.text.trim();
     Navigator.of(context).pop(
       UpdatePlayInput(
         playId: widget.detail.playId,
@@ -165,6 +185,8 @@ class _EditPlayPageState extends State<EditPlayPage> {
         gameName: _gameName,
         playedAt: _playedAt,
         participants: participants,
+        location: location.isNotEmpty ? location : null,
+        notes: notes.isNotEmpty ? notes : null,
       ),
     );
   }
@@ -210,6 +232,19 @@ class _EditPlayPageState extends State<EditPlayPage> {
                   _SectionLabel('SESSION'),
                   const SizedBox(height: 8),
                   _DateRow(date: _playedAt, onTap: _pickDate),
+                  const SizedBox(height: 10),
+                  _StyledField(
+                    controller: _locationController,
+                    hint: 'Location (optional)',
+                    icon: Icons.location_on_outlined,
+                  ),
+                  const SizedBox(height: 10),
+                  _StyledField(
+                    controller: _notesController,
+                    hint: 'Notes (optional)',
+                    icon: Icons.notes_outlined,
+                    maxLines: 3,
+                  ),
                   const SizedBox(height: 24),
                   _SectionLabel('PLAYERS'),
                   const SizedBox(height: 8),
@@ -419,6 +454,7 @@ class _PlayerRow extends StatelessWidget {
               ),
             ),
           ),
+          _ScoreField(controller: entry.scoreController),
           GestureDetector(
             onTap: onToggleWinner,
             child: Padding(
@@ -443,6 +479,88 @@ class _PlayerRow extends StatelessWidget {
           else
             const SizedBox(width: 30),
         ],
+      ),
+    );
+  }
+}
+
+class _StyledField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final int maxLines;
+
+  const _StyledField({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: kColorSurfaceHigh,
+        border: Border.all(color: kColorAmberBorder),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, color: kColorOutline, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              maxLines: maxLines,
+              style: GoogleFonts.spaceGrotesk(
+                color: kColorOnSurface,
+                fontSize: 14,
+              ),
+              decoration: InputDecoration.collapsed(
+                hintText: hint,
+                hintStyle: GoogleFonts.spaceGrotesk(
+                  color: kColorOutline,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScoreField extends StatelessWidget {
+  final TextEditingController controller;
+
+  const _ScoreField({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 52,
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(
+          decimal: true,
+          signed: true,
+        ),
+        textAlign: TextAlign.center,
+        style: GoogleFonts.spaceGrotesk(color: kColorOnSurface, fontSize: 14),
+        decoration: InputDecoration.collapsed(
+          hintText: '—',
+          hintStyle: GoogleFonts.spaceGrotesk(
+            color: kColorOutline,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }

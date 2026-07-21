@@ -21,9 +21,11 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
   final _locationController = TextEditingController();
   final _notesController = TextEditingController();
 
-  // Parallel list of name controllers mirroring state.participants.
-  // Invariant: _controllers.length == state.participants.length at all times.
+  // Parallel lists of name/score controllers mirroring state.participants.
+  // Invariant: _controllers.length == _scoreControllers.length ==
+  // state.participants.length at all times.
   final List<TextEditingController> _controllers = [];
+  final List<TextEditingController> _scoreControllers = [];
 
   @override
   void initState() {
@@ -41,11 +43,15 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     for (final c in _controllers) {
       c.dispose();
     }
+    for (final c in _scoreControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
-  // Creates a controller whose listener always resolves its own current index,
-  // so removal from the middle of the list doesn't corrupt indices.
+  // Creates a name + score controller pair whose listeners always resolve
+  // their own current index, so removal from the middle of the list doesn't
+  // corrupt indices.
   void _addController({String initialText = ''}) {
     final ctrl = TextEditingController(text: initialText);
     ctrl.addListener(() {
@@ -57,6 +63,20 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       }
     });
     _controllers.add(ctrl);
+
+    final scoreCtrl = TextEditingController();
+    scoreCtrl.addListener(() {
+      final idx = _scoreControllers.indexOf(scoreCtrl);
+      if (idx >= 0) {
+        ref
+            .read(addPlayProvider.notifier)
+            .updateParticipantScore(
+              idx,
+              double.tryParse(scoreCtrl.text.trim()),
+            );
+      }
+    });
+    _scoreControllers.add(scoreCtrl);
   }
 
   Future<void> _showGamePicker() async {
@@ -120,20 +140,39 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
   void _removeParticipant(int index) {
     _controllers[index].dispose();
     _controllers.removeAt(index);
+    _scoreControllers[index].dispose();
+    _scoreControllers.removeAt(index);
     ref.read(addPlayProvider.notifier).removeParticipant(index);
   }
 
-  void _save() {
+  Future<void> _save() async {
     final notifier = ref.read(addPlayProvider.notifier);
     for (var i = 0; i < _controllers.length; i++) {
       notifier.updateParticipantName(i, _controllers[i].text);
+      notifier.updateParticipantScore(
+        i,
+        double.tryParse(_scoreControllers[i].text.trim()),
+      );
     }
-    // Fire and forget — the Cloud Function completes server-side regardless.
-    // The plays list updates automatically via its real-time listener.
-    notifier
-        .save(location: _locationController.text, notes: _notesController.text)
-        .ignore();
-    Navigator.of(context).pop(true);
+
+    final ok = await notifier.save(
+      location: _locationController.text,
+      notes: _notesController.text,
+    );
+    if (!mounted) return;
+    if (ok) {
+      Navigator.of(context).pop(true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to save play. Please try again.',
+            style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
+          ),
+          backgroundColor: kColorSurfaceHigh,
+        ),
+      );
+    }
   }
 
   @override
@@ -202,6 +241,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: _PlayerRow(
                         controller: _controllers[e.key],
+                        scoreController: _scoreControllers[e.key],
                         isWinner: e.value.isWinner,
                         canRemove: e.key != 0,
                         readOnly: e.value.userId == state.currentUserId,
@@ -463,6 +503,7 @@ class _StyledField extends StatelessWidget {
 
 class _PlayerRow extends StatelessWidget {
   final TextEditingController controller;
+  final TextEditingController scoreController;
   final bool isWinner;
   final bool canRemove;
   final bool readOnly;
@@ -471,6 +512,7 @@ class _PlayerRow extends StatelessWidget {
 
   const _PlayerRow({
     required this.controller,
+    required this.scoreController,
     required this.isWinner,
     required this.onToggleWinner,
     required this.onRemove,
@@ -511,6 +553,7 @@ class _PlayerRow extends StatelessWidget {
               ),
             ),
           ),
+          _ScoreField(controller: scoreController),
           GestureDetector(
             onTap: onToggleWinner,
             child: Padding(
@@ -533,6 +576,35 @@ class _PlayerRow extends StatelessWidget {
           else
             const SizedBox(width: 30),
         ],
+      ),
+    );
+  }
+}
+
+class _ScoreField extends StatelessWidget {
+  final TextEditingController controller;
+
+  const _ScoreField({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 52,
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(
+          decimal: true,
+          signed: true,
+        ),
+        textAlign: TextAlign.center,
+        style: GoogleFonts.spaceGrotesk(color: kColorOnSurface, fontSize: 14),
+        decoration: InputDecoration.collapsed(
+          hintText: '—',
+          hintStyle: GoogleFonts.spaceGrotesk(
+            color: kColorOutline,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }

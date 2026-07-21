@@ -198,6 +198,27 @@ void main() {
       expect(notifier.state.playerCountText, 'Players: 2');
     });
 
+    // ── updateParticipantScore ───────────────────────────────────────────────
+
+    test('updateParticipantScore sets and clears a participant score', () {
+      addNamed('Alice');
+
+      notifier.updateParticipantScore(0, 42);
+      expect(notifier.state.participants[0].score, 42);
+
+      notifier.updateParticipantScore(0, null);
+      expect(notifier.state.participants[0].score, isNull);
+    });
+
+    test('updateParticipantScore ignores out-of-range indices', () {
+      addNamed('Alice');
+
+      notifier.updateParticipantScore(5, 10);
+
+      expect(notifier.state.participants.length, 1);
+      expect(notifier.state.participants[0].score, isNull);
+    });
+
     // ── pre-filled current user ──────────────────────────────────────────────
 
     test('always adds current user as first participant when logged in', () {

@@ -97,7 +97,7 @@ class _BoardGameAppState extends State<BoardGameApp> {
             return const _SplashScreen();
           }
           if (snapshot.hasError) {
-            return const _SplashScreen();
+            return _AuthErrorScreen(error: snapshot.error!);
           }
           return _buildHome(snapshot.data);
         },
@@ -113,6 +113,45 @@ class _SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(child: CircularProgressIndicator(color: kColorPrimary)),
+    );
+  }
+}
+
+class _AuthErrorScreen extends StatelessWidget {
+  final Object error;
+
+  const _AuthErrorScreen({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                color: kColorPrimary,
+                size: 40,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Could not sign you in',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$error',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

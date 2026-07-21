@@ -9,15 +9,27 @@ class ParticipantData {
   final String name;
   final bool isWinner;
   final String? userId;
+  final double? score;
 
-  const ParticipantData({this.name = '', this.isWinner = false, this.userId});
+  const ParticipantData({
+    this.name = '',
+    this.isWinner = false,
+    this.userId,
+    this.score,
+  });
 
-  ParticipantData copyWith({String? name, bool? isWinner, String? userId}) =>
-      ParticipantData(
-        name: name ?? this.name,
-        isWinner: isWinner ?? this.isWinner,
-        userId: userId ?? this.userId,
-      );
+  ParticipantData copyWith({
+    String? name,
+    bool? isWinner,
+    String? userId,
+    double? score,
+    bool clearScore = false,
+  }) => ParticipantData(
+    name: name ?? this.name,
+    isWinner: isWinner ?? this.isWinner,
+    userId: userId ?? this.userId,
+    score: clearScore ? null : score ?? this.score,
+  );
 }
 
 class AddPlayState {
@@ -147,6 +159,16 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
     state = state.copyWith(participants: updated);
   }
 
+  void updateParticipantScore(int index, double? score) {
+    if (index < 0 || index >= state.participants.length) return;
+    if (state.participants[index].score == score) return;
+    final updated = List<ParticipantData>.from(state.participants);
+    updated[index] = score == null
+        ? updated[index].copyWith(clearScore: true)
+        : updated[index].copyWith(score: score);
+    state = state.copyWith(participants: updated);
+  }
+
   void setPlayedAt(DateTime date) => state = state.copyWith(playedAt: date);
 
   Future<bool> save({String? location, String? notes}) async {
@@ -159,6 +181,7 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
             userId: p.userId,
             name: p.name.trim(),
             isWinner: p.isWinner,
+            score: p.score,
           ),
         )
         .toList();

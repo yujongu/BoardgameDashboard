@@ -1,36 +1,66 @@
-# Handover — 2026-04-30
+# Handover — 2026-07-22
 
-## What Was Done
+## Current Milestone
 
-### App Display Name
-- Decided on **Gameshelf** as the app name shown below the icon.
-- Updated `CFBundleDisplayName` in `ios/Runner/Info.plist` to `Gameshelf`.
-- Updated `android:label` in `android/app/src/main/AndroidManifest.xml` to `Gameshelf`.
-- Requires a rebuild and reinstall on device/simulator to take effect.
+Implementing the **tester's feature-gap backlog** (`~/.claude/plans/i-want-you-to-flickering-nygaard.md`).
+First-sprint items **H1, H2, H3 are DONE** this session. Remaining next-up: H5 (play history +
+pagination), then Q2→Q1 (make repos injectable + widget tests), then P1 (strings).
 
-### Lost Cities Calculator — UX & Layout
-- **App bar button margins**: Added 8px left margin to the back button and 8px right margin to the Reset button so neither touches the screen edge.
-- **No-scroll layout**: Replaced `SingleChildScrollView` + `AspectRatio(1.0)` with `Expanded` rows inside the number grid. The grid now fills available height proportionally and no vertical or horizontal scrolling occurs inside the colored expedition container.
-- **Tap feedback**: Converted `_NumberButton` from `StatelessWidget` to `StatefulWidget` with `_pressed` bool. Both number buttons and handshake buttons now use `onTapDown` / `onTapUp` / `onTapCancel` with `AnimatedContainer` (80ms) for immediate visual response on finger-down.
-- **Gesture conflict fix**: Added `_HighThresholdScrollPhysics` on the `PageView` with `dragStartDistanceMotionThreshold: 20.0` (default ~3–5px) to prevent the horizontal scroll from stealing accidental taps.
-- **Faster page settling**: Added `SpringDescription.withDampingRatio(mass: 0.5, stiffness: 400.0)` override to `_HighThresholdScrollPhysics`, snapping the page to its final position ~4× faster so taps register sooner after a swipe.
+### Completed this session
+- **H2 — edit play now persists location & notes.** Added `location`/`notes` to
+  `UpdatePlayInput` (`lib/shared/models/play.dart`), the edit form
+  (`lib/features/plays/edit_play_page.dart` — new `_StyledField`s + controllers), the backend
+  (`functions/src/plays/updatePlay.ts` — writes them, `FieldValue.delete()` when cleared), and
+  `play_detail_controller.dart` (optimistic state now reflects edited values). Backend jest tests
+  added (set + clear).
+- **H1 — score entry.** Added `_ScoreField` (numeric TextField, per the `[[feedback_score_input]]`
+  preference — tappable field, not a stepper) to both the add and edit player rows.
+  `ParticipantData` gained `score` + `updateParticipantScore`; the add screen keeps a parallel
+  `_scoreControllers` list; the edit `_PlayerEntry` parses its own controller. `rank` left
+  server-side for now.
+- **H3 — no more silent save failures.** Add-play `_save` now awaits the CF and shows a SnackBar
+  on failure instead of fire-and-forget + immediate pop. `main.dart` surfaces auth-stream errors
+  via `_AuthErrorScreen` instead of silently showing the splash. (The edit path already had a
+  SnackBar.)
 
-### App Icon
-- Added `flutter_launcher_icons: ^0.14.3` as a dev dependency.
-- Created `assets/icon/` directory and configured `flutter_launcher_icons` in `pubspec.yaml` (`image_path: "assets/icon/app_icon.png"`, Android + iOS).
-- User provided a 1774×1774 full-bleed square PNG. Icons were generated successfully via `dart run flutter_launcher_icons`.
+### Verification done
+- `flutter analyze` clean; `flutter test` 66 pass (incl. new `add_play_notifier` score tests and
+  a new `add_play_screen_test.dart` that renders the score + location/notes fields); `functions`
+  jest updatePlay suite 16 pass against the Firestore emulator.
+- App **builds and boots on the iOS iPhone 17 simulator** (home renders, no runtime errors).
+  Could NOT interactively tap through to the Add/Edit screens — no `idb`/`simctl tap` and macOS
+  blocked AppleScript UI control; the new widget test is the substitute confirming those fields
+  render.
 
-### Home Screen
-- Added 8px bottom padding to the app bar row (`_AppBar`) so the profile avatar and "ARCHEON" title no longer touch the amber divider line at the bottom of the app bar.
+## Context & Decisions
 
----
+- The app is substantially further along than the previous handover implied: session logging
+  (`features/plays/`), 5 score calculators, friends, and The Crew campaign sheet all exist now.
+- Audit scope was set by the requester: emphasize **user-facing gaps, quality/testing gaps, and
+  infra/polish**. Explicitly **out of scope**: writing new per-game score calculators for the
+  ~109 tool-less catalog games. (The *generic campaign system* refactor is kept, as an
+  architecture fix rather than a new calculator.)
+- There are **zero TODO/FIXME markers** in `lib/` or `functions/src/`; every gap in the backlog
+  was inferred by reading code.
 
-## Possible Next Session Tasks
+## The 'Gravel' (non-obvious findings)
 
-- **Session logging**: Implement the play session recording flow — date picker, player selection, outcome entry. The `Session` model and `DashboardState` scaffolding exist but the UI is missing.
-- **Player management screen**: Add, edit, and remove players. Currently players are not manageable from the UI.
-- **More game tools**: Implement score calculators for Wingspan, Catan, or Ticket to Ride under `lib/features/tools/<game_name>/`.
-- **Profile screen**: The profile avatar in the home app bar is a static placeholder. Wire it to a real profile/settings screen.
-- **Git initialisation**: The project has no git repo yet. Running `git init` and making an initial commit would be a good baseline before further feature work.
-- **Leaderboard view**: Per-game leaderboard showing win counts per player is planned in CLAUDE.md but not yet built.
-- **`_PlaceholderGameScreen`**: Replace the "Coming Soon" stub with a real game detail view showing play history and stats.
+- **H1/H2/H3 DONE this session** (see Completed above). `rank` is still never set by the client —
+  scores are entered but ranks are not derived; revisit if ranking matters.
+- `ListMyPlaysResult.nextCursor` + the `listMyPlays` CF exist and are tested, but the client never
+  paginates (hard limit ~10, no history screen). (H5)
+- Campaign sheet is **hard-coded** to `the-crew-the-quest-for-planet-nine-2019`; the second seeded
+  Crew game has none. (M4)
+- Repositories are hand-rolled singletons (not Riverpod-provided) → core UI is largely untestable
+  without a small refactor. (Q2)
+- `getMyFriends` Cloud Function is dead (superseded by the `watchMyFriends` stream) — don't delete
+  unasked, just flagged.
+- `CLAUDE.md` documents `lib/features/games/` and `lib/features/sessions/`, but neither exists /
+  both are empty; real code is in `library/` and `plays/`.
+
+## Next Immediate Step
+
+**H5 — play history + pagination.** Add a paginated "Play History" screen backed by the existing
+`listMyPlays` CF (`functions/src/reads/listMyPlays.ts`, cursor/`nextCursor` already implemented and
+tested) wired through `PlayRepository`, and link it from the Home "Recent Plays" section header
+(`lib/features/home/home_tab.dart`). Use `stats/{uid}.totalGamesPlayed` for the true session count.

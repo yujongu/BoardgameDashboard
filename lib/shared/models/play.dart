@@ -53,6 +53,8 @@ class UpdatePlayInput {
     required this.gameName,
     required this.playedAt,
     required this.participants,
+    this.location,
+    this.notes,
   });
 
   final String playId;
@@ -60,6 +62,8 @@ class UpdatePlayInput {
   final String gameName;
   final DateTime playedAt;
   final List<ParticipantInput> participants;
+  final String? location;
+  final String? notes;
 
   Map<String, dynamic> toJson() => {
     'playId': playId,
@@ -67,6 +71,8 @@ class UpdatePlayInput {
     'gameName': gameName,
     'playedAt': playedAt.toUtc().toIso8601String(),
     'participants': participants.map((p) => p.toJson()).toList(),
+    if (location != null) 'location': location,
+    if (notes != null) 'notes': notes,
   };
 }
 
