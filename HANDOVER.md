@@ -2,7 +2,7 @@
 
 ## Current Milestone
 
-Implementing the **tester's feature-gap backlog** (`~/.claude/plans/i-want-you-to-flickering-nygaard.md`).
+Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
 Items **H1, H2, H3, H5, Q2, Q1 are DONE** this session. Remaining next-up: P1 (strings/l10n),
 then H4 (friend play history), M1 (catalog browse), etc.
 
