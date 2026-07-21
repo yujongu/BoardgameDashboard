@@ -26,6 +26,27 @@ class PlayRepository {
     await _fn.httpsCallable('deletePlay').call({'playId': playId});
   }
 
+  /// Fetches one page of the caller's plays, newest first, via the
+  /// `listMyPlays` Cloud Function. Pass [cursor] (a previous page's
+  /// [ListMyPlaysResult.nextCursor]) to fetch the following page.
+  Future<ListMyPlaysResult> listMyPlays({
+    int limit = 20,
+    String? cursor,
+  }) async {
+    final result = await _fn.httpsCallable('listMyPlays').call({
+      'limit': limit,
+      'cursor': ?cursor,
+    });
+    final data = Map<String, dynamic>.from(result.data as Map);
+    final plays = (data['plays'] as List)
+        .map((p) => PlaySummary.fromJson(Map<String, dynamic>.from(p as Map)))
+        .toList();
+    return ListMyPlaysResult(
+      plays: plays,
+      nextCursor: data['nextCursor'] as String?,
+    );
+  }
+
   Future<PlayDetail> getPlay(String playId) async {
     final playRef = _db.collection('plays').doc(playId);
     final playFuture = playRef.get();

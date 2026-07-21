@@ -3,8 +3,8 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`~/.claude/plans/i-want-you-to-flickering-nygaard.md`).
-First-sprint items **H1, H2, H3 are DONE** this session. Remaining next-up: H5 (play history +
-pagination), then Q2→Q1 (make repos injectable + widget tests), then P1 (strings).
+First-sprint items **H1, H2, H3, H5 are DONE** this session. Remaining next-up: Q2→Q1 (make repos
+injectable + widget tests), then P1 (strings).
 
 ### Completed this session
 - **H2 — edit play now persists location & notes.** Added `location`/`notes` to
@@ -22,15 +22,23 @@ pagination), then Q2→Q1 (make repos injectable + widget tests), then P1 (strin
   on failure instead of fire-and-forget + immediate pop. `main.dart` surfaces auth-stream errors
   via `_AuthErrorScreen` instead of silently showing the splash. (The edit path already had a
   SnackBar.)
+- **H5 — play history + pagination.** New `PlayHistoryPage`
+  (`lib/features/plays/play_history_page.dart`) with infinite scroll, backed by a new
+  `PlayRepository.listMyPlays({limit, cursor})` calling the existing `listMyPlays` CF. Home's
+  "Recent Plays" header (`home_tab.dart`) now shows the true lifetime count (library `playCount`
+  sum = `totalGamesPlayed`, replacing the misleading capped list length) and a chevron that opens
+  the history screen.
 
 ### Verification done
 - `flutter analyze` clean; `flutter test` 66 pass (incl. new `add_play_notifier` score tests and
   a new `add_play_screen_test.dart` that renders the score + location/notes fields); `functions`
   jest updatePlay suite 16 pass against the Firestore emulator.
-- App **builds and boots on the iOS iPhone 17 simulator** (home renders, no runtime errors).
-  Could NOT interactively tap through to the Add/Edit screens — no `idb`/`simctl tap` and macOS
-  blocked AppleScript UI control; the new widget test is the substitute confirming those fields
-  render.
+- App **builds and boots on the iOS iPhone 17 simulator**; the H5 Home header change ("N PLAYS" +
+  chevron) is **visually confirmed** by screenshot. Could NOT interactively tap through to the
+  Add/Edit/History screen *bodies* — no `idb`/`simctl tap` and macOS blocked AppleScript UI
+  control. The add-screen widget test substitutes for Add; `PlayHistoryPage`'s runtime path is
+  covered only by build + the already-tested `listMyPlays` CF, so its list rendering is **not yet
+  interactively verified** (unblocked once repos are injectable — Q2).
 
 ## Context & Decisions
 
@@ -60,7 +68,8 @@ pagination), then Q2→Q1 (make repos injectable + widget tests), then P1 (strin
 
 ## Next Immediate Step
 
-**H5 — play history + pagination.** Add a paginated "Play History" screen backed by the existing
-`listMyPlays` CF (`functions/src/reads/listMyPlays.ts`, cursor/`nextCursor` already implemented and
-tested) wired through `PlayRepository`, and link it from the Home "Recent Plays" section header
-(`lib/features/home/home_tab.dart`). Use `stats/{uid}.totalGamesPlayed` for the true session count.
+**Q2 — make repositories injectable** (then Q1 — widget tests). Wrap `PlayRepository`,
+`FriendRepository`, `CampaignRepository`, `GameCatalogRepository` in Riverpod `Provider`s (keep the
+singleton internally, or inject `FirebaseFirestore`/`FirebaseFunctions`) so widget tests can
+override them with fakes. This also unblocks interactive/widget verification of `PlayHistoryPage`
+and the Add/Edit play screens left pending above.

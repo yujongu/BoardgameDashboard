@@ -7,6 +7,7 @@ import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/profile_app_bar.dart';
 import '../plays/play_detail_page.dart';
+import '../plays/play_history_page.dart';
 
 class HomeTab extends ConsumerStatefulWidget {
   final String displayName;
@@ -27,6 +28,13 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   Widget build(BuildContext context) {
     final playsAsync = ref.watch(recentPlaysProvider);
     final libraryAsync = ref.watch(libraryProvider);
+
+    // True lifetime play count (sum of per-game playCount) — matches the stat
+    // row and stats/{uid}.totalGamesPlayed, unlike the capped recent-plays list.
+    final totalPlays = libraryAsync.valueOrNull?.fold<int>(
+      0,
+      (sum, e) => sum + e.playCount,
+    );
 
     return CustomScrollView(
       slivers: [
@@ -53,8 +61,15 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
             child: _SectionHeader(
               title: 'Recent Plays',
-              subtitle: playsAsync.whenData((p) => p.length).valueOrNull != null
-                  ? '${playsAsync.value!.length} sessions'
+              subtitle: totalPlays != null
+                  ? '$totalPlays ${totalPlays == 1 ? 'play' : 'plays'}'
+                  : null,
+              onSeeAll: (totalPlays ?? 0) > 0
+                  ? () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PlayHistoryPage(),
+                      ),
+                    )
                   : null,
             ),
           ),
@@ -212,8 +227,9 @@ class _StatsShimmer extends StatelessWidget {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
+  final VoidCallback? onSeeAll;
 
-  const _SectionHeader({required this.title, this.subtitle});
+  const _SectionHeader({required this.title, this.subtitle, this.onSeeAll});
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +249,32 @@ class _SectionHeader extends StatelessWidget {
                 letterSpacing: 0.3,
               ),
             ),
-            if (subtitle != null)
+            if (onSeeAll != null)
+              GestureDetector(
+                onTap: onSeeAll,
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: [
+                    if (subtitle != null)
+                      Text(
+                        subtitle!.toUpperCase(),
+                        style: GoogleFonts.spaceGrotesk(
+                          color: kColorOutline,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: kColorPrimary,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              )
+            else if (subtitle != null)
               Text(
                 subtitle!.toUpperCase(),
                 style: GoogleFonts.spaceGrotesk(
