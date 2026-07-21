@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/catalog_game.dart';
 import '../repositories/game_catalog_repository.dart';
+import 'repository_providers.dart';
 
 class GameCatalogState {
   /// null while the initial preload has not yet completed.
@@ -58,10 +59,11 @@ class GameCatalogState {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class GameCatalogNotifier extends StateNotifier<GameCatalogState> {
-  GameCatalogNotifier() : super(const GameCatalogState()) {
+  GameCatalogNotifier(this._repo) : super(const GameCatalogState()) {
     _preload();
   }
 
+  final GameCatalogRepository _repo;
   List<CatalogGame> _allGames = [];
   Timer? _debounce;
 
@@ -73,7 +75,7 @@ class GameCatalogNotifier extends StateNotifier<GameCatalogState> {
 
   Future<void> _preload() async {
     try {
-      _allGames = await GameCatalogRepository.instance.fetchInitialGames();
+      _allGames = await _repo.fetchInitialGames();
       if (!mounted) return;
       // If the user typed while loading, apply that query to the fresh data
       // rather than showing the full unfiltered list.
@@ -136,7 +138,7 @@ class GameCatalogNotifier extends StateNotifier<GameCatalogState> {
     if (mounted) state = state.copyWith(games: local, remoteLoading: true);
 
     try {
-      final remote = await GameCatalogRepository.instance.searchRemote(query);
+      final remote = await _repo.searchRemote(query);
       // Discard if the user has already typed something newer.
       if (mounted && _lastQuery == query) {
         state = state.copyWith(
@@ -183,5 +185,5 @@ class GameCatalogNotifier extends StateNotifier<GameCatalogState> {
 
 final gameCatalogProvider =
     StateNotifierProvider.autoDispose<GameCatalogNotifier, GameCatalogState>(
-      (ref) => GameCatalogNotifier(),
+      (ref) => GameCatalogNotifier(ref.watch(gameCatalogRepositoryProvider)),
     );

@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../shared/models/friend.dart';
 import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
-import '../../shared/repositories/friend_repository.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
 import 'friend_profile_screen.dart';
 import 'friend_requests_screen.dart';
@@ -61,7 +61,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final expected = trimmed;
     _debounce = Timer(const Duration(milliseconds: 300), () async {
       try {
-        final results = await FriendRepository.instance.searchUsers(expected);
+        final results = await ref
+            .read(friendRepositoryProvider)
+            .searchUsers(expected);
         if (mounted && _searchController.text.trim() == expected) {
           setState(() {
             _searchResults = results;
@@ -79,7 +81,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   Future<void> _sendRequest(String userId) async {
     setState(() => _pendingSends.add(userId));
     try {
-      await FriendRepository.instance.sendFriendRequest(userId);
+      await ref.read(friendRepositoryProvider).sendFriendRequest(userId);
       if (!mounted) return;
       setState(() {
         _pendingSends.remove(userId);

@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../shared/models/play.dart';
-import '../../shared/repositories/play_repository.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
 import 'play_detail_page.dart';
 
 /// Full, paginated history of the caller's plays (newest first), backed by the
 /// `listMyPlays` Cloud Function. Loads more pages on scroll until exhausted.
-class PlayHistoryPage extends StatefulWidget {
+class PlayHistoryPage extends ConsumerStatefulWidget {
   const PlayHistoryPage({super.key});
 
   @override
-  State<PlayHistoryPage> createState() => _PlayHistoryPageState();
+  ConsumerState<PlayHistoryPage> createState() => _PlayHistoryPageState();
 }
 
-class _PlayHistoryPageState extends State<PlayHistoryPage> {
+class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
   static const _pageSize = 20;
 
-  final _repo = PlayRepository.instance;
   final _scrollController = ScrollController();
   final List<PlaySummary> _plays = [];
 
@@ -55,7 +55,9 @@ class _PlayHistoryPageState extends State<PlayHistoryPage> {
       _error = null;
     });
     try {
-      final result = await _repo.listMyPlays(limit: _pageSize, cursor: _cursor);
+      final result = await ref
+          .read(playRepositoryProvider)
+          .listMyPlays(limit: _pageSize, cursor: _cursor);
       if (!mounted) return;
       setState(() {
         _plays.addAll(result.plays);

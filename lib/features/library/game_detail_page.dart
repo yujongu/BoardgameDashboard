@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../shared/models/play.dart';
-import '../../shared/repositories/play_repository.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../plays/play_detail_page.dart';
 import '../tools/presentation/widgets/tool_card.dart';
 import 'crew_record_section.dart';
 import '../tools/registry/game_tools_registry.dart';
 
-class GameDetailPage extends StatefulWidget {
+class GameDetailPage extends ConsumerStatefulWidget {
   final String gameId;
   final String gameName;
 
@@ -20,10 +21,10 @@ class GameDetailPage extends StatefulWidget {
   });
 
   @override
-  State<GameDetailPage> createState() => _GameDetailPageState();
+  ConsumerState<GameDetailPage> createState() => _GameDetailPageState();
 }
 
-class _GameDetailPageState extends State<GameDetailPage> {
+class _GameDetailPageState extends ConsumerState<GameDetailPage> {
   late Future<List<PlaySummary>> _future;
   bool _mutated = false;
 
@@ -34,7 +35,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
   }
 
   Future<List<PlaySummary>> _fetchPlays() {
-    return PlayRepository.instance.fetchPlaysByGame(widget.gameId);
+    return ref.read(playRepositoryProvider).fetchPlaysByGame(widget.gameId);
   }
 
   void _reload() => setState(() => _future = _fetchPlays());

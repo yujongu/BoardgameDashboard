@@ -3,8 +3,8 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`~/.claude/plans/i-want-you-to-flickering-nygaard.md`).
-First-sprint items **H1, H2, H3, H5 are DONE** this session. Remaining next-up: Q2→Q1 (make repos
-injectable + widget tests), then P1 (strings).
+Items **H1, H2, H3, H5, Q2, Q1 are DONE** this session. Remaining next-up: P1 (strings/l10n),
+then H4 (friend play history), M1 (catalog browse), etc.
 
 ### Completed this session
 - **H2 — edit play now persists location & notes.** Added `location`/`notes` to
@@ -28,17 +28,25 @@ injectable + widget tests), then P1 (strings).
   "Recent Plays" header (`home_tab.dart`) now shows the true lifetime count (library `playCount`
   sum = `totalGamesPlayed`, replacing the misleading capped list length) and a chevron that opens
   the history screen.
+- **Q2 — repositories are injectable.** New `lib/shared/providers/repository_providers.dart`
+  exposes all four repos as Riverpod `Provider`s (returning the existing singletons). Every call
+  site now reads the provider instead of `Repository.instance` (the only remaining `.instance` is
+  the intentional default in `AddPlayNotifier`'s constructor). Notifiers take the repo via
+  constructor; `game_detail_page` and `crew_record_section` were converted to `ConsumerStatefulWidget`.
+- **Q1 — widget/unit tests unblocked by Q2.** New `play_history_page_test.dart` (renders first
+  page + loads next page on scroll, via a fake repo override) and new `AddPlayNotifier.save()`
+  tests (success + failure-surfaces-`saveError`, i.e. H3). This is the interactive-verification
+  substitute that was pending for the history screen.
 
 ### Verification done
-- `flutter analyze` clean; `flutter test` 66 pass (incl. new `add_play_notifier` score tests and
-  a new `add_play_screen_test.dart` that renders the score + location/notes fields); `functions`
-  jest updatePlay suite 16 pass against the Firestore emulator.
-- App **builds and boots on the iOS iPhone 17 simulator**; the H5 Home header change ("N PLAYS" +
-  chevron) is **visually confirmed** by screenshot. Could NOT interactively tap through to the
-  Add/Edit/History screen *bodies* — no `idb`/`simctl tap` and macOS blocked AppleScript UI
-  control. The add-screen widget test substitutes for Add; `PlayHistoryPage`'s runtime path is
-  covered only by build + the already-tested `listMyPlays` CF, so its list rendering is **not yet
-  interactively verified** (unblocked once repos are injectable — Q2).
+- `flutter analyze` clean; `flutter test` **70 pass**; `functions` jest updatePlay suite 16 pass
+  against the Firestore emulator.
+- App **builds and boots on the iOS iPhone 17 simulator** after the Q2 refactor (home renders from
+  real Firebase through the provider-wired repos — confirms runtime wiring). H5 Home header ("N
+  PLAYS" + chevron) **visually confirmed** by screenshot.
+- Interactive tap-through to Add/Edit/History screen *bodies* is still blocked (no `idb`/`simctl
+  tap`, macOS blocks AppleScript UI control), but the History list rendering + pagination is now
+  covered by `play_history_page_test.dart` (fake-repo override), so it's no longer unverified.
 
 ## Context & Decisions
 
@@ -68,8 +76,7 @@ injectable + widget tests), then P1 (strings).
 
 ## Next Immediate Step
 
-**Q2 — make repositories injectable** (then Q1 — widget tests). Wrap `PlayRepository`,
-`FriendRepository`, `CampaignRepository`, `GameCatalogRepository` in Riverpod `Provider`s (keep the
-singleton internally, or inject `FirebaseFirestore`/`FirebaseFunctions`) so widget tests can
-override them with fakes. This also unblocks interactive/widget verification of `PlayHistoryPage`
-and the Add/Edit play screens left pending above.
+**P1 — kill hardcoded strings** (the CLAUDE.md rule with nothing behind it). Decide with the owner:
+`flutter_localizations` + `app_en.arb`, or a lighter `lib/shared/strings.dart` constants file. Then
+migrate inline UI strings. After that, good candidates are H4 (friend shared-play history) and M1
+(a catalog-browse screen) — both now easier to test thanks to the Q2 injectable repos.

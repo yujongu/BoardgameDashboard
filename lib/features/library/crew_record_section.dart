@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../shared/models/crew_campaign.dart';
-import '../../shared/repositories/campaign_repository.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
 
 const kTheCrewPlanetNineGameId = 'the-crew-the-quest-for-planet-nine-2019';
@@ -11,16 +12,16 @@ const kTheCrewMissionCount = 50;
 
 /// Campaign record sheet for The Crew: crew roster plus the mission the whole
 /// crew has reached. Loads and saves the signed-in user's campaign doc.
-class CrewRecordSection extends StatefulWidget {
+class CrewRecordSection extends ConsumerStatefulWidget {
   final String gameId;
 
   const CrewRecordSection({super.key, required this.gameId});
 
   @override
-  State<CrewRecordSection> createState() => _CrewRecordSectionState();
+  ConsumerState<CrewRecordSection> createState() => _CrewRecordSectionState();
 }
 
-class _CrewRecordSectionState extends State<CrewRecordSection> {
+class _CrewRecordSectionState extends ConsumerState<CrewRecordSection> {
   CrewCampaign? _campaign;
   Object? _error;
 
@@ -33,9 +34,9 @@ class _CrewRecordSectionState extends State<CrewRecordSection> {
   Future<void> _load() async {
     setState(() => _error = null);
     try {
-      final campaign = await CampaignRepository.instance.fetchCampaign(
-        widget.gameId,
-      );
+      final campaign = await ref
+          .read(campaignRepositoryProvider)
+          .fetchCampaign(widget.gameId);
       if (!mounted) return;
       setState(() {
         _campaign =
@@ -50,7 +51,9 @@ class _CrewRecordSectionState extends State<CrewRecordSection> {
   Future<void> _update(CrewCampaign next) async {
     setState(() => _campaign = next);
     try {
-      await CampaignRepository.instance.saveCampaign(widget.gameId, next);
+      await ref
+          .read(campaignRepositoryProvider)
+          .saveCampaign(widget.gameId, next);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

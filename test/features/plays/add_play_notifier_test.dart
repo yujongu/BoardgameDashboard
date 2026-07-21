@@ -2,6 +2,27 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:board_game_dashboard/features/plays/add_play_notifier.dart';
 import 'package:board_game_dashboard/shared/models/catalog_game.dart';
+import 'package:board_game_dashboard/shared/models/play.dart';
+import 'package:board_game_dashboard/shared/repositories/play_repository.dart';
+
+/// Fake repo whose createPlay either records the call or throws. Only
+/// createPlay is exercised; everything else routes through noSuchMethod.
+class _FakePlayRepo implements PlayRepository {
+  _FakePlayRepo({this.throwOnCreate = false});
+
+  final bool throwOnCreate;
+  int createCalls = 0;
+
+  @override
+  Future<String> createPlay(CreatePlayInput input) async {
+    createCalls++;
+    if (throwOnCreate) throw Exception('boom');
+    return 'play-1';
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   group('AddPlayNotifier', () {
@@ -244,5 +265,44 @@ void main() {
         expect(seeded.state.participants.first.userId, 'uid-123');
       },
     );
+
+    // ── save() — H3 error surfacing ──────────────────────────────────────────
+
+    AddPlayNotifier saveReady(PlayRepository repo) {
+      final n = AddPlayNotifier(
+        currentUserName: 'Me',
+        currentUserId: 'u1',
+        repo: repo,
+      );
+      n.onGameSelected(game2to2);
+      n.addParticipantWithData('Bob');
+      n.toggleWinner(0); // "Me" wins → a named winner is present
+      return n;
+    }
+
+    test('save() returns true and calls createPlay on success', () async {
+      final repo = _FakePlayRepo();
+      final n = saveReady(repo);
+      addTearDown(n.dispose);
+      expect(n.state.canSave, isTrue);
+
+      final ok = await n.save();
+
+      expect(ok, isTrue);
+      expect(repo.createCalls, 1);
+      expect(n.state.saveError, isNull);
+    });
+
+    test('save() returns false and surfaces saveError on failure', () async {
+      final repo = _FakePlayRepo(throwOnCreate: true);
+      final n = saveReady(repo);
+      addTearDown(n.dispose);
+
+      final ok = await n.save();
+
+      expect(ok, isFalse);
+      expect(n.state.saving, isFalse);
+      expect(n.state.saveError, isNotNull);
+    });
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/catalog_game.dart';
 import '../../shared/models/play.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/repositories/play_repository.dart';
 
 class ParticipantData {
@@ -98,21 +99,27 @@ class AddPlayState {
 }
 
 class AddPlayNotifier extends StateNotifier<AddPlayState> {
-  AddPlayNotifier({String? currentUserName, String? currentUserId})
-    : super(
-        AddPlayState(
-          playedAt: DateTime.now(),
-          currentUserId: currentUserId,
-          participants: currentUserId != null
-              ? [
-                  ParticipantData(
-                    name: currentUserName ?? '',
-                    userId: currentUserId,
-                  ),
-                ]
-              : const [],
-        ),
-      );
+  AddPlayNotifier({
+    String? currentUserName,
+    String? currentUserId,
+    PlayRepository? repo,
+  }) : _repo = repo ?? PlayRepository.instance,
+       super(
+         AddPlayState(
+           playedAt: DateTime.now(),
+           currentUserId: currentUserId,
+           participants: currentUserId != null
+               ? [
+                   ParticipantData(
+                     name: currentUserName ?? '',
+                     userId: currentUserId,
+                   ),
+                 ]
+               : const [],
+         ),
+       );
+
+  final PlayRepository _repo;
 
   void onGameSelected(CatalogGame game) {
     state = state.copyWith(selectedGame: game);
@@ -188,7 +195,7 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
 
     state = state.copyWith(saving: true, clearSaveError: true);
     try {
-      await PlayRepository.instance.createPlay(
+      await _repo.createPlay(
         CreatePlayInput(
           gameId: state.selectedGame!.gameId,
           gameName: state.selectedGame!.name,
@@ -220,5 +227,9 @@ final addPlayProvider =
         name = user?.displayName;
         uid = user?.uid;
       } catch (_) {}
-      return AddPlayNotifier(currentUserName: name, currentUserId: uid);
+      return AddPlayNotifier(
+        currentUserName: name,
+        currentUserId: uid,
+        repo: ref.watch(playRepositoryProvider),
+      );
     });

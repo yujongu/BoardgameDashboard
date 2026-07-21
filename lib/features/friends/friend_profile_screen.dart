@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../shared/models/friend_profile.dart';
 import '../../shared/providers/friend_provider.dart';
-import '../../shared/repositories/friend_repository.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
 
 class FriendProfileScreen extends ConsumerStatefulWidget {
@@ -33,7 +33,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _profileFuture = FriendRepository.instance.getFriendProfileDirect(
+    _profileFuture = ref.read(friendRepositoryProvider).getFriendProfileDirect(
       widget.friendId,
     );
   }
@@ -77,7 +77,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
 
     setState(() => _unfriending = true);
     try {
-      await FriendRepository.instance.removeFriend(widget.friendId);
+      await ref.read(friendRepositoryProvider).removeFriend(widget.friendId);
       if (!mounted) return;
       ref.invalidate(friendListProvider);
       Navigator.of(context).pop();
