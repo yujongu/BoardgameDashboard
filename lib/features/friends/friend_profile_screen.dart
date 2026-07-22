@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend_profile.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/providers/repository_providers.dart';
@@ -33,22 +34,23 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _profileFuture = ref.read(friendRepositoryProvider).getFriendProfileDirect(
-      widget.friendId,
-    );
+    _profileFuture = ref
+        .read(friendRepositoryProvider)
+        .getFriendProfileDirect(widget.friendId);
   }
 
   Future<void> _unfriend() async {
+    final s = AppStrings.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kColorSurfaceHigh,
         title: Text(
-          'Unfriend ${widget.friendName}?',
+          s.friendUnfriendTitle(widget.friendName),
           style: GoogleFonts.newsreader(color: kColorOnSurface),
         ),
         content: Text(
-          'You will no longer appear in each other\'s friends list.',
+          s.friendUnfriendBody,
           style: GoogleFonts.spaceGrotesk(
             color: kColorOnSurfaceVariant,
             fontSize: 14,
@@ -58,14 +60,14 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              'Cancel',
+              s.commonCancel,
               style: GoogleFonts.spaceGrotesk(color: kColorOutline),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              'Unfriend',
+              s.friendUnfriendAction,
               style: GoogleFonts.spaceGrotesk(color: Colors.redAccent),
             ),
           ),
@@ -81,11 +83,11 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
       if (!mounted) return;
       ref.invalidate(friendListProvider);
       Navigator.of(context).pop();
-    } catch (e, s) {
+    } catch (e, st) {
       dev.log(
         'removeFriend failed',
         error: e,
-        stackTrace: s,
+        stackTrace: st,
         name: 'FriendProfileScreen',
       );
       if (!mounted) return;
@@ -93,7 +95,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to unfriend. Try again.',
+            AppStrings.of(context).friendUnfriendFailed,
             style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
           ),
           backgroundColor: kColorSurfaceHigh,
@@ -104,6 +106,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Scaffold(
       backgroundColor: kColorBackground,
       appBar: AppBar(
@@ -113,7 +116,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'PROFILE',
+          s.profileTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -146,7 +149,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
           if (snapshot.hasError || !snapshot.hasData) {
             return Center(
               child: Text(
-                'Could not load profile.',
+                s.friendProfileLoadFailed,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 14,
@@ -185,6 +188,7 @@ class _ProfileBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final winPct = profile.totalGamesPlayed == 0
         ? '—'
         : '${(profile.winRate * 100).round()}%';
@@ -211,7 +215,7 @@ class _ProfileBody extends StatelessWidget {
           const SizedBox(height: 4),
           Center(
             child: Text(
-              'Last played ${_timeAgo(profile.lastPlayedAt!)}',
+              s.friendLastPlayed(_timeAgo(s, profile.lastPlayedAt!)),
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 12,
@@ -222,23 +226,26 @@ class _ProfileBody extends StatelessWidget {
         const SizedBox(height: 28),
 
         // ── Stats row ──────────────────────────────────────────────────────
-        _SectionLabel('STATS'),
+        _SectionLabel(s.friendStats),
         const SizedBox(height: 10),
         Row(
           children: [
             Expanded(
               child: _StatCard(
                 value: '${profile.totalGamesPlayed}',
-                label: 'PLAYS',
+                label: s.homeStatPlays,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _StatCard(value: '${profile.totalWins}', label: 'WINS'),
+              child: _StatCard(
+                value: '${profile.totalWins}',
+                label: s.homeStatWins,
+              ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _StatCard(value: winPct, label: 'WIN RATE'),
+              child: _StatCard(value: winPct, label: s.homeStatWinRate),
             ),
           ],
         ),
@@ -246,7 +253,7 @@ class _ProfileBody extends StatelessWidget {
         // ── Top games ──────────────────────────────────────────────────────
         if (profile.topGames.isNotEmpty) ...[
           const SizedBox(height: 28),
-          _SectionLabel('MOST PLAYED'),
+          _SectionLabel(s.friendMostPlayed),
           const SizedBox(height: 8),
           ...profile.topGames.map((g) => _GameRow(game: g)),
         ],
@@ -279,7 +286,7 @@ class _ProfileBody extends StatelessWidget {
                       strokeWidth: 1.5,
                     ),
                   )
-                : const Text('UNFRIEND'),
+                : Text(s.friendUnfriendCaps),
           ),
         ),
       ],
@@ -374,7 +381,9 @@ class _GameRow extends StatelessWidget {
             ),
           ),
           Text(
-            '${game.playCount} plays · ${game.winCount} wins',
+            AppStrings.of(
+              context,
+            ).friendGameStat(game.playCount, game.winCount),
             style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 11),
           ),
         ],
@@ -415,12 +424,12 @@ class _Avatar extends StatelessWidget {
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-String _timeAgo(DateTime dt) {
+String _timeAgo(AppStrings s, DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inDays >= 365) return '${diff.inDays ~/ 365}y ago';
-  if (diff.inDays >= 30) return '${diff.inDays ~/ 30}mo ago';
-  if (diff.inDays >= 1) return '${diff.inDays}d ago';
-  if (diff.inHours >= 1) return '${diff.inHours}h ago';
-  if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
-  return 'just now';
+  if (diff.inDays >= 365) return s.timeYearsAgo(diff.inDays ~/ 365);
+  if (diff.inDays >= 30) return s.timeMonthsAgo(diff.inDays ~/ 30);
+  if (diff.inDays >= 1) return s.timeDaysAgo(diff.inDays);
+  if (diff.inHours >= 1) return s.timeHoursAgo(diff.inHours);
+  if (diff.inMinutes >= 1) return s.timeMinutesAgo(diff.inMinutes);
+  return s.timeJustNow;
 }

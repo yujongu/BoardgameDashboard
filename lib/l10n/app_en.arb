@@ -131,5 +131,107 @@
     "placeholders": {
       "max": { "type": "int" }
     }
+  },
+
+  "timeYearsAgo": "{count}y ago",
+  "@timeYearsAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeMonthsAgo": "{count}mo ago",
+  "@timeMonthsAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeDaysAgo": "{count}d ago",
+  "@timeDaysAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeHoursAgo": "{count}h ago",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeMinutesAgo": "{count}m ago",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeJustNow": "just now",
+
+  "friendsTitle": "FRIENDS",
+  "friendsRequestsTooltip": "Friend requests",
+  "friendsSearchHint": "Search to add friends…",
+  "friendsNoUsers": "No users found",
+  "friendsStatusFriends": "FRIENDS",
+  "friendsStatusPending": "PENDING",
+  "friendsAdd": "ADD",
+  "friendsIncomingCount": "INCOMING ({count})",
+  "@friendsIncomingCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "friendsPendingCount": "PENDING ({count})",
+  "@friendsPendingCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "friendsAccept": "ACCEPT",
+  "friendsDecline": "DECLINE",
+  "friendsLoadFailed": "Could not load friends.",
+  "friendsEmpty": "No friends yet.\nSearch above to add someone.",
+  "friendsAcceptFailed": "Failed to accept. Try again.",
+  "friendsDeclineFailed": "Failed to decline. Try again.",
+  "friendsAlreadyExists": "Already friends or request already pending.",
+  "friendsSendFailed": "Could not send request. Try again.",
+
+  "friendsRequestsTitle": "REQUESTS",
+  "friendsIncoming": "INCOMING",
+  "friendsSent": "SENT",
+  "friendsSentCount": "SENT ({count})",
+  "@friendsSentCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "friendsCancelFailed": "Failed to cancel. Try again.",
+  "friendsIncomingLoadFailed": "Could not load incoming requests.",
+  "friendsNoIncoming": "No incoming requests.",
+  "friendsSentLoadFailed": "Could not load sent requests.",
+  "friendsNoSent": "No sent requests.",
+
+  "friendUnfriendTitle": "Unfriend {name}?",
+  "@friendUnfriendTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "friendUnfriendBody": "You will no longer appear in each other''s friends list.",
+  "friendUnfriendAction": "Unfriend",
+  "friendUnfriendFailed": "Failed to unfriend. Try again.",
+  "friendProfileLoadFailed": "Could not load profile.",
+  "friendLastPlayed": "Last played {time}",
+  "@friendLastPlayed": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "friendStats": "STATS",
+  "friendMostPlayed": "MOST PLAYED",
+  "friendUnfriendCaps": "UNFRIEND",
+  "friendGameStat": "{plays} plays · {wins} wins",
+  "@friendGameStat": {
+    "placeholders": {
+      "plays": { "type": "int" },
+      "wins": { "type": "int" }
+    }
   }
 }

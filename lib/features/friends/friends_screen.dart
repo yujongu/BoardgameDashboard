@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend.dart';
 import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
@@ -99,14 +100,18 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final ok = await ref
         .read(incomingRequestsProvider.notifier)
         .accept(request.requestId);
-    if (!ok && mounted) _showSnackbar('Failed to accept. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsAcceptFailed);
+    }
   }
 
   Future<void> _reject(FriendRequestSummary request) async {
     final ok = await ref
         .read(incomingRequestsProvider.notifier)
         .reject(request.requestId);
-    if (!ok && mounted) _showSnackbar('Failed to decline. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsDeclineFailed);
+    }
   }
 
   void _showSnackbar(String message) {
@@ -122,17 +127,19 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   }
 
   String _friendlyError(Object e) {
+    final s = AppStrings.of(context);
     final msg = e.toString().toLowerCase();
     if (msg.contains('already-exists')) {
-      return 'Already friends or request already pending.';
+      return s.friendsAlreadyExists;
     }
-    return 'Could not send request. Try again.';
+    return s.friendsSendFailed;
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final query = _searchController.text.trim();
     final incomingCount =
         ref.watch(incomingRequestsProvider).valueOrNull?.length ?? 0;
@@ -145,7 +152,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'FRIENDS',
+          s.friendsTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -156,7 +163,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Friend requests',
+            tooltip: s.friendsRequestsTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const FriendRequestsScreen()),
             ),
@@ -188,6 +195,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   // ─── Search results view ────────────────────────────────────────────────────
 
   Widget _buildSearchView() {
+    final s = AppStrings.of(context);
     // Always watch so these providers don't dispose mid-search.
     final friendIds =
         ref
@@ -221,7 +229,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     if (_searchResults.isEmpty) {
       return Center(
         child: Text(
-          'No users found',
+          s.friendsNoUsers,
           style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 14),
         ),
       );
@@ -250,6 +258,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   // ─── Sections view (no query) ───────────────────────────────────────────────
 
   Widget _buildSectionsView() {
+    final s = AppStrings.of(context);
     final incomingAsync = ref.watch(incomingRequestsProvider);
     final outgoingAsync = ref.watch(outgoingRequestsProvider);
     final friendsAsync = ref.watch(friendListProvider);
@@ -259,7 +268,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       children: [
         // Incoming requests — hidden while loading or on error; only shown when non-empty.
         if (incomingAsync.valueOrNull?.isNotEmpty == true) ...[
-          _SectionLabel('INCOMING (${incomingAsync.value!.length})'),
+          _SectionLabel(s.friendsIncomingCount(incomingAsync.value!.length)),
           ...incomingAsync.value!.map(
             (r) => _IncomingRequestRow(
               request: r,
@@ -272,13 +281,13 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
         // Outgoing / pending — hidden while loading or on error; only shown when non-empty.
         if (outgoingAsync.valueOrNull?.isNotEmpty == true) ...[
-          _SectionLabel('PENDING (${outgoingAsync.value!.length})'),
+          _SectionLabel(s.friendsPendingCount(outgoingAsync.value!.length)),
           ...outgoingAsync.value!.map((r) => _OutgoingRequestRow(request: r)),
           const SizedBox(height: 8),
         ],
 
         // Friends list — always shows the section header.
-        const _SectionLabel('FRIENDS'),
+        _SectionLabel(s.friendsTitle),
         ...friendsAsync.when<List<Widget>>(
           loading: () => [const _SectionLoadingTile()],
           error: (err, _) => [
@@ -343,7 +352,7 @@ class _SearchField extends StatelessWidget {
                   fontSize: 14,
                 ),
                 decoration: InputDecoration.collapsed(
-                  hintText: 'Search to add friends…',
+                  hintText: AppStrings.of(context).friendsSearchHint,
                   hintStyle: GoogleFonts.spaceGrotesk(
                     color: kColorOutline,
                     fontSize: 14,
@@ -414,13 +423,14 @@ class _SearchResultRow extends StatelessWidget {
               ),
             ),
           ),
-          _action(),
+          _action(context),
         ],
       ),
     );
   }
 
-  Widget _action() {
+  Widget _action(BuildContext context) {
+    final s = AppStrings.of(context);
     if (isFriend) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -428,7 +438,7 @@ class _SearchResultRow extends StatelessWidget {
           const Icon(Icons.check, color: kColorPrimary, size: 13),
           const SizedBox(width: 4),
           Text(
-            'FRIENDS',
+            s.friendsStatusFriends,
             style: GoogleFonts.spaceGrotesk(
               color: kColorPrimary,
               fontSize: 10,
@@ -451,7 +461,7 @@ class _SearchResultRow extends StatelessWidget {
     }
     if (isPending) {
       return Text(
-        'PENDING',
+        s.friendsStatusPending,
         style: GoogleFonts.spaceGrotesk(
           color: kColorOutlineVariant,
           fontSize: 10,
@@ -469,7 +479,7 @@ class _SearchResultRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
-          'ADD',
+          s.friendsAdd,
           style: GoogleFonts.spaceGrotesk(
             color: kColorPrimary,
             fontSize: 10,
@@ -542,6 +552,7 @@ class _IncomingRequestRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -567,7 +578,7 @@ class _IncomingRequestRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  _timeAgo(request.createdAt),
+                  _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorOutline,
                     fontSize: 11,
@@ -586,7 +597,7 @@ class _IncomingRequestRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                'ACCEPT',
+                s.friendsAccept,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorPrimary,
                   fontSize: 10,
@@ -600,7 +611,7 @@ class _IncomingRequestRow extends StatelessWidget {
           GestureDetector(
             onTap: onReject,
             child: Text(
-              'DECLINE',
+              s.friendsDecline,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 10,
@@ -624,6 +635,7 @@ class _OutgoingRequestRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -649,7 +661,7 @@ class _OutgoingRequestRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  _timeAgo(request.createdAt),
+                  _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorOutline,
                     fontSize: 11,
@@ -659,7 +671,7 @@ class _OutgoingRequestRow extends StatelessWidget {
             ),
           ),
           Text(
-            'PENDING',
+            s.friendsStatusPending,
             style: GoogleFonts.spaceGrotesk(
               color: kColorOutlineVariant,
               fontSize: 10,
@@ -729,20 +741,21 @@ class _FriendErrorTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Could not load friends.',
+            s.friendsLoadFailed,
             style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
           ),
           const SizedBox(width: 12),
           GestureDetector(
             onTap: onRetry,
             child: Text(
-              'RETRY',
+              s.commonRetry,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorPrimary,
                 fontSize: 11,
@@ -765,7 +778,7 @@ class _EmptyFriendsTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Text(
-        'No friends yet.\nSearch above to add someone.',
+        AppStrings.of(context).friendsEmpty,
         textAlign: TextAlign.center,
         style: GoogleFonts.newsreader(
           color: kColorOutline,
@@ -810,12 +823,12 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-String _timeAgo(DateTime dt) {
+String _timeAgo(AppStrings s, DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inDays >= 365) return '${diff.inDays ~/ 365}y ago';
-  if (diff.inDays >= 30) return '${diff.inDays ~/ 30}mo ago';
-  if (diff.inDays >= 1) return '${diff.inDays}d ago';
-  if (diff.inHours >= 1) return '${diff.inHours}h ago';
-  if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
-  return 'just now';
+  if (diff.inDays >= 365) return s.timeYearsAgo(diff.inDays ~/ 365);
+  if (diff.inDays >= 30) return s.timeMonthsAgo(diff.inDays ~/ 30);
+  if (diff.inDays >= 1) return s.timeDaysAgo(diff.inDays);
+  if (diff.inHours >= 1) return s.timeHoursAgo(diff.inHours);
+  if (diff.inMinutes >= 1) return s.timeMinutesAgo(diff.inMinutes);
+  return s.timeJustNow;
 }

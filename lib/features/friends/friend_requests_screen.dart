@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/theme/app_theme.dart';
@@ -19,21 +20,27 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
     final ok = await ref
         .read(incomingRequestsProvider.notifier)
         .accept(requestId);
-    if (!ok && mounted) _showSnackbar('Failed to accept. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsAcceptFailed);
+    }
   }
 
   Future<void> _reject(String requestId) async {
     final ok = await ref
         .read(incomingRequestsProvider.notifier)
         .reject(requestId);
-    if (!ok && mounted) _showSnackbar('Failed to decline. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsDeclineFailed);
+    }
   }
 
   Future<void> _cancel(String requestId) async {
     final ok = await ref
         .read(outgoingRequestsProvider.notifier)
         .cancel(requestId);
-    if (!ok && mounted) _showSnackbar('Failed to cancel. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsCancelFailed);
+    }
   }
 
   void _showSnackbar(String message) {
@@ -50,6 +57,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final incomingAsync = ref.watch(incomingRequestsProvider);
     final outgoingAsync = ref.watch(outgoingRequestsProvider);
 
@@ -65,7 +73,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'REQUESTS',
+          s.friendsRequestsTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -84,16 +92,14 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
         children: [
           _SectionLabel(
             incomingCount != null && incomingCount > 0
-                ? 'INCOMING ($incomingCount)'
-                : 'INCOMING',
+                ? s.friendsIncomingCount(incomingCount)
+                : s.friendsIncoming,
           ),
           ...incomingAsync.when(
             loading: () => [const _LoadingTile()],
-            error: (_, _) => [
-              const _MessageTile('Could not load incoming requests.'),
-            ],
+            error: (_, _) => [_MessageTile(s.friendsIncomingLoadFailed)],
             data: (requests) => requests.isEmpty
-                ? [const _MessageTile('No incoming requests.')]
+                ? [_MessageTile(s.friendsNoIncoming)]
                 : requests
                       .map(
                         (r) => _IncomingRow(
@@ -107,16 +113,14 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
           const SizedBox(height: 8),
           _SectionLabel(
             outgoingCount != null && outgoingCount > 0
-                ? 'SENT ($outgoingCount)'
-                : 'SENT',
+                ? s.friendsSentCount(outgoingCount)
+                : s.friendsSent,
           ),
           ...outgoingAsync.when(
             loading: () => [const _LoadingTile()],
-            error: (_, _) => [
-              const _MessageTile('Could not load sent requests.'),
-            ],
+            error: (_, _) => [_MessageTile(s.friendsSentLoadFailed)],
             data: (requests) => requests.isEmpty
-                ? [const _MessageTile('No sent requests.')]
+                ? [_MessageTile(s.friendsNoSent)]
                 : requests
                       .map(
                         (r) => _OutgoingRow(
@@ -171,6 +175,7 @@ class _IncomingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -196,7 +201,7 @@ class _IncomingRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  _timeAgo(request.createdAt),
+                  _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorOutline,
                     fontSize: 11,
@@ -215,7 +220,7 @@ class _IncomingRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                'ACCEPT',
+                s.friendsAccept,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorPrimary,
                   fontSize: 10,
@@ -229,7 +234,7 @@ class _IncomingRow extends StatelessWidget {
           GestureDetector(
             onTap: onDecline,
             child: Text(
-              'DECLINE',
+              s.friendsDecline,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 10,
@@ -254,6 +259,7 @@ class _OutgoingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -279,7 +285,7 @@ class _OutgoingRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  _timeAgo(request.createdAt),
+                  _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorOutline,
                     fontSize: 11,
@@ -291,7 +297,7 @@ class _OutgoingRow extends StatelessWidget {
           GestureDetector(
             onTap: onCancel,
             child: Text(
-              'CANCEL',
+              s.commonCancelCaps,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 10,
@@ -381,12 +387,12 @@ class _Avatar extends StatelessWidget {
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-String _timeAgo(DateTime dt) {
+String _timeAgo(AppStrings s, DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inDays >= 365) return '${diff.inDays ~/ 365}y ago';
-  if (diff.inDays >= 30) return '${diff.inDays ~/ 30}mo ago';
-  if (diff.inDays >= 1) return '${diff.inDays}d ago';
-  if (diff.inHours >= 1) return '${diff.inHours}h ago';
-  if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
-  return 'just now';
+  if (diff.inDays >= 365) return s.timeYearsAgo(diff.inDays ~/ 365);
+  if (diff.inDays >= 30) return s.timeMonthsAgo(diff.inDays ~/ 30);
+  if (diff.inDays >= 1) return s.timeDaysAgo(diff.inDays);
+  if (diff.inHours >= 1) return s.timeHoursAgo(diff.inHours);
+  if (diff.inMinutes >= 1) return s.timeMinutesAgo(diff.inMinutes);
+  return s.timeJustNow;
 }
