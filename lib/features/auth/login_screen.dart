@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -66,9 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       setState(() => _errorMessage = _friendlyError(e.code));
     } catch (_) {
-      setState(
-        () => _errorMessage = 'Google sign-in failed. Please try again.',
-      );
+      setState(() => _errorMessage = AppStrings.of(context).authGoogleFailed);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -104,21 +103,22 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String _friendlyError(String code) {
+    final s = AppStrings.of(context);
     switch (code) {
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':
-        return 'Incorrect email or password.';
+        return s.authErrorIncorrectCredentials;
       case 'email-already-in-use':
-        return 'An account with this email already exists.';
+        return s.authErrorEmailInUse;
       case 'weak-password':
-        return 'Password must be at least 6 characters.';
+        return s.authErrorWeakPassword;
       case 'invalid-email':
-        return 'Please enter a valid email address.';
+        return s.authErrorInvalidEmail;
       case 'too-many-requests':
-        return 'Too many attempts. Please try again later.';
+        return s.authErrorTooManyRequests;
       default:
-        return 'Something went wrong. Please try again.';
+        return s.authErrorGeneric;
     }
   }
 
@@ -162,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         Text(
-          'Gameshelf',
+          AppStrings.of(context).appTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 40,
@@ -174,7 +174,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          _isRegistering ? 'Create your account' : 'Sign in to continue',
+          _isRegistering
+              ? AppStrings.of(context).authSubtitleCreate
+              : AppStrings.of(context).authSubtitleSignIn,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: kColorOnSurfaceVariant),
@@ -191,10 +193,14 @@ class _LoginScreenState extends State<LoginScreen> {
       textInputAction: TextInputAction.next,
       autocorrect: false,
       style: const TextStyle(color: kColorOnSurface),
-      decoration: _inputDecoration('Email', Icons.mail_outline),
+      decoration: _inputDecoration(
+        AppStrings.of(context).authEmailLabel,
+        Icons.mail_outline,
+      ),
       validator: (v) {
-        if (v == null || v.trim().isEmpty) return 'Email is required.';
-        if (!v.contains('@')) return 'Enter a valid email.';
+        final s = AppStrings.of(context);
+        if (v == null || v.trim().isEmpty) return s.authEmailRequired;
+        if (!v.contains('@')) return s.authEmailInvalid;
         return null;
       },
     );
@@ -207,22 +213,28 @@ class _LoginScreenState extends State<LoginScreen> {
       textInputAction: TextInputAction.done,
       onFieldSubmitted: (_) => _submit(),
       style: const TextStyle(color: kColorOnSurface),
-      decoration: _inputDecoration('Password', Icons.lock_outline).copyWith(
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
-            color: kColorOutline,
-            size: 20,
+      decoration:
+          _inputDecoration(
+            AppStrings.of(context).authPasswordLabel,
+            Icons.lock_outline,
+          ).copyWith(
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: kColorOutline,
+                size: 20,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+            ),
           ),
-          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-        ),
-      ),
       validator: (v) {
-        if (v == null || v.isEmpty) return 'Password is required.';
+        final s = AppStrings.of(context);
+        if (v == null || v.isEmpty) return s.authPasswordRequired;
         if (_isRegistering && v.length < 6) {
-          return 'Password must be at least 6 characters.';
+          return s.authErrorWeakPassword;
         }
         return null;
       },
@@ -292,7 +304,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: kColorOnPrimary,
                 ),
               )
-            : Text(_isRegistering ? 'Create Account' : 'Sign In'),
+            : Text(
+                _isRegistering
+                    ? AppStrings.of(context).authCreateAccount
+                    : AppStrings.of(context).authSignIn,
+              ),
       ),
     );
   }
@@ -303,8 +319,8 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(
           _isRegistering
-              ? 'Already have an account?'
-              : "Don't have an account?",
+              ? AppStrings.of(context).authHaveAccount
+              : AppStrings.of(context).authNoAccount,
           style: const TextStyle(color: kColorOnSurfaceVariant, fontSize: 13),
         ),
         TextButton(
@@ -319,7 +335,9 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 6),
           ),
           child: Text(
-            _isRegistering ? 'Sign In' : 'Register',
+            _isRegistering
+                ? AppStrings.of(context).authSignIn
+                : AppStrings.of(context).authRegister,
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
         ),
@@ -334,8 +352,8 @@ class _LoginScreenState extends State<LoginScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'or',
-            style: TextStyle(color: kColorOnSurfaceVariant, fontSize: 13),
+            AppStrings.of(context).authOr,
+            style: const TextStyle(color: kColorOnSurfaceVariant, fontSize: 13),
           ),
         ),
         const Expanded(child: Divider(color: kColorOutlineVariant)),
@@ -357,7 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        child: const Text('Continue with Google'),
+        child: Text(AppStrings.of(context).authContinueWithGoogle),
       ),
     );
   }

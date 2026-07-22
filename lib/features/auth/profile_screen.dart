@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_theme.dart';
 import '../friends/friends_screen.dart';
 
@@ -75,6 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final initials = _initials(_name);
 
     return Scaffold(
@@ -86,7 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'PROFILE',
+          s.profileTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -156,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(width: 14),
                     Expanded(
                       child: Text(
-                        'Friends',
+                        s.profileFriends,
                         style: GoogleFonts.workSans(
                           color: kColorOnSurface,
                           fontSize: 16,
@@ -181,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: OutlinedButton.icon(
                 onPressed: _signOut,
                 icon: const Icon(Icons.logout, size: 18),
-                label: const Text('Sign Out'),
+                label: Text(s.profileSignOut),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: kColorPrimary,
                   side: const BorderSide(color: kColorAmberBorder),
@@ -232,9 +234,9 @@ class _EditNameDialogState extends State<_EditNameDialog> {
       widget.onSuccess(newName);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Display name updated.'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(AppStrings.of(context).profileNameUpdated),
+            duration: const Duration(seconds: 2),
           ),
         );
         Navigator.of(context).pop();
@@ -243,7 +245,9 @@ class _EditNameDialogState extends State<_EditNameDialog> {
       debugPrint('Name update error: $e\n$st');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update name. Try again.')),
+          SnackBar(
+            content: Text(AppStrings.of(context).profileNameUpdateFailed),
+          ),
         );
       }
     } finally {
@@ -253,10 +257,11 @@ class _EditNameDialogState extends State<_EditNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return AlertDialog(
       backgroundColor: kColorSurface,
       title: Text(
-        'Edit display name',
+        s.profileEditNameTitle,
         style: GoogleFonts.newsreader(
           color: kColorOnSurface,
           fontSize: 20,
@@ -273,7 +278,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
           autofocus: true,
           style: const TextStyle(color: kColorOnSurface),
           decoration: InputDecoration(
-            hintText: 'Your name',
+            hintText: s.profileNameHint,
             hintStyle: const TextStyle(color: kColorOutline),
             filled: true,
             fillColor: kColorSurfaceHigh,
@@ -296,7 +301,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
             errorStyle: const TextStyle(color: Colors.redAccent),
           ),
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Name cannot be empty.';
+            if (v == null || v.trim().isEmpty) return s.profileNameEmpty;
             return null;
           },
         ),
@@ -305,7 +310,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           child: Text(
-            'Cancel',
+            s.commonCancel,
             style: GoogleFonts.workSans(color: kColorOnSurfaceVariant),
           ),
         ),
@@ -332,7 +337,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                     color: kColorOnPrimary,
                   ),
                 )
-              : const Text('Save'),
+              : Text(s.commonSave),
         ),
       ],
     );

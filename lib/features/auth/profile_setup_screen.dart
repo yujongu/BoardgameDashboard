@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_theme.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
@@ -53,9 +54,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save name. Please try again.'),
-          ),
+          SnackBar(content: Text(AppStrings.of(context).profileSaveNameFailed)),
         );
       }
     } finally {
@@ -65,6 +64,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -77,7 +77,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Gameshelf',
+                    s.appTitle,
                     style: GoogleFonts.newsreader(
                       color: kColorPrimary,
                       fontSize: 40,
@@ -89,7 +89,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'One last step',
+                    s.profileSetupSubtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: kColorOnSurfaceVariant,
                     ),
@@ -97,7 +97,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ),
                   const SizedBox(height: 48),
                   Text(
-                    'What should we call you?',
+                    s.profileSetupPrompt,
                     style: GoogleFonts.newsreader(
                       color: kColorOnSurface,
                       fontSize: 20,
@@ -115,7 +115,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     style: const TextStyle(color: kColorOnSurface),
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
-                      hintText: 'Your name',
+                      hintText: s.profileNameHint,
                       hintStyle: const TextStyle(color: kColorOutline),
                       filled: true,
                       fillColor: kColorSurface,
@@ -147,7 +147,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Please enter your name.';
+                        return s.profileNameRequired;
                       }
                       return null;
                     },
@@ -180,7 +180,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                 color: kColorOnPrimary,
                               ),
                             )
-                          : const Text('Continue'),
+                          : Text(s.commonContinue),
                     ),
                   ),
                 ],

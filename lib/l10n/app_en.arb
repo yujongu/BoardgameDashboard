@@ -1,0 +1,49 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Gameshelf",
+  "@appTitle": {
+    "description": "The application display name."
+  },
+
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonContinue": "Continue",
+
+  "authErrorTitle": "Could not sign you in",
+  "authSubtitleCreate": "Create your account",
+  "authSubtitleSignIn": "Sign in to continue",
+  "authGoogleFailed": "Google sign-in failed. Please try again.",
+  "authErrorIncorrectCredentials": "Incorrect email or password.",
+  "authErrorEmailInUse": "An account with this email already exists.",
+  "authErrorWeakPassword": "Password must be at least 6 characters.",
+  "authErrorInvalidEmail": "Please enter a valid email address.",
+  "authErrorTooManyRequests": "Too many attempts. Please try again later.",
+  "authErrorGeneric": "Something went wrong. Please try again.",
+  "authEmailLabel": "Email",
+  "authEmailRequired": "Email is required.",
+  "authEmailInvalid": "Enter a valid email.",
+  "authPasswordLabel": "Password",
+  "authPasswordRequired": "Password is required.",
+  "authCreateAccount": "Create Account",
+  "authSignIn": "Sign In",
+  "authHaveAccount": "Already have an account?",
+  "authNoAccount": "Don't have an account?",
+  "authRegister": "Register",
+  "authOr": "or",
+  "authContinueWithGoogle": "Continue with Google",
+
+  "profileSetupSubtitle": "One last step",
+  "profileSetupPrompt": "What should we call you?",
+  "profileNameHint": "Your name",
+  "profileNameRequired": "Please enter your name.",
+  "profileSaveNameFailed": "Failed to save name. Please try again.",
+
+  "profileTitle": "PROFILE",
+  "profileFriends": "Friends",
+  "profileSignOut": "Sign Out",
+  "profileEditNameTitle": "Edit display name",
+  "profileNameUpdated": "Display name updated.",
+  "profileNameUpdateFailed": "Failed to update name. Try again.",
+  "profileNameEmpty": "Name cannot be empty."
+}

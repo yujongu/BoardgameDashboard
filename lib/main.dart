@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
+import 'l10n/app_localizations.dart';
 import 'shared/theme/app_theme.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/profile_setup_screen.dart';
@@ -87,8 +88,10 @@ class _BoardGameAppState extends State<BoardGameApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gameshelf',
+      onGenerateTitle: (context) => AppStrings.of(context).appTitle,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppStrings.localizationsDelegates,
+      supportedLocales: AppStrings.supportedLocales,
       theme: buildAppTheme(),
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
@@ -138,7 +141,7 @@ class _AuthErrorScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Could not sign you in',
+                AppStrings.of(context).authErrorTitle,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
