@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:board_game_dashboard/features/plays/play_history_page.dart';
+import 'package:board_game_dashboard/l10n/app_localizations.dart';
 import 'package:board_game_dashboard/shared/models/play.dart';
 import 'package:board_game_dashboard/shared/providers/repository_providers.dart';
 import 'package:board_game_dashboard/shared/repositories/play_repository.dart';
@@ -39,7 +40,11 @@ class _FakePlayRepo implements PlayRepository {
 
 Widget _wrap(PlayRepository repo) => ProviderScope(
   overrides: [playRepositoryProvider.overrideWithValue(repo)],
-  child: const MaterialApp(home: PlayHistoryPage()),
+  child: MaterialApp(
+    localizationsDelegates: AppStrings.localizationsDelegates,
+    supportedLocales: AppStrings.supportedLocales,
+    home: const PlayHistoryPage(),
+  ),
 );
 
 void main() {

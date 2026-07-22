@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/theme/app_theme.dart';
 import 'edit_play_page.dart';
@@ -36,7 +37,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to save. Please try again.',
+            AppStrings.of(context).playDetailSaveFailed,
             style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
           ),
           backgroundColor: kColorSurfaceHigh,
@@ -46,13 +47,14 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
   }
 
   Future<void> _onDelete() async {
+    final s = AppStrings.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kColorSurfaceHigh,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         title: Text(
-          'Delete this play?',
+          s.playDeleteTitle,
           style: GoogleFonts.newsreader(
             color: kColorOnSurface,
             fontSize: 20,
@@ -60,14 +62,14 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
           ),
         ),
         content: Text(
-          'This will permanently remove the session and update all stats.',
+          s.playDeleteBody,
           style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              'CANCEL',
+              s.commonCancelCaps,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 12,
@@ -79,7 +81,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              'DELETE',
+              s.playDeleteConfirm,
               style: GoogleFonts.spaceGrotesk(
                 color: Colors.redAccent,
                 fontSize: 12,
@@ -103,6 +105,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final state = ref.watch(playDetailProvider(widget.initialData));
 
     return PopScope(
@@ -133,7 +136,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                         : kColorOutline,
                     size: 20,
                   ),
-                  tooltip: 'Edit',
+                  tooltip: s.commonEdit,
                   onPressed: state.participants != null
                       ? () => _onEdit(state)
                       : null,
@@ -144,7 +147,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                     color: Colors.redAccent,
                     size: 20,
                   ),
-                  tooltip: 'Delete',
+                  tooltip: s.commonDelete,
                   onPressed: _onDelete,
                 ),
                 const SizedBox(width: 4),
@@ -189,7 +192,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
                 child: _SectionHeader(
-                  title: 'Players',
+                  title: s.playDetailPlayers,
                   count: state.participantCount,
                 ),
               ),
@@ -343,7 +346,7 @@ class _SectionHeader extends StatelessWidget {
               ),
             ),
             Text(
-              '$count ${count == 1 ? 'PLAYER' : 'PLAYERS'}',
+              AppStrings.of(context).playersCountCaps(count),
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 11,
@@ -444,6 +447,7 @@ class _ParticipantsError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
@@ -452,14 +456,14 @@ class _ParticipantsError extends StatelessWidget {
           const Icon(Icons.error_outline, color: kColorOutline, size: 32),
           const SizedBox(height: 12),
           Text(
-            'Could not load players',
+            s.playDetailPlayersLoadFailed,
             style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
           ),
           const SizedBox(height: 12),
           GestureDetector(
             onTap: onRetry,
             child: Text(
-              'RETRY',
+              s.commonRetry,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorPrimary,
                 fontSize: 11,
@@ -487,6 +491,7 @@ class _ParticipantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final isWinner = participant.isWinner;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -534,7 +539,7 @@ class _ParticipantCard extends StatelessWidget {
                 if (participant.score != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Score: ${_formatScore(participant.score!)}',
+                    s.playDetailScore(_formatScore(participant.score!)),
                     style: GoogleFonts.spaceGrotesk(
                       color: kColorOutline,
                       fontSize: 11,
@@ -545,9 +550,12 @@ class _ParticipantCard extends StatelessWidget {
             ),
           ),
           if (isWinner)
-            _Badge(label: 'WINNER', color: kColorPrimary)
+            _Badge(label: s.playDetailWinner, color: kColorPrimary)
           else if (participant.rank != null)
-            _Badge(label: '#${participant.rank}', color: kColorOutline),
+            _Badge(
+              label: s.playDetailRank(participant.rank!),
+              color: kColorOutline,
+            ),
         ],
       ),
     );

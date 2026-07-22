@@ -65,21 +65,15 @@ class AddPlayState {
     return true;
   }
 
-  String get saveButtonText {
-    if (selectedGame != null && participants.length < _effectiveMin) {
-      return 'Minimum $_effectiveMin players needed';
-    }
-    return 'Save Play';
-  }
+  /// Minimum players required for the selected game (1 when none selected).
+  int get effectiveMinPlayers => _effectiveMin;
 
-  String get addButtonText =>
-      canAddParticipant ? '+ Add Participant' : 'Max players added';
+  /// True when a game is selected but not enough players have been added yet.
+  bool get belowMinPlayers =>
+      selectedGame != null && participants.length < _effectiveMin;
 
-  String get playerCountText {
-    final max = selectedGame?.maxPlayers;
-    if (max != null) return 'Players: ${participants.length} / $max';
-    return 'Players: ${participants.length}';
-  }
+  /// Max players for the selected game, or null when none is selected / unbounded.
+  int? get maxPlayers => selectedGame?.maxPlayers;
 
   AddPlayState copyWith({
     CatalogGame? selectedGame,

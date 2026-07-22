@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_theme.dart';
 import 'add_play_notifier.dart';
 import 'participant_list_section.dart';
@@ -76,7 +77,7 @@ class _ParticipantPickerBottomSheetState
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
                 child: Text(
-                  'Max players reached',
+                  AppStrings.of(context).participantMaxReached,
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorPrimary,
                     fontSize: 11,
@@ -103,11 +104,14 @@ class _ParticipantPickerBottomSheetState
   );
 
   Widget _sheetTitle() {
+    final s = AppStrings.of(context);
     final guestName = _addedGuestName;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
-        guestName != null ? '$guestName ADDED' : 'ADD PARTICIPANTS',
+        guestName != null
+            ? s.participantGuestAdded(guestName)
+            : s.participantAddTitle,
         style: GoogleFonts.spaceGrotesk(
           color: guestName != null ? kColorPrimary : kColorOutline,
           fontSize: 11,

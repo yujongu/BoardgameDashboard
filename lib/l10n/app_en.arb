@@ -233,5 +233,91 @@
       "plays": { "type": "int" },
       "wins": { "type": "int" }
     }
-  }
+  },
+
+  "commonEdit": "Edit",
+  "commonDelete": "Delete",
+  "scoreHint": "—",
+
+  "addPlayTitle": "LOG A PLAY",
+  "addPlaySaveFailed": "Failed to save play. Please try again.",
+  "addPlaySectionGame": "GAME",
+  "addPlaySectionSession": "SESSION",
+  "addPlayLocationHint": "Location (optional)",
+  "addPlayNotesHint": "Notes (optional)",
+  "addPlayPlayers": "PLAYERS",
+  "addPlaySelectGame": "Select a game…",
+  "addPlayPlayerNameHint": "Player name",
+  "savePlay": "Save Play",
+  "minPlayersNeeded": "Minimum {count} players needed",
+  "@minPlayersNeeded": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "addParticipant": "+ Add Participant",
+  "maxPlayersAdded": "Max players added",
+  "playersCountMax": "Players: {count} / {max}",
+  "@playersCountMax": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "playersCountOnly": "Players: {count}",
+  "@playersCountOnly": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "participantSearchHint": "Search friends or add guest…",
+  "participantMaxReached": "Max players reached",
+  "participantGuestAdded": "{name} ADDED",
+  "@participantGuestAdded": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "participantAddTitle": "ADD PARTICIPANTS",
+  "participantSectionUsers": "USERS",
+  "participantNoFriends": "No friends yet",
+  "participantAdded": "Added",
+  "participantLoadFailed": "Failed to load friends",
+  "participantGuestHint": "Type a name to add as guest",
+  "participantAddGuestPrefix": "Add guest ",
+
+  "playHistoryTitleCaps": "PLAY HISTORY",
+  "historyTapToRetry": "TAP TO RETRY",
+  "historyLoadFailed": "Could not load your plays",
+
+  "playDetailSaveFailed": "Failed to save. Please try again.",
+  "playDeleteTitle": "Delete this play?",
+  "playDeleteBody": "This will permanently remove the session and update all stats.",
+  "playDeleteConfirm": "DELETE",
+  "playDetailPlayers": "Players",
+  "playersCountCaps": "{count, plural, =1{1 PLAYER} other{{count} PLAYERS}}",
+  "@playersCountCaps": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "playDetailPlayersLoadFailed": "Could not load players",
+  "playDetailScore": "Score: {score}",
+  "@playDetailScore": {
+    "placeholders": {
+      "score": { "type": "String" }
+    }
+  },
+  "playDetailWinner": "WINNER",
+  "playDetailRank": "#{rank}",
+  "@playDetailRank": {
+    "placeholders": {
+      "rank": { "type": "int" }
+    }
+  },
+
+  "editPlayTitle": "EDIT PLAY",
+  "editPlayAddPlayer": "ADD PLAYER",
+  "editPlaySaveChanges": "SAVE CHANGES"
 }

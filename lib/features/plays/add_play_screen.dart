@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/catalog_game.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
@@ -166,7 +167,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to save play. Please try again.',
+            AppStrings.of(context).addPlaySaveFailed,
             style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
           ),
           backgroundColor: kColorSurfaceHigh,
@@ -177,7 +178,17 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final state = ref.watch(addPlayProvider);
+    final countText = state.maxPlayers != null
+        ? s.playersCountMax(state.participants.length, state.maxPlayers!)
+        : s.playersCountOnly(state.participants.length);
+    final addButtonText = state.canAddParticipant
+        ? s.addParticipant
+        : s.maxPlayersAdded;
+    final saveButtonText = state.belowMinPlayers
+        ? s.minPlayersNeeded(state.effectiveMinPlayers)
+        : s.savePlay;
     return Scaffold(
       backgroundColor: kColorBackground,
       resizeToAvoidBottomInset: true,
@@ -188,7 +199,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'LOG A PLAY',
+          s.addPlayTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -210,31 +221,31 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _SectionLabel('GAME'),
+                  _SectionLabel(s.addPlaySectionGame),
                   const SizedBox(height: 8),
                   _GamePicker(
                     gameName: state.selectedGame?.name,
                     onTap: _showGamePicker,
                   ),
                   const SizedBox(height: 24),
-                  _SectionLabel('SESSION'),
+                  _SectionLabel(s.addPlaySectionSession),
                   const SizedBox(height: 8),
                   _DateRow(date: state.playedAt, onTap: _pickDate),
                   const SizedBox(height: 10),
                   _StyledField(
                     controller: _locationController,
-                    hint: 'Location (optional)',
+                    hint: s.addPlayLocationHint,
                     icon: Icons.location_on_outlined,
                   ),
                   const SizedBox(height: 10),
                   _StyledField(
                     controller: _notesController,
-                    hint: 'Notes (optional)',
+                    hint: s.addPlayNotesHint,
                     icon: Icons.notes_outlined,
                     maxLines: 3,
                   ),
                   const SizedBox(height: 24),
-                  _PlayersSectionHeader(countText: state.playerCountText),
+                  _PlayersSectionHeader(countText: countText),
                   const SizedBox(height: 8),
                   ...state.participants.asMap().entries.map(
                     (e) => Padding(
@@ -254,7 +265,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
                   ),
                   const SizedBox(height: 4),
                   _AddParticipantButton(
-                    label: state.addButtonText,
+                    label: addButtonText,
                     enabled: state.canAddParticipant,
                     onTap: state.canAddParticipant
                         ? _showParticipantPicker
@@ -268,7 +279,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
           _SaveBar(
             enabled: state.canSave && !state.saving,
             loading: state.saving,
-            buttonText: state.saveButtonText,
+            buttonText: saveButtonText,
             onTap: _save,
           ),
         ],
@@ -319,7 +330,7 @@ class _PlayersSectionHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'PLAYERS',
+              AppStrings.of(context).addPlayPlayers,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 11,
@@ -367,7 +378,7 @@ class _GamePicker extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                gameName ?? 'Select a game…',
+                gameName ?? AppStrings.of(context).addPlaySelectGame,
                 style: gameName != null
                     ? GoogleFonts.newsreader(
                         color: kColorOnSurface,
@@ -545,7 +556,7 @@ class _PlayerRow extends StatelessWidget {
                 fontSize: 14,
               ),
               decoration: InputDecoration.collapsed(
-                hintText: 'Player name',
+                hintText: AppStrings.of(context).addPlayPlayerNameHint,
                 hintStyle: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 14,
@@ -599,7 +610,7 @@ class _ScoreField extends StatelessWidget {
         textAlign: TextAlign.center,
         style: GoogleFonts.spaceGrotesk(color: kColorOnSurface, fontSize: 14),
         decoration: InputDecoration.collapsed(
-          hintText: '—',
+          hintText: AppStrings.of(context).scoreHint,
           hintStyle: GoogleFonts.spaceGrotesk(
             color: kColorOutline,
             fontSize: 14,

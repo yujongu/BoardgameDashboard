@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/theme/app_theme.dart';
@@ -17,6 +18,7 @@ class ParticipantListSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final pickerState = ref.watch(participantPickerProvider);
     final addPlayState = ref.watch(addPlayProvider);
     final friendsAsync = ref.watch(friendListProvider);
@@ -45,6 +47,7 @@ class ParticipantListSection extends ConsumerWidget {
         );
       },
       data: (friends) => _buildList(
+        s: s,
         pickerState: pickerState,
         friends: friends,
         selectedIds: selectedIds,
@@ -54,6 +57,7 @@ class ParticipantListSection extends ConsumerWidget {
   }
 
   Widget _buildList({
+    required AppStrings s,
     required PickerSearchState pickerState,
     required List<FriendSummary> friends,
     required Set<String> selectedIds,
@@ -80,7 +84,7 @@ class ParticipantListSection extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
       children: [
         if (filteredFriends.isNotEmpty) ...[
-          const _SectionHeader('FRIENDS'),
+          _SectionHeader(s.friendsTitle),
           ...filteredFriends.map((f) {
             final isSelected = selectedIds.contains(f.userId);
             return FriendListItem(
@@ -95,7 +99,7 @@ class ParticipantListSection extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(
-              'No friends yet',
+              s.participantNoFriends,
               textAlign: TextAlign.center,
               style: GoogleFonts.newsreader(
                 color: kColorOutline,
@@ -121,7 +125,7 @@ class ParticipantListSection extends ConsumerWidget {
               ),
             )
           else if (userResults.isNotEmpty) ...[
-            const _SectionHeader('USERS'),
+            _SectionHeader(s.participantSectionUsers),
             ...userResults.map(
               (u) => UserListItem(
                 name: u.name,
@@ -152,6 +156,7 @@ class _FriendsErrorPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -165,7 +170,7 @@ class _FriendsErrorPanel extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load friends',
+              s.participantLoadFailed,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 13,
@@ -175,7 +180,7 @@ class _FriendsErrorPanel extends StatelessWidget {
             GestureDetector(
               onTap: onRetry,
               child: Text(
-                'RETRY',
+                s.commonRetry,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorPrimary,
                   fontSize: 11,
@@ -266,7 +271,7 @@ class FriendListItem extends StatelessWidget {
                   const Icon(Icons.check, color: kColorPrimary, size: 14),
                   const SizedBox(width: 4),
                   Text(
-                    'Added',
+                    AppStrings.of(context).participantAdded,
                     style: GoogleFonts.spaceGrotesk(
                       color: kColorPrimary,
                       fontSize: 11,
@@ -354,6 +359,7 @@ class GuestListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -378,7 +384,7 @@ class GuestListItem extends StatelessWidget {
             Expanded(
               child: query.isEmpty
                   ? Text(
-                      'Type a name to add as guest',
+                      s.participantGuestHint,
                       style: GoogleFonts.spaceGrotesk(
                         color: kColorOutlineVariant,
                         fontSize: 13,
@@ -394,7 +400,7 @@ class GuestListItem extends StatelessWidget {
                           fontSize: 13,
                         ),
                         children: [
-                          const TextSpan(text: 'Add guest '),
+                          TextSpan(text: s.participantAddGuestPrefix),
                           TextSpan(
                             text: '"$query"',
                             style: GoogleFonts.spaceGrotesk(

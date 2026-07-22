@@ -129,19 +129,18 @@ void main() {
       expect(notifier.state.canAddParticipant, isFalse);
     });
 
-    test('addButtonText is "Max players added" when at maxPlayers', () {
+    test('canAddParticipant is false when at maxPlayers', () {
       notifier.onGameSelected(game2to2);
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.addButtonText, 'Max players added');
+      expect(notifier.state.canAddParticipant, isFalse);
     });
 
-    test('addButtonText is "+ Add Participant" when below maxPlayers', () {
+    test('canAddParticipant is true when below maxPlayers', () {
       notifier.onGameSelected(game3to6);
 
       expect(notifier.state.canAddParticipant, isTrue);
-      expect(notifier.state.addButtonText, '+ Add Participant');
     });
 
     test('addParticipant is a no-op when already at maxPlayers', () {
@@ -167,20 +166,21 @@ void main() {
       expect(notifier.state.canSave, isFalse);
     });
 
-    test('saveButtonText shows minimum count when below minPlayers', () {
+    test('belowMinPlayers is true (and exposes min) when below minPlayers', () {
       notifier.onGameSelected(game3to6);
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.saveButtonText, 'Minimum 3 players needed');
+      expect(notifier.state.belowMinPlayers, isTrue);
+      expect(notifier.state.effectiveMinPlayers, 3);
     });
 
-    test('saveButtonText is "Save Play" when at or above minPlayers', () {
+    test('belowMinPlayers is false when at or above minPlayers', () {
       notifier.onGameSelected(game2to2);
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.saveButtonText, 'Save Play');
+      expect(notifier.state.belowMinPlayers, isFalse);
     });
 
     test('canSave is false when no winner is marked', () {
@@ -203,20 +203,22 @@ void main() {
 
     // ── playerCountText ──────────────────────────────────────────────────────
 
-    test('playerCountText shows count and max when game has maxPlayers', () {
+    test('participant count and maxPlayers reflect a game with maxPlayers', () {
       notifier.onGameSelected(game2to4);
       notifier.addParticipant();
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.playerCountText, 'Players: 3 / 4');
+      expect(notifier.state.participants.length, 3);
+      expect(notifier.state.maxPlayers, 4);
     });
 
-    test('playerCountText shows only count when no game is selected', () {
+    test('maxPlayers is null when no game is selected', () {
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.playerCountText, 'Players: 2');
+      expect(notifier.state.participants.length, 2);
+      expect(notifier.state.maxPlayers, isNull);
     });
 
     // ── updateParticipantScore ───────────────────────────────────────────────

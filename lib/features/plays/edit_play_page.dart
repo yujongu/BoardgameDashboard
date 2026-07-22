@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
@@ -193,6 +194,7 @@ class _EditPlayPageState extends State<EditPlayPage> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Scaffold(
       backgroundColor: kColorBackground,
       resizeToAvoidBottomInset: true,
@@ -203,7 +205,7 @@ class _EditPlayPageState extends State<EditPlayPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'EDIT PLAY',
+          s.editPlayTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -225,28 +227,28 @@ class _EditPlayPageState extends State<EditPlayPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _SectionLabel('GAME'),
+                  _SectionLabel(s.addPlaySectionGame),
                   const SizedBox(height: 8),
                   _GamePicker(gameName: _gameName, onTap: _showGamePicker),
                   const SizedBox(height: 24),
-                  _SectionLabel('SESSION'),
+                  _SectionLabel(s.addPlaySectionSession),
                   const SizedBox(height: 8),
                   _DateRow(date: _playedAt, onTap: _pickDate),
                   const SizedBox(height: 10),
                   _StyledField(
                     controller: _locationController,
-                    hint: 'Location (optional)',
+                    hint: s.addPlayLocationHint,
                     icon: Icons.location_on_outlined,
                   ),
                   const SizedBox(height: 10),
                   _StyledField(
                     controller: _notesController,
-                    hint: 'Notes (optional)',
+                    hint: s.addPlayNotesHint,
                     icon: Icons.notes_outlined,
                     maxLines: 3,
                   ),
                   const SizedBox(height: 24),
-                  _SectionLabel('PLAYERS'),
+                  _SectionLabel(s.addPlayPlayers),
                   const SizedBox(height: 8),
                   ..._players.asMap().entries.map(
                     (e) => Padding(
@@ -446,7 +448,7 @@ class _PlayerRow extends StatelessWidget {
                 fontSize: 14,
               ),
               decoration: InputDecoration.collapsed(
-                hintText: 'Player name',
+                hintText: AppStrings.of(context).addPlayPlayerNameHint,
                 hintStyle: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 14,
@@ -555,7 +557,7 @@ class _ScoreField extends StatelessWidget {
         textAlign: TextAlign.center,
         style: GoogleFonts.spaceGrotesk(color: kColorOnSurface, fontSize: 14),
         decoration: InputDecoration.collapsed(
-          hintText: '—',
+          hintText: AppStrings.of(context).scoreHint,
           hintStyle: GoogleFonts.spaceGrotesk(
             color: kColorOutline,
             fontSize: 14,
@@ -587,7 +589,7 @@ class _AddPlayerButton extends StatelessWidget {
             const Icon(Icons.add, color: kColorOutline, size: 16),
             const SizedBox(width: 6),
             Text(
-              'ADD PLAYER',
+              AppStrings.of(context).editPlayAddPlayer,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 11,
@@ -638,7 +640,7 @@ class _SaveBar extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      'SAVE CHANGES',
+                      AppStrings.of(context).editPlaySaveChanges,
                       style: GoogleFonts.spaceGrotesk(
                         color: enabled ? kColorOnPrimary : kColorOutline,
                         fontSize: 13,

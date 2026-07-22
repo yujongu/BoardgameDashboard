@@ -4,14 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:board_game_dashboard/features/plays/add_play_notifier.dart';
 import 'package:board_game_dashboard/features/plays/add_play_screen.dart';
+import 'package:board_game_dashboard/l10n/app_localizations.dart';
+
+MaterialApp _app({Widget home = const AddPlayScreen()}) => MaterialApp(
+  localizationsDelegates: AppStrings.localizationsDelegates,
+  supportedLocales: AppStrings.supportedLocales,
+  home: home,
+);
 
 void main() {
   testWidgets('AddPlayScreen renders the session location and notes fields', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: AddPlayScreen())),
-    );
+    await tester.pumpWidget(ProviderScope(child: _app()));
     await tester.pump();
 
     expect(find.text('LOG A PLAY'), findsOneWidget);
@@ -31,7 +36,7 @@ void main() {
                 AddPlayNotifier(currentUserName: 'Me', currentUserId: 'u1'),
           ),
         ],
-        child: const MaterialApp(home: AddPlayScreen()),
+        child: _app(),
       ),
     );
     await tester.pump();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
@@ -85,7 +86,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'PLAY HISTORY',
+          AppStrings.of(context).playHistoryTitleCaps,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -163,7 +164,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
           child: GestureDetector(
             onTap: _loadNextPage,
             child: Text(
-              'TAP TO RETRY',
+              AppStrings.of(context).historyTapToRetry,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorPrimary,
                 fontSize: 11,
@@ -249,7 +250,7 @@ class _PlayRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${play.participantCount} ${play.participantCount == 1 ? 'player' : 'players'}',
+                    AppStrings.of(context).playersCount(play.participantCount),
                     style: GoogleFonts.spaceGrotesk(
                       color: kColorOutline,
                       fontSize: 11,
@@ -286,7 +287,7 @@ class _EmptyView extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Text(
-          'No plays logged yet',
+          AppStrings.of(context).homeEmptyTitle,
           style: GoogleFonts.newsreader(
             color: kColorOnSurfaceVariant,
             fontSize: 18,
@@ -305,6 +306,7 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -314,7 +316,7 @@ class _ErrorView extends StatelessWidget {
             const Icon(Icons.error_outline, color: kColorOutline, size: 40),
             const SizedBox(height: 16),
             Text(
-              'Could not load your plays',
+              s.historyLoadFailed,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 13,
@@ -324,7 +326,7 @@ class _ErrorView extends StatelessWidget {
             GestureDetector(
               onTap: onRetry,
               child: Text(
-                'RETRY',
+                s.commonRetry,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorPrimary,
                   fontSize: 11,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_theme.dart';
 
 class ParticipantSearchField extends StatelessWidget {
@@ -32,7 +33,7 @@ class ParticipantSearchField extends StatelessWidget {
                   fontSize: 14,
                 ),
                 decoration: InputDecoration.collapsed(
-                  hintText: 'Search friends or add guest…',
+                  hintText: AppStrings.of(context).participantSearchHint,
                   hintStyle: GoogleFonts.spaceGrotesk(
                     color: kColorOutline,
                     fontSize: 14,
