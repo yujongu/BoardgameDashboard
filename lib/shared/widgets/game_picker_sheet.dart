@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../models/catalog_game.dart';
 import '../providers/game_catalog_provider.dart';
 import '../theme/app_theme.dart';
@@ -36,6 +37,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final catalog = ref.watch(gameCatalogProvider);
 
     return SizedBox(
@@ -59,7 +61,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'SELECT GAME',
+                s.gamePickerTitle,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 11,
@@ -94,7 +96,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
                           fontSize: 14,
                         ),
                         decoration: InputDecoration.collapsed(
-                          hintText: 'Search games…',
+                          hintText: s.gamePickerSearchHint,
                           hintStyle: GoogleFonts.spaceGrotesk(
                             color: kColorOutline,
                             fontSize: 14,
@@ -126,6 +128,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
   }
 
   Widget _buildBody(GameCatalogState catalog) {
+    final s = AppStrings.of(context);
     if (catalog.loading && catalog.games == null) {
       return const Center(
         child: CircularProgressIndicator(color: kColorPrimary),
@@ -142,7 +145,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
               const Icon(Icons.error_outline, color: kColorOutline, size: 32),
               const SizedBox(height: 12),
               Text(
-                'Could not load games',
+                s.gamePickerLoadFailed,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
@@ -153,7 +156,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
               GestureDetector(
                 onTap: () => ref.read(gameCatalogProvider.notifier).reload(),
                 child: Text(
-                  'RETRY',
+                  s.commonRetry,
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorPrimary,
                     fontSize: 11,
@@ -172,7 +175,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
     if (games.isEmpty) {
       return Center(
         child: Text(
-          'No games found',
+          s.gamePickerNoGames,
           style: GoogleFonts.newsreader(
             color: kColorOnSurfaceVariant,
             fontSize: 16,

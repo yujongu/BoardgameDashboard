@@ -319,5 +319,10 @@
 
   "editPlayTitle": "EDIT PLAY",
   "editPlayAddPlayer": "ADD PLAYER",
-  "editPlaySaveChanges": "SAVE CHANGES"
+  "editPlaySaveChanges": "SAVE CHANGES",
+
+  "gamePickerTitle": "SELECT GAME",
+  "gamePickerSearchHint": "Search games…",
+  "gamePickerLoadFailed": "Could not load games",
+  "gamePickerNoGames": "No games found"
 }
