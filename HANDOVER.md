@@ -3,11 +3,30 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1** (earlier sessions) and **P1 — l10n / no hardcoded
-strings** (this session, **100% complete** — the whole app, including all 5 score calculators,
-is now localized; a grep for `Text('…'`, `hintText:`, `labelText:`, `tooltip:` string literals
-across `lib/` outside `lib/l10n` returns nothing). Next: **H4** (friend shared-play history),
-then **M1** (catalog browse).
+Done to date: **H1, H2, H3, H5, Q2, Q1, P1** (earlier) and now **H4 — friend shared-play
+history** (this session). Next: **M1** (catalog browse), then **M2/M3** (nav + dashboard).
+
+### H4 completed this session
+
+- New `PlayRepository.fetchSharedPlays(friendId, {scanLimit = 100})` — queries the caller's
+  recent plays (`participantIds arrayContains uid`, `orderBy playedAt desc`, `limit`) and
+  client-filters for the friend's uid. **No rules or index change needed**: the caller is always
+  a participant (so the existing `plays` read rule permits it), and the required composite index
+  (`participantIds CONTAINS` + `playedAt DESC`) already exists in `firestore.indexes.json` —
+  it's the same query shape as `watchRecentPlays`.
+- `friend_profile_screen.dart` loads it in `initState` (parallel to the profile) and renders a
+  new **"PLAYED TOGETHER"** section (`_SharedPlays` + `_SharedPlayRow`): a "{n} games together"
+  count line and a tappable list of shared plays (game + date → `PlayDetailPage`), with
+  loading / empty / error states. l10n keys added under the friends group.
+- **Head-to-head W/L was deliberately NOT built**: play docs carry no winner info (winners live
+  only in the `participants` subcollection), so a true W/L record would need either N per-play
+  subcollection reads or a new `winnerIds` field on the play doc + backfill. Shipped the shared
+  count instead. If W/L is wanted later, add `winnerIds` in `createPlay.ts`/`updatePlay.ts`.
+- Tested via `test/features/friends/friend_profile_screen_test.dart` (fake friend+play repos,
+  overridden through the Q2 providers): asserts the count header + rows render, and the empty
+  state. `flutter analyze` clean; `flutter test` **72 pass**.
+- **UI not visually confirmed on a device** — this is a Windows dev box with no iOS/Android
+  simulator; the widget test covers the section's render + empty state instead.
 
 ### P1 completed this session (full `flutter_localizations` + ARB, per owner's choice)
 
@@ -78,14 +97,18 @@ then **M1** (catalog browse).
 ## The 'Gravel' (non-obvious findings)
 
 - **P1 is fully done** — no hardcoded UI strings remain anywhere in `lib/` (verified by grep).
-- `calculator_widgets.dart` was already clean (all its strings arrive as params).
+  New UI (like H4's section) should keep using `AppStrings`.
+- The friend profile is still a **one-shot `Future`** loaded in `initState` (both the profile and
+  now the shared plays) — no live refresh. Left as-is to match the existing pattern; make it
+  a stream if live updates are wanted.
 - Month abbreviations in `_formatDate` helpers were intentionally left as-is (date data, not UI
   copy). Switch to `intl`'s `DateFormat` if true locale-aware dates are ever wanted.
 - `rank` is still never set by the client (scores entered, ranks not derived). (from H1)
 
 ## Next Immediate Step
 
-P1 is complete. Pick up **H4 — friend shared-play history** on `friend_profile_screen.dart`
-(query `plays` where `participantIds array-contains` self, then client-filter for the friend;
-check `firestore.rules` first). **M1** (catalog browse screen) is the next-best after that. Both
-are now easy to test thanks to the Q2 injectable repos.
+**M1 — browse the full game catalog.** There's no way to reach the 115-game catalog except the
+game-picker while logging a play; "Library" only shows already-played games. Add a browse/explore
+screen (reuse `game_catalog_provider.dart` search + the `game_picker_sheet` patterns) that opens
+`GameDetailPage` for any game — as a 3rd nav tab or a header action on Library. After that,
+**M2** (promote Friends into the bottom nav) and **M3** (Home leaderboard from `gameStats`).

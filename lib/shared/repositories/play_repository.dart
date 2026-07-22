@@ -96,6 +96,29 @@ class PlayRepository {
     return qs.docs.map(_playSummaryFromDoc).toList();
   }
 
+  /// Plays that both the caller and [friendId] participated in, newest first.
+  ///
+  /// Firestore permits only one `array-contains` per query, so we fetch the
+  /// caller's most recent plays (bounded by [scanLimit]) and client-filter for
+  /// the friend. Reads are permitted because the caller is always a participant.
+  Future<List<PlaySummary>> fetchSharedPlays(
+    String friendId, {
+    int scanLimit = 100,
+  }) async {
+    final uid = _uid;
+    if (uid == null) return [];
+    final qs = await _db
+        .collection('plays')
+        .where('participantIds', arrayContains: uid)
+        .orderBy('playedAt', descending: true)
+        .limit(scanLimit)
+        .get();
+    return qs.docs
+        .where((d) => (d.data()['participantIds'] as List).contains(friendId))
+        .map(_playSummaryFromDoc)
+        .toList();
+  }
+
   Stream<List<PlaySummary>> watchRecentPlays({int limit = 20}) {
     final uid = _uid;
     if (uid == null) return const Stream.empty();

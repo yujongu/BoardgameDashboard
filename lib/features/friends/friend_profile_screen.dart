@@ -6,9 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend_profile.dart';
+import '../../shared/models/play.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
+import '../plays/play_detail_page.dart';
 
 class FriendProfileScreen extends ConsumerStatefulWidget {
   final String friendId;
@@ -29,6 +31,7 @@ class FriendProfileScreen extends ConsumerStatefulWidget {
 
 class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
   late Future<FriendProfile> _profileFuture;
+  late Future<List<PlaySummary>> _sharedPlaysFuture;
   bool _unfriending = false;
 
   @override
@@ -37,6 +40,9 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
     _profileFuture = ref
         .read(friendRepositoryProvider)
         .getFriendProfileDirect(widget.friendId);
+    _sharedPlaysFuture = ref
+        .read(playRepositoryProvider)
+        .fetchSharedPlays(widget.friendId);
   }
 
   Future<void> _unfriend() async {
@@ -162,6 +168,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
           return _ProfileBody(
             friendId: widget.friendId,
             profile: profile,
+            sharedPlaysFuture: _sharedPlaysFuture,
             unfriending: _unfriending,
             onUnfriend: _unfriend,
           );
@@ -176,12 +183,14 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
 class _ProfileBody extends StatelessWidget {
   final String friendId;
   final FriendProfile profile;
+  final Future<List<PlaySummary>> sharedPlaysFuture;
   final bool unfriending;
   final VoidCallback onUnfriend;
 
   const _ProfileBody({
     required this.friendId,
     required this.profile,
+    required this.sharedPlaysFuture,
     required this.unfriending,
     required this.onUnfriend,
   });
@@ -257,6 +266,12 @@ class _ProfileBody extends StatelessWidget {
           const SizedBox(height: 8),
           ...profile.topGames.map((g) => _GameRow(game: g)),
         ],
+
+        // ── Played together ────────────────────────────────────────────────
+        const SizedBox(height: 28),
+        _SectionLabel(s.friendPlayedTogether),
+        const SizedBox(height: 8),
+        _SharedPlays(future: sharedPlaysFuture),
 
         // ── Unfriend ───────────────────────────────────────────────────────
         const SizedBox(height: 40),
@@ -387,6 +402,155 @@ class _GameRow extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 11),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SharedPlays extends StatelessWidget {
+  final Future<List<PlaySummary>> future;
+
+  const _SharedPlays({required this.future});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    return FutureBuilder<List<PlaySummary>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  color: kColorOutline,
+                  strokeWidth: 1.5,
+                ),
+              ),
+            ),
+          );
+        }
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Text(
+            s.friendSharedPlaysError,
+            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+          );
+        }
+        final plays = snapshot.data!;
+        if (plays.isEmpty) {
+          return Text(
+            s.friendNoSharedPlays,
+            style: GoogleFonts.newsreader(
+              color: kColorOutline,
+              fontSize: 15,
+              fontStyle: FontStyle.italic,
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                s.friendSharedCount(plays.length),
+                style: GoogleFonts.spaceGrotesk(
+                  color: kColorOnSurfaceVariant,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ...plays.map((p) => _SharedPlayRow(play: p)),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SharedPlayRow extends StatelessWidget {
+  final PlaySummary play;
+
+  const _SharedPlayRow({required this.play});
+
+  static const _months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  static String _formatDate(DateTime dt) {
+    final local = dt.toLocal();
+    return '${_months[local.month - 1]} ${local.day}, ${local.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => PlayDetailPage(initialData: play)),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: kColorSurfaceHigh,
+          border: Border.all(color: kColorAmberBorder),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    play.gameName,
+                    style: GoogleFonts.newsreader(
+                      color: kColorOnSurface,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatDate(play.playedAt),
+                    style: GoogleFonts.spaceGrotesk(
+                      color: kColorOutline,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              AppStrings.of(context).playersCount(play.participantCount),
+              style: GoogleFonts.spaceGrotesk(
+                color: kColorOutline,
+                fontSize: 11,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.chevron_right,
+              color: kColorOutlineVariant,
+              size: 18,
+            ),
+          ],
+        ),
       ),
     );
   }

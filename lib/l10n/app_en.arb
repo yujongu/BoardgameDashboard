@@ -234,6 +234,15 @@
       "wins": { "type": "int" }
     }
   },
+  "friendPlayedTogether": "PLAYED TOGETHER",
+  "friendSharedCount": "{count, plural, =1{1 game together} other{{count} games together}}",
+  "@friendSharedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "friendNoSharedPlays": "No games played together yet",
+  "friendSharedPlaysError": "Could not load shared plays",
 
   "commonEdit": "Edit",
   "commonDelete": "Delete",
