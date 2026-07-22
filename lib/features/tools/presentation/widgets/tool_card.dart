@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../domain/models/game_tool.dart';
 
@@ -11,6 +12,7 @@ class ToolCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Material(
       color: kColorSurfaceHigh,
       borderRadius: BorderRadius.circular(6),
@@ -43,7 +45,7 @@ class ToolCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      tool.title,
+                      tool.title(s),
                       style: GoogleFonts.newsreader(
                         color: kColorOnSurface,
                         fontSize: 16,
@@ -52,7 +54,7 @@ class ToolCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      tool.description,
+                      tool.description(s),
                       style: GoogleFonts.spaceGrotesk(
                         color: kColorOutline,
                         fontSize: 11,
