@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:board_game_dashboard/features/tools/wingspan/wingspan_calculator_screen.dart';
+import 'package:board_game_dashboard/l10n/app_localizations.dart';
+
+const _app = MaterialApp(
+  localizationsDelegates: AppStrings.localizationsDelegates,
+  supportedLocales: AppStrings.supportedLocales,
+  home: WingspanCalculatorScreen(),
+);
 
 void main() {
   group('wingspanTotal', () {
@@ -45,18 +52,14 @@ void main() {
   });
 
   testWidgets('screen builds without throwing', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: WingspanCalculatorScreen()),
-    );
+    await tester.pumpWidget(_app);
     expect(find.text('WINGSPAN'), findsOneWidget);
   });
 
   testWidgets('entering scores updates the selected player total', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: WingspanCalculatorScreen()),
-    );
+    await tester.pumpWidget(_app);
 
     // Birds 40 + eggs 14 = 54 for player 1 (default 2 players).
     await tester.enterText(find.widgetWithText(TextField, '').at(0), '40');

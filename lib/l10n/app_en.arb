@@ -331,5 +331,98 @@
   "toolTerraformingMarsDesc": "Tally TR, milestones, awards, and card VP",
   "toolSevenWondersDuelDesc": "Tally 7 Wonders Duel civilian-victory scores",
   "toolSevenWondersDesc": "Tally science sets, military, coins, and card VP",
-  "toolWingspanDesc": "Sum birds, bonuses, goals, eggs, food, and tucked cards"
+  "toolWingspanDesc": "Sum birds, bonuses, goals, eggs, food, and tucked cards",
+
+  "calcReset": "RESET",
+  "calcTotal": "TOTAL",
+  "calcGrandTotal": "GRAND TOTAL",
+  "calcPlayers": "PLAYERS",
+  "calcShowing": "SHOWING",
+  "calcCategory": "CATEGORY",
+  "calcPlayer1": "PLAYER 1",
+  "calcPlayer2": "PLAYER 2",
+  "calcTie": "TIE",
+  "calcPlayerWins": "PLAYER {player} WINS",
+  "@calcPlayerWins": {
+    "placeholders": {
+      "player": { "type": "int" }
+    }
+  },
+  "calcPlayerWinsTiebreaker": "PLAYER {player} WINS (TIEBREAKER)",
+  "@calcPlayerWinsTiebreaker": {
+    "placeholders": {
+      "player": { "type": "int" }
+    }
+  },
+  "calcTieMulti": "TIE: {players}",
+  "@calcTieMulti": {
+    "placeholders": {
+      "players": { "type": "String" }
+    }
+  },
+  "calcPlayerChip": "P{player} · {total}",
+  "@calcPlayerChip": {
+    "placeholders": {
+      "player": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "calcPlayerTotal": "P{player} TOTAL",
+  "@calcPlayerTotal": {
+    "placeholders": {
+      "player": { "type": "int" }
+    }
+  },
+
+  "lostCitiesTitle": "LOST CITIES",
+  "sevenWondersTitle": "7 WONDERS",
+  "sevenWondersDuelTitle": "7 WONDERS DUEL",
+  "wingspanTitle": "WINGSPAN",
+  "terraformingMarsTitle": "TERRAFORMING MARS",
+
+  "swCivilian": "Civilian (Blue) VP",
+  "swScience": "Science (Green) VP",
+  "swCommercial": "Commercial (Yellow) VP",
+  "swGuilds": "Guilds (Purple) VP",
+  "swCoins": "Coins (÷3 → VP)",
+  "sw7dWonders": "Wonders VP",
+  "sw7dProgress": "Progress tokens VP",
+  "sw7dMilitary": "Military tokens VP",
+  "sw7Military": "Military tokens (net VP)",
+  "sw7Wonders": "Wonder stages VP",
+  "sw7Tablets": "Tablets",
+  "sw7Compasses": "Compasses",
+  "sw7Gears": "Gears",
+  "sevenWondersScienceHeader": "SCIENCE (GREEN) — {vp} VP",
+  "@sevenWondersScienceHeader": {
+    "placeholders": {
+      "vp": { "type": "int" }
+    }
+  },
+
+  "wsBirds": "Bird cards VP",
+  "wsBonusCards": "Bonus cards VP",
+  "wsRoundGoals": "End-of-round goals VP",
+  "wsEggs": "Eggs (1 VP each)",
+  "wsCachedFood": "Cached food (1 VP each)",
+  "wsTuckedCards": "Tucked cards (1 VP each)",
+
+  "tmTerraformRating": "Terraform Rating",
+  "tmVpEach": "1 VP each",
+  "tmMilestones": "Milestones Claimed",
+  "tmMilestonesHint": "5 VP each · max 3",
+  "tmAward": "Award Points",
+  "tmAwardHint": "1st place: 5 VP · 2nd place: 2 VP",
+  "tmGreenery": "Greenery Tiles",
+  "tmCity": "City Adjacency",
+  "tmCityHint": "1 VP per adjacent greenery",
+  "tmCardVp": "Card VP",
+  "tmCardVpHint": "VP icons on played cards",
+
+  "lostCitiesGold": "Gold",
+  "lostCitiesBlue": "Blue",
+  "lostCitiesPurple": "Purple",
+  "lostCitiesGreen": "Green",
+  "lostCitiesRed": "Red",
+  "lostCitiesScorePrefix": "Score: "
 }

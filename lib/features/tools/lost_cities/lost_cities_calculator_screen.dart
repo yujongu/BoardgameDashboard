@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_theme.dart';
 import 'expedition_column.dart';
 
@@ -13,12 +14,12 @@ class LostCitiesCalculatorScreen extends StatefulWidget {
 
 class _LostCitiesCalculatorScreenState
     extends State<LostCitiesCalculatorScreen> {
-  static const _expeditions = [
-    (title: 'Gold', color: Color(0xFFF2CA50)),
-    (title: 'Blue', color: Color(0xFF4A90E2)),
-    (title: 'Purple', color: Color(0xFF9B59B6)),
-    (title: 'Green', color: Color(0xFF50C878)),
-    (title: 'Red', color: Color(0xFFE32636)),
+  static const _expeditionColors = [
+    Color(0xFFF2CA50),
+    Color(0xFF4A90E2),
+    Color(0xFF9B59B6),
+    Color(0xFF50C878),
+    Color(0xFFE32636),
   ];
 
   late final List<int> _scores;
@@ -29,7 +30,7 @@ class _LostCitiesCalculatorScreenState
   @override
   void initState() {
     super.initState();
-    _scores = List.filled(_expeditions.length, 0);
+    _scores = List.filled(_expeditionColors.length, 0);
     _pageController = PageController(viewportFraction: 0.88)
       ..addListener(() {
         final page = _pageController.page?.round() ?? 0;
@@ -60,6 +61,15 @@ class _LostCitiesCalculatorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final titles = [
+      s.lostCitiesGold,
+      s.lostCitiesBlue,
+      s.lostCitiesPurple,
+      s.lostCitiesGreen,
+      s.lostCitiesRed,
+    ];
+
     return Scaffold(
       backgroundColor: kColorBackground,
       appBar: AppBar(
@@ -73,7 +83,7 @@ class _LostCitiesCalculatorScreenState
           ),
         ),
         title: Text(
-          'LOST CITIES',
+          s.lostCitiesTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -88,7 +98,7 @@ class _LostCitiesCalculatorScreenState
             child: TextButton(
               onPressed: _reset,
               child: Text(
-                'RESET',
+                s.calcReset,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 11,
@@ -111,9 +121,9 @@ class _LostCitiesCalculatorScreenState
             padding: const EdgeInsets.only(top: 14, bottom: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_expeditions.length, (i) {
+              children: List.generate(_expeditionColors.length, (i) {
                 final active = i == _currentPage;
-                final color = _expeditions[i].color;
+                final color = _expeditionColors[i];
                 return GestureDetector(
                   onTap: () => _pageController.animateToPage(
                     i,
@@ -140,13 +150,12 @@ class _LostCitiesCalculatorScreenState
             child: PageView.builder(
               controller: _pageController,
               physics: const _HighThresholdScrollPhysics(),
-              itemCount: _expeditions.length,
+              itemCount: _expeditionColors.length,
               itemBuilder: (context, index) {
-                final exp = _expeditions[index];
                 return ExpeditionColumn(
                   key: ValueKey('$index-$_resetToken'),
-                  title: exp.title,
-                  color: exp.color,
+                  title: titles[index],
+                  color: _expeditionColors[index],
                   onScoreChanged: (score) => _onScoreChanged(index, score),
                 );
               },
@@ -164,7 +173,7 @@ class _LostCitiesCalculatorScreenState
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'GRAND TOTAL',
+                  s.calcGrandTotal,
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorOnSurfaceVariant,
                     fontSize: 12,

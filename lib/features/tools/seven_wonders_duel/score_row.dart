@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_theme.dart';
 
 enum SevenWondersCategory {
-  civilian('Civilian (Blue) VP'),
-  science('Science (Green) VP'),
-  commercial('Commercial (Yellow) VP'),
-  guilds('Guilds (Purple) VP'),
-  wonders('Wonders VP'),
-  progress('Progress tokens VP'),
-  military('Military tokens VP'),
-  coins('Coins (÷3 → VP)');
+  civilian,
+  science,
+  commercial,
+  guilds,
+  wonders,
+  progress,
+  military,
+  coins,
+}
 
-  const SevenWondersCategory(this.label);
-
-  final String label;
+extension SevenWondersCategoryL10n on SevenWondersCategory {
+  String label(AppStrings s) => switch (this) {
+    SevenWondersCategory.civilian => s.swCivilian,
+    SevenWondersCategory.science => s.swScience,
+    SevenWondersCategory.commercial => s.swCommercial,
+    SevenWondersCategory.guilds => s.swGuilds,
+    SevenWondersCategory.wonders => s.sw7dWonders,
+    SevenWondersCategory.progress => s.sw7dProgress,
+    SevenWondersCategory.military => s.sw7dMilitary,
+    SevenWondersCategory.coins => s.swCoins,
+  };
 }
 
 class ScoreHeaderRow extends StatelessWidget {
@@ -22,6 +32,7 @@ class ScoreHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final style = GoogleFonts.spaceGrotesk(
       color: kColorOnSurfaceVariant,
       fontSize: 12,
@@ -30,14 +41,14 @@ class ScoreHeaderRow extends StatelessWidget {
     );
     return Row(
       children: [
-        Expanded(flex: 4, child: Text('CATEGORY', style: style)),
+        Expanded(flex: 4, child: Text(s.calcCategory, style: style)),
         Expanded(
           flex: 3,
-          child: Text('PLAYER 1', textAlign: TextAlign.center, style: style),
+          child: Text(s.calcPlayer1, textAlign: TextAlign.center, style: style),
         ),
         Expanded(
           flex: 3,
-          child: Text('PLAYER 2', textAlign: TextAlign.center, style: style),
+          child: Text(s.calcPlayer2, textAlign: TextAlign.center, style: style),
         ),
       ],
     );
@@ -64,7 +75,7 @@ class ScoreRow extends StatelessWidget {
         Expanded(
           flex: 4,
           child: Text(
-            category.label,
+            category.label(AppStrings.of(context)),
             style: GoogleFonts.spaceGrotesk(
               color: kColorOnSurface,
               fontSize: 13,

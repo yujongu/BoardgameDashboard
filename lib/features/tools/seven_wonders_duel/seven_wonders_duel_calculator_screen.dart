@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_theme.dart';
 import 'score_row.dart';
 
@@ -176,7 +177,7 @@ class _SevenWondersDuelCalculatorScreenState
           ),
         ),
         title: Text(
-          '7 WONDERS DUEL',
+          AppStrings.of(context).sevenWondersDuelTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -191,7 +192,7 @@ class _SevenWondersDuelCalculatorScreenState
             child: TextButton(
               onPressed: _reset,
               child: Text(
-                'RESET',
+                AppStrings.of(context).calcReset,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 11,
@@ -247,23 +248,24 @@ class _TotalsBar extends StatelessWidget {
     required this.result,
   });
 
-  String get _winnerLabel {
+  String _winnerLabel(AppStrings s) {
     switch (result.winner) {
       case SevenWondersWinner.player1:
         return result.byTiebreaker
-            ? 'PLAYER 1 WINS (TIEBREAKER)'
-            : 'PLAYER 1 WINS';
+            ? s.calcPlayerWinsTiebreaker(1)
+            : s.calcPlayerWins(1);
       case SevenWondersWinner.player2:
         return result.byTiebreaker
-            ? 'PLAYER 2 WINS (TIEBREAKER)'
-            : 'PLAYER 2 WINS';
+            ? s.calcPlayerWinsTiebreaker(2)
+            : s.calcPlayerWins(2);
       case SevenWondersWinner.tie:
-        return 'TIE';
+        return s.calcTie;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       decoration: const BoxDecoration(
@@ -284,7 +286,7 @@ class _TotalsBar extends StatelessWidget {
                 ),
               ),
               Text(
-                'TOTAL',
+                s.calcTotal,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOnSurfaceVariant,
                   fontSize: 12,
@@ -304,7 +306,7 @@ class _TotalsBar extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            _winnerLabel,
+            _winnerLabel(s),
             style: GoogleFonts.spaceGrotesk(
               color: kColorOnSurface,
               fontSize: 13,

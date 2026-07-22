@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_theme.dart';
 import '../presentation/widgets/calculator_widgets.dart';
 
@@ -67,20 +68,33 @@ List<int> sevenWondersClassicWinners({
 }
 
 enum SevenWondersScoreCategory {
-  military('Military tokens (net VP)', signed: true),
-  coins('Coins (÷3 → VP)'),
-  wonders('Wonder stages VP'),
-  civilian('Civilian (Blue) VP'),
-  commercial('Commercial (Yellow) VP'),
-  guilds('Guilds (Purple) VP'),
-  tablets('Tablets'),
-  compasses('Compasses'),
-  gears('Gears');
+  military(signed: true),
+  coins,
+  wonders,
+  civilian,
+  commercial,
+  guilds,
+  tablets,
+  compasses,
+  gears;
 
-  const SevenWondersScoreCategory(this.label, {this.signed = false});
+  const SevenWondersScoreCategory({this.signed = false});
 
-  final String label;
   final bool signed;
+}
+
+extension SevenWondersScoreCategoryL10n on SevenWondersScoreCategory {
+  String label(AppStrings s) => switch (this) {
+    SevenWondersScoreCategory.military => s.sw7Military,
+    SevenWondersScoreCategory.coins => s.swCoins,
+    SevenWondersScoreCategory.wonders => s.sw7Wonders,
+    SevenWondersScoreCategory.civilian => s.swCivilian,
+    SevenWondersScoreCategory.commercial => s.swCommercial,
+    SevenWondersScoreCategory.guilds => s.swGuilds,
+    SevenWondersScoreCategory.tablets => s.sw7Tablets,
+    SevenWondersScoreCategory.compasses => s.sw7Compasses,
+    SevenWondersScoreCategory.gears => s.sw7Gears,
+  };
 }
 
 const _kMinPlayers = 3;
@@ -155,7 +169,7 @@ class _SevenWondersCalculatorScreenState
     gears: _valueOf(player, SevenWondersScoreCategory.gears),
   );
 
-  String _winnerLabel(List<int> totals) {
+  String _winnerLabel(AppStrings s, List<int> totals) {
     final winners = sevenWondersClassicWinners(
       totals: totals,
       coins: [
@@ -163,12 +177,13 @@ class _SevenWondersCalculatorScreenState
           _valueOf(i, SevenWondersScoreCategory.coins),
       ],
     );
-    if (winners.length == 1) return 'PLAYER ${winners.first + 1} WINS';
-    return 'TIE: ${winners.map((i) => 'P${i + 1}').join(' · ')}';
+    if (winners.length == 1) return s.calcPlayerWins(winners.first + 1);
+    return s.calcTieMulti(winners.map((i) => 'P${i + 1}').join(' · '));
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final totals = [for (var i = 0; i < _playerCount; i++) _totalOf(i)];
     final scienceVp = sevenWondersScienceScore(
       tablets: _valueOf(_selected, SevenWondersScoreCategory.tablets),
@@ -189,7 +204,7 @@ class _SevenWondersCalculatorScreenState
           ),
         ),
         title: Text(
-          '7 WONDERS',
+          s.sevenWondersTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 18,
@@ -204,7 +219,7 @@ class _SevenWondersCalculatorScreenState
             child: TextButton(
               onPressed: _reset,
               child: Text(
-                'RESET',
+                s.calcReset,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 11,
@@ -228,7 +243,7 @@ class _SevenWondersCalculatorScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SelectorChipRow(
-                  label: 'PLAYERS',
+                  label: s.calcPlayers,
                   labels: [
                     for (var n = _kMinPlayers; n <= _kMaxPlayers; n++) '$n',
                   ],
@@ -240,10 +255,10 @@ class _SevenWondersCalculatorScreenState
                 ),
                 const SizedBox(height: 8),
                 SelectorChipRow(
-                  label: 'SHOWING',
+                  label: s.calcShowing,
                   labels: [
                     for (var i = 0; i < _playerCount; i++)
-                      'P${i + 1} · ${totals[i]}',
+                      s.calcPlayerChip(i + 1, totals[i]),
                   ],
                   selectedIndex: _selected,
                   onSelected: (i) => setState(() => _selected = i),
@@ -259,9 +274,11 @@ class _SevenWondersCalculatorScreenState
                 children: [
                   for (final category in SevenWondersScoreCategory.values) ...[
                     if (category == SevenWondersScoreCategory.tablets)
-                      _SectionHeader(label: 'SCIENCE (GREEN) — $scienceVp VP'),
+                      _SectionHeader(
+                        label: s.sevenWondersScienceHeader(scienceVp),
+                      ),
                     ScoreInputRow(
-                      label: category.label,
+                      label: category.label(s),
                       controller: _players[_selected][category]!,
                       signed: category.signed,
                     ),
@@ -273,8 +290,8 @@ class _SevenWondersCalculatorScreenState
           ),
           CalculatorTotalsBar(
             total: totals[_selected],
-            totalLabel: 'P${_selected + 1} TOTAL',
-            resultLabel: _winnerLabel(totals),
+            totalLabel: s.calcPlayerTotal(_selected + 1),
+            resultLabel: _winnerLabel(s, totals),
           ),
         ],
       ),

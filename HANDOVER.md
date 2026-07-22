@@ -3,9 +3,11 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1** (earlier sessions) and now **P1 — l10n / no hardcoded
-strings** (this session, ~90% complete). Remaining P1: the 5 score-calculator screens (see
-Next Immediate Step). After P1: H4 (friend shared-play history), M1 (catalog browse).
+Done to date: **H1, H2, H3, H5, Q2, Q1** (earlier sessions) and **P1 — l10n / no hardcoded
+strings** (this session, **100% complete** — the whole app, including all 5 score calculators,
+is now localized; a grep for `Text('…'`, `hintText:`, `labelText:`, `tooltip:` string literals
+across `lib/` outside `lib/l10n` returns nothing). Next: **H4** (friend shared-play history),
+then **M1** (catalog browse).
 
 ### P1 completed this session (full `flutter_localizations` + ARB, per owner's choice)
 
@@ -55,31 +57,35 @@ Next Immediate Step). After P1: H4 (friend shared-play history), M1 (catalog bro
   to `intl`'s `DateFormat` (separate, behavior-changing task).
 - A per-edit `flutter analyze` hook runs on save; keep it green.
 
+### Calculators completed (this session, closing P1)
+
+- All 5 score calculators are now localized. The `enum … label`-String pattern was replaced with
+  a **resolver extension** (closures can't live in const enum constructors): the enum values are
+  now bare, and a `extension XL10n on X { String label(AppStrings s) => switch(this){…} }`
+  resolves them; row widgets call `category.label(AppStrings.of(context))`. See
+  `seven_wonders_duel/score_row.dart`, `wingspan_calculator_screen.dart`,
+  `seven_wonders/seven_wonders_calculator_screen.dart`.
+- Lost Cities' const expedition list dropped its `title` strings; titles are now resolved in
+  `build` (`[s.lostCitiesGold, …]`) parallel to a const color list.
+- Shared calculator keys: `calcReset/Total/GrandTotal/Players/Showing/Category/Player1/Player2/
+  Tie`, plus placeholder helpers `calcPlayerWins(n)`, `calcPlayerWinsTiebreaker(n)`,
+  `calcTieMulti(players)`, `calcPlayerChip(n,total)`, `calcPlayerTotal(n)`. The `'P'` prefix in
+  the "P1 · P2" tie string is left as a plain glyph (like `#rank`).
+- The five calculator tests (`widget_test.dart`, `wingspan/seven_wonders/seven_wonders_duel`
+  `_calculator_test.dart`) got `AppStrings.localizationsDelegates`/`supportedLocales` added to
+  their pumped `MaterialApp`; asserted strings are unchanged so no assertion edits were needed.
+
 ## The 'Gravel' (non-obvious findings)
 
-- **Only the 5 score calculators still hold hardcoded strings** — everything else is migrated
-  (verified via grep for `Text('…'`, `hintText:`, `labelText:`, `tooltip:` outside
-  `lib/features/tools` and `lib/l10n`: none). `calculator_widgets.dart` is already clean (all
-  its strings arrive as params).
-- The calculators use an **enum-with-`label`-String** pattern (e.g.
-  `SevenWondersCategory.civilian('Civilian (Blue) VP')` in
-  `seven_wonders_duel/score_row.dart`). To localize, mirror the GameTool fix: change the enum
-  `label` from a stored `String` to a resolver, or add an extension
-  `String localized(AppStrings s) => switch(this){…}` and call it from the row widgets (which
-  have a BuildContext). Screen chrome ('7 WONDERS DUEL', 'RESET', 'TOTAL', 'CATEGORY',
-  'PLAYER 1/2', winner labels) is plain and easy.
-- **`widget_test.dart`** (7 Wonders Duel) and **`wingspan_calculator_test.dart`** assert some of
-  those calculator strings and pump the screens **without** localization delegates — when you
-  migrate the screens, add `AppStrings.localizationsDelegates`/`supportedLocales` to their
-  pumped `MaterialApp` (same fix already applied to the other three tests).
+- **P1 is fully done** — no hardcoded UI strings remain anywhere in `lib/` (verified by grep).
+- `calculator_widgets.dart` was already clean (all its strings arrive as params).
+- Month abbreviations in `_formatDate` helpers were intentionally left as-is (date data, not UI
+  copy). Switch to `intl`'s `DateFormat` if true locale-aware dates are ever wanted.
 - `rank` is still never set by the client (scores entered, ranks not derived). (from H1)
 
 ## Next Immediate Step
 
-**Finish P1**: localize the 5 calculators —
-`lib/features/tools/{lost_cities/*, seven_wonders/*, seven_wonders_duel/*, terraforming_mars/*,
-wingspan/*}`. Recommended order: do `seven_wonders_duel` first (its `score_row.dart` enum is the
-template for the rest), then the other four. Add the calculator ARB keys to `app_en.arb`, run
-`flutter gen-l10n`, migrate each screen + its enum labels, and add the localization delegates to
-`widget_test.dart` and `wingspan_calculator_test.dart`. Then `flutter analyze` + `flutter test`
-must be green. After that, good next backlog items are **H4** and **M1**.
+P1 is complete. Pick up **H4 — friend shared-play history** on `friend_profile_screen.dart`
+(query `plays` where `participantIds array-contains` self, then client-filter for the friend;
+check `firestore.rules` first). **M1** (catalog browse screen) is the next-best after that. Both
+are now easy to test thanks to the Q2 injectable repos.

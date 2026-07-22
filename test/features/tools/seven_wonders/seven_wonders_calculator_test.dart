@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:board_game_dashboard/features/tools/seven_wonders/seven_wonders_calculator_screen.dart';
+import 'package:board_game_dashboard/l10n/app_localizations.dart';
+
+const _app = MaterialApp(
+  localizationsDelegates: AppStrings.localizationsDelegates,
+  supportedLocales: AppStrings.supportedLocales,
+  home: SevenWondersCalculatorScreen(),
+);
 
 void main() {
   group('sevenWondersScienceScore', () {
@@ -89,18 +96,14 @@ void main() {
   });
 
   testWidgets('screen builds without throwing', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: SevenWondersCalculatorScreen()),
-    );
+    await tester.pumpWidget(_app);
     expect(find.text('7 WONDERS'), findsOneWidget);
   });
 
   testWidgets('entering scores updates the selected player total', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: SevenWondersCalculatorScreen()),
-    );
+    await tester.pumpWidget(_app);
 
     // Civilian 12 + coins 7 (-> 2 VP) = 14 for player 1.
     await tester.enterText(

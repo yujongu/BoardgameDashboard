@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_theme.dart';
 
 class TerraformingMarsCalculatorScreen extends StatefulWidget {
@@ -38,6 +39,7 @@ class _TerraformingMarsCalculatorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Scaffold(
       backgroundColor: kColorBackground,
       appBar: AppBar(
@@ -51,7 +53,7 @@ class _TerraformingMarsCalculatorScreenState
           ),
         ),
         title: Text(
-          'TERRAFORMING MARS',
+          s.terraformingMarsTitle,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 16,
@@ -66,7 +68,7 @@ class _TerraformingMarsCalculatorScreenState
             child: TextButton(
               onPressed: _reset,
               child: Text(
-                'RESET',
+                s.calcReset,
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 11,
@@ -89,8 +91,8 @@ class _TerraformingMarsCalculatorScreenState
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
                 _ScoreRow(
-                  label: 'Terraform Rating',
-                  hint: '1 VP each',
+                  label: s.tmTerraformRating,
+                  hint: s.tmVpEach,
                   value: _tr,
                   vp: _tr,
                   min: 0,
@@ -99,8 +101,8 @@ class _TerraformingMarsCalculatorScreenState
                   onChanged: (v) => setState(() => _tr = v),
                 ),
                 _ScoreRow(
-                  label: 'Milestones Claimed',
-                  hint: '5 VP each · max 3',
+                  label: s.tmMilestones,
+                  hint: s.tmMilestonesHint,
                   value: _milestones,
                   vp: _milestones * 5,
                   min: 0,
@@ -109,8 +111,8 @@ class _TerraformingMarsCalculatorScreenState
                   onChanged: (v) => setState(() => _milestones = v),
                 ),
                 _ScoreRow(
-                  label: 'Award Points',
-                  hint: '1st place: 5 VP · 2nd place: 2 VP',
+                  label: s.tmAward,
+                  hint: s.tmAwardHint,
                   value: _awardVp,
                   vp: _awardVp,
                   min: 0,
@@ -119,8 +121,8 @@ class _TerraformingMarsCalculatorScreenState
                   onChanged: (v) => setState(() => _awardVp = v),
                 ),
                 _ScoreRow(
-                  label: 'Greenery Tiles',
-                  hint: '1 VP each',
+                  label: s.tmGreenery,
+                  hint: s.tmVpEach,
                   value: _greeneries,
                   vp: _greeneries,
                   min: 0,
@@ -129,8 +131,8 @@ class _TerraformingMarsCalculatorScreenState
                   onChanged: (v) => setState(() => _greeneries = v),
                 ),
                 _ScoreRow(
-                  label: 'City Adjacency',
-                  hint: '1 VP per adjacent greenery',
+                  label: s.tmCity,
+                  hint: s.tmCityHint,
                   value: _cityPoints,
                   vp: _cityPoints,
                   min: 0,
@@ -139,8 +141,8 @@ class _TerraformingMarsCalculatorScreenState
                   onChanged: (v) => setState(() => _cityPoints = v),
                 ),
                 _ScoreRow(
-                  label: 'Card VP',
-                  hint: 'VP icons on played cards',
+                  label: s.tmCardVp,
+                  hint: s.tmCardVpHint,
                   value: _cardVp,
                   vp: _cardVp,
                   min: 0,
@@ -161,7 +163,7 @@ class _TerraformingMarsCalculatorScreenState
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'TOTAL',
+                  s.calcTotal,
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorOnSurfaceVariant,
                     fontSize: 12,

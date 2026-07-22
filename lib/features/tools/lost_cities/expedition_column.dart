@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_theme.dart';
 
 int calculateExpeditionScore(List<int> selectedNumbers, int handshakeCount) {
@@ -81,6 +82,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final s = AppStrings.of(context);
     final color = widget.color;
 
     return Container(
@@ -123,14 +125,14 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Score: ',
+                        s.lostCitiesScorePrefix,
                         style: GoogleFonts.spaceGrotesk(
                           color: kColorOutline,
                           fontSize: 12,
                         ),
                       ),
                       Text(
-                        _isStarted ? _currentScore.toString() : '—',
+                        _isStarted ? _currentScore.toString() : s.scoreHint,
                         style: GoogleFonts.spaceGrotesk(
                           color: _isStarted
                               ? (_currentScore >= 0
