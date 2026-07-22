@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../auth/profile_screen.dart';
@@ -118,14 +119,14 @@ class _BottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home,
-                label: 'Home',
+                label: AppStrings.of(context).navHome,
                 selected: selectedIndex == 0,
                 onTap: () => onTap(0),
               ),
               _NavItem(
                 icon: Icons.menu_book_outlined,
                 activeIcon: Icons.menu_book,
-                label: 'Library',
+                label: AppStrings.of(context).navLibrary,
                 selected: selectedIndex == 1,
                 onTap: () => onTap(1),
               ),

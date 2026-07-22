@@ -45,5 +45,91 @@
   "profileEditNameTitle": "Edit display name",
   "profileNameUpdated": "Display name updated.",
   "profileNameUpdateFailed": "Failed to update name. Try again.",
-  "profileNameEmpty": "Name cannot be empty."
+  "profileNameEmpty": "Name cannot be empty.",
+
+  "commonRetry": "RETRY",
+
+  "navHome": "Home",
+  "navLibrary": "Library",
+
+  "homeRecentPlays": "Recent Plays",
+  "homeStatPlays": "PLAYS",
+  "homeStatWins": "WINS",
+  "homeStatWinRate": "WIN RATE",
+  "homeEmptyTitle": "No plays logged yet",
+  "homeEmptySubtitle": "Tap + to log your first session",
+
+  "playsCount": "{count, plural, =1{1 play} other{{count} plays}}",
+  "@playsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "playersCount": "{count, plural, =1{1 player} other{{count} players}}",
+  "@playersCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "commonOk": "OK",
+  "commonCancelCaps": "CANCEL",
+
+  "libraryCollection": "My Collection",
+  "gamesCount": "{count, plural, =1{1 GAME} other{{count} GAMES}}",
+  "@gamesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "libraryWinsShort": "{count}W",
+  "@libraryWinsShort": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "libraryPlaysSuffix": " / {count} plays",
+  "@libraryPlaysSuffix": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "libraryEmptyTitle": "No games in collection",
+  "libraryEmptySubtitle": "Log a play to add games here",
+
+  "gameDetailUnexpectedEmpty": "Unexpected empty result",
+  "playHistoryTitle": "Play History",
+  "sessionsCount": "{count, plural, =1{1 SESSION} other{{count} SESSIONS}}",
+  "@sessionsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "gameDetailEmptyTitle": "No play history found",
+  "gameDetailEmptySubtitle": "Log a play to see it here",
+  "gameDetailTools": "Tools",
+  "gameDetailNoTools": "No tools available yet.",
+
+  "crewSaveFailed": "Could not save campaign record",
+  "crewCampaignRecord": "Campaign Record",
+  "crewLoadFailed": "Could not load campaign record",
+  "crewAddMemberTitle": "Add crew member",
+  "crewNameHint": "Name",
+  "crewSetMissionTitle": "Set current mission",
+  "crewMissionRangeHint": "1–{max}",
+  "@crewMissionRangeHint": {
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+  "crewSectionCrew": "CREW",
+  "crewAdd": "ADD",
+  "crewNoMembers": "No crew members yet",
+  "crewCurrentMission": "CURRENT MISSION",
+  "crewMissionDenominator": " / {max}",
+  "@crewMissionDenominator": {
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  }
 }

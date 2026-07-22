@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
@@ -70,7 +71,9 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
             return _buildErrorScaffold(snapshot.error!);
           }
           if (!snapshot.hasData) {
-            return _buildErrorScaffold('Unexpected empty result');
+            return _buildErrorScaffold(
+              AppStrings.of(context).gameDetailUnexpectedEmpty,
+            );
           }
           return _buildDataScaffold(snapshot.data!);
         },
@@ -116,7 +119,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
               GestureDetector(
                 onTap: _reload,
                 child: Text(
-                  'RETRY',
+                  AppStrings.of(context).commonRetry,
                   style: GoogleFonts.spaceGrotesk(
                     color: kColorPrimary,
                     fontSize: 12,
@@ -287,7 +290,7 @@ class _StatsBox extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'PLAYS',
+            AppStrings.of(context).homeStatPlays,
             style: GoogleFonts.spaceGrotesk(
               color: kColorOutline,
               fontSize: 9,
@@ -310,6 +313,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Column(
       children: [
         Row(
@@ -318,7 +322,7 @@ class _SectionHeader extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              'Play History',
+              s.playHistoryTitle,
               style: GoogleFonts.newsreader(
                 color: kColorPrimary,
                 fontSize: 22,
@@ -328,7 +332,7 @@ class _SectionHeader extends StatelessWidget {
             ),
             if (count > 0)
               Text(
-                '$count ${count == 1 ? 'SESSION' : 'SESSIONS'}',
+                s.sessionsCount(count),
                 style: GoogleFonts.spaceGrotesk(
                   color: kColorOutline,
                   fontSize: 11,
@@ -414,8 +418,7 @@ class _PlayRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${play.participantCount} '
-                    '${play.participantCount == 1 ? 'player' : 'players'}',
+                    AppStrings.of(context).playersCount(play.participantCount),
                     style: GoogleFonts.spaceGrotesk(
                       color: kColorOutline,
                       fontSize: 11,
@@ -444,6 +447,7 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(
@@ -456,7 +460,7 @@ class _EmptyView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No play history found',
+            s.gameDetailEmptyTitle,
             style: GoogleFonts.newsreader(
               color: kColorOnSurfaceVariant,
               fontSize: 18,
@@ -465,7 +469,7 @@ class _EmptyView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Log a play to see it here',
+            s.gameDetailEmptySubtitle,
             style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
           ),
         ],
@@ -485,7 +489,7 @@ class _ToolsSectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tools',
+          AppStrings.of(context).gameDetailTools,
           style: GoogleFonts.newsreader(
             color: kColorPrimary,
             fontSize: 22,
@@ -514,7 +518,7 @@ class _ToolsContent extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
         child: Text(
-          'No tools available yet.',
+          AppStrings.of(context).gameDetailNoTools,
           style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
         ),
       );

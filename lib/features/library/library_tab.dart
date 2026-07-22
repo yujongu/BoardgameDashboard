@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_theme.dart';
@@ -113,6 +114,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Column(
       children: [
         Row(
@@ -121,7 +123,7 @@ class _SectionHeader extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              'My Collection',
+              s.libraryCollection,
               style: GoogleFonts.newsreader(
                 color: kColorPrimary,
                 fontSize: 22,
@@ -130,7 +132,7 @@ class _SectionHeader extends StatelessWidget {
               ),
             ),
             Text(
-              '$count ${count == 1 ? 'GAME' : 'GAMES'}',
+              s.gamesCount(count),
               style: GoogleFonts.spaceGrotesk(
                 color: kColorOutline,
                 fontSize: 11,
@@ -193,6 +195,7 @@ class _LibraryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final colors = _gradientColors;
     final lastPlayed = entry.lastPlayedAt;
 
@@ -293,7 +296,7 @@ class _LibraryCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '${entry.winCount}W',
+                          s.libraryWinsShort(entry.winCount),
                           style: GoogleFonts.spaceGrotesk(
                             color: kColorPrimary,
                             fontSize: 10,
@@ -301,7 +304,7 @@ class _LibraryCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          ' / ${entry.playCount} plays',
+                          s.libraryPlaysSuffix(entry.playCount),
                           style: GoogleFonts.spaceGrotesk(
                             color: kColorOutline,
                             fontSize: 10,
@@ -338,6 +341,7 @@ class _EmptyLibraryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(
@@ -350,7 +354,7 @@ class _EmptyLibraryView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No games in collection',
+            s.libraryEmptyTitle,
             style: GoogleFonts.newsreader(
               color: kColorOnSurfaceVariant,
               fontSize: 18,
@@ -359,7 +363,7 @@ class _EmptyLibraryView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Log a play to add games here',
+            s.libraryEmptySubtitle,
             style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
           ),
         ],
@@ -392,7 +396,7 @@ class _ErrorView extends StatelessWidget {
           GestureDetector(
             onTap: onRetry,
             child: Text(
-              'RETRY',
+              AppStrings.of(context).commonRetry,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorPrimary,
                 fontSize: 11,

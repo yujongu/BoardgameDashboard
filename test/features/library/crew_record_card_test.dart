@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:board_game_dashboard/features/library/crew_record_section.dart';
+import 'package:board_game_dashboard/l10n/app_localizations.dart';
 import 'package:board_game_dashboard/shared/models/crew_campaign.dart';
 
 void main() {
   Widget wrap(CrewCampaign campaign, ValueChanged<CrewCampaign> onChanged) {
     return MaterialApp(
+      localizationsDelegates: AppStrings.localizationsDelegates,
+      supportedLocales: AppStrings.supportedLocales,
       home: Scaffold(
         body: CrewRecordCard(campaign: campaign, onChanged: onChanged),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_theme.dart';
@@ -26,6 +27,7 @@ class HomeTab extends ConsumerStatefulWidget {
 class _HomeTabState extends ConsumerState<HomeTab> {
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final playsAsync = ref.watch(recentPlaysProvider);
     final libraryAsync = ref.watch(libraryProvider);
 
@@ -60,10 +62,8 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
             child: _SectionHeader(
-              title: 'Recent Plays',
-              subtitle: totalPlays != null
-                  ? '$totalPlays ${totalPlays == 1 ? 'play' : 'plays'}'
-                  : null,
+              title: s.homeRecentPlays,
+              subtitle: totalPlays != null ? s.playsCount(totalPlays) : null,
               onSeeAll: (totalPlays ?? 0) > 0
                   ? () => Navigator.of(context).push(
                       MaterialPageRoute(
@@ -130,6 +130,7 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final totalPlays = library.fold(0, (sum, e) => sum + e.playCount);
     final totalWins = library.fold(0, (sum, e) => sum + e.winCount);
     final winRate = totalPlays == 0 ? 0 : (totalWins * 100 ~/ totalPlays);
@@ -143,11 +144,11 @@ class _StatsRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _StatCell(value: '$totalPlays', label: 'PLAYS'),
+          _StatCell(value: '$totalPlays', label: s.homeStatPlays),
           _Divider(),
-          _StatCell(value: '$totalWins', label: 'WINS'),
+          _StatCell(value: '$totalWins', label: s.homeStatWins),
           _Divider(),
-          _StatCell(value: '$winRate%', label: 'WIN RATE'),
+          _StatCell(value: '$winRate%', label: s.homeStatWinRate),
         ],
       ),
     );
@@ -362,7 +363,7 @@ class _PlayCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${play.participantCount} ${play.participantCount == 1 ? 'player' : 'players'}',
+                    AppStrings.of(context).playersCount(play.participantCount),
                     style: GoogleFonts.spaceGrotesk(
                       color: kColorOutline,
                       fontSize: 11,
@@ -395,6 +396,7 @@ class _EmptyPlaysView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(
@@ -407,7 +409,7 @@ class _EmptyPlaysView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No plays logged yet',
+            s.homeEmptyTitle,
             style: GoogleFonts.newsreader(
               color: kColorOnSurfaceVariant,
               fontSize: 18,
@@ -416,7 +418,7 @@ class _EmptyPlaysView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Tap + to log your first session',
+            s.homeEmptySubtitle,
             style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
           ),
         ],
@@ -449,7 +451,7 @@ class _ErrorView extends StatelessWidget {
           GestureDetector(
             onTap: onRetry,
             child: Text(
-              'RETRY',
+              AppStrings.of(context).commonRetry,
               style: GoogleFonts.spaceGrotesk(
                 color: kColorPrimary,
                 fontSize: 11,
