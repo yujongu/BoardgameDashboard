@@ -3,9 +3,21 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2, M3, M4, Q3** and now **Q4 — integration
-test targets the emulator**. Also added **Flutter web support** this session. **All H/M/Q items
-are done.** Remaining: infra/polish only (P2–P6; P1 done).
+Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2, M3, M4, Q3, Q4** and now **P6 —
+housekeeping**. Also added **Flutter web support** this session. **All H/M/Q items and P1/P6 are
+done.** Remaining: infra/polish (P2, P3, P4, P5) and H6.
+
+### P6 completed / notes
+
+- `CLAUDE.md` feature-dir list corrected: dropped the non-existent `games/` and `sessions/`
+  entries (game detail lives in `library/`, play history/detail in `plays/`).
+- **Emulator logs**: nothing to do — no `*-debug.log` is tracked (`git ls-files` is clean) and
+  `*.log` is already git-ignored. The backlog's claim predates a cleanup or they were never
+  committed.
+- **`getMyFriends` CF**: confirmed orphaned (app uses the `watchMyFriends` stream; the client
+  `FriendRepository.getMyFriends()` has no callers) BUT it's a deployed, jest-tested function.
+  Per the audit's "don't delete unasked" and the owner's explicit choice this session, it's
+  **left in place, flagged only** — do not remove without a fresh go-ahead + a `firebase deploy`.
 
 ### Q4 completed
 
@@ -213,17 +225,14 @@ emulator needs Java, which isn't on PATH here — start it with Android Studio's
 
 ## Next Immediate Step
 
-The backlog is down to **infra/polish (P-series)**, in rough value order:
+Only infra/polish + H6 remain, in rough value order:
 
-- **P6 (S)** — housekeeping / cheap wins: git-ignore & untrack committed emulator logs
-  (`firestore-debug.log` at repo root and `functions/`), reconcile `CLAUDE.md`'s documented-but-
-  empty dirs (`lib/features/games/`, `lib/features/sessions/` — real code is in `library/` +
-  `plays/`), and flag/remove the dead `getMyFriends` CF (superseded by `watchMyFriends`).
-- **P2 (M)** — light theme + `themeMode` switch (needs `shared_preferences`), plus **P5 (S)** a
-  Settings screen to host the toggle (and later theme/notifications/about).
+- **H6a (S)** — "Forgot password?" link on `login_screen.dart` (`sendPasswordResetEmail`). Quick,
+  user-facing.
+- **P2 (M) + P5 (S)** — light theme + `themeMode` switch (needs `shared_preferences`), plus a
+  Settings screen to host the toggle (and later notifications/about/version). Biggest chunk.
 - **P3** — Crashlytics first, then analytics for key funnels (login, add-play, add-friend).
-- **H6** — "Forgot password?" link (S, quick) is also still open; avatar upload needs
-  `image_picker` + Storage (P4-dependent).
+- **P4 / H6b** — capability packages as their features are scheduled: `image_picker` +
+  Firebase Storage for avatar upload; `shared_preferences` (P2); charts (would enrich M3).
 
-Recommended: **P6** (fast, tidies the repo) or **H6a** (fast, user-facing) next; **P2+P5** is the
-biggest remaining polish chunk.
+Recommended: **H6a** for a fast user-facing win, or **P2+P5** for the biggest remaining polish.
