@@ -74,8 +74,9 @@ Always check `firestore.rules` when implementing any feature that reads from or 
 
 ## Gotchas
 
-- `lib/main.dart` has `const bool _useEmulators = false`. Set to `true` ONLY while
-  `firebase emulators:start` is running. Auth and Functions emulators must BOTH be on
+- `lib/main.dart` reads `_useEmulators` from `--dart-define=USE_EMULATORS=true` (defaults to
+  false → production). Pass that define ONLY while `firebase emulators:start` is running; the
+  integration test suite passes it automatically. Auth and Functions emulators must BOTH be on
   or BOTH off — mixing emulator auth tokens with production Functions causes INTERNAL errors.
 - Session hand-offs go in `HANDOVER.md` at the repo root.
 

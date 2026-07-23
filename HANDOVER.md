@@ -3,9 +3,25 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2, M3, M4** and now **Q3 — calculator +
-backend test coverage**. Also added **Flutter web support** this session. All H/M features and
-Q1–Q3 are done. Remaining: **Q4** (integration test → emulator) and infra/polish (P2–P6; P1 done).
+Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2, M3, M4, Q3** and now **Q4 — integration
+test targets the emulator**. Also added **Flutter web support** this session. **All H/M/Q items
+are done.** Remaining: infra/polish only (P2–P6; P1 done).
+
+### Q4 completed
+
+- `main.dart`: `_useEmulators` is now `bool.fromEnvironment('USE_EMULATORS')` (was a hard-coded
+  `false`). Defaults to false → production, so normal runs/builds are unchanged; pass
+  `--dart-define=USE_EMULATORS=true` to hit the emulator suite. `CLAUDE.md` gotcha updated.
+- `integration_test/app_test.dart`: removed the hard-coded prod account
+  (`thisemailcannotexist@gmail.com` / `joeyqwer1!`). Creds now come from `--dart-define`
+  (`TEST_EMAIL`/`TEST_PASSWORD`/`TEST_EMAIL2`/`TEST_PASSWORD2`) with throwaway `*.test` defaults
+  that the Auth emulator creates on the fly. Added a run-instructions header comment.
+- **Not executed here**: running the UI integration test needs the full emulator suite
+  (Auth :9099, Functions :5001, Firestore :8080 — with `functions` built) **and** a target
+  device/browser, and its Firestore :8080 clashes with the dev web build. `flutter analyze` is
+  clean and the unit/widget suite is **89 pass**; the integration run itself is left for a machine
+  with the emulator suite + a device. The test's string assertions still match the l10n English
+  strings, so no assertion changes were needed.
 
 ### Q3 completed
 
@@ -197,10 +213,17 @@ emulator needs Java, which isn't on PATH here — start it with Android Studio's
 
 ## Next Immediate Step
 
-**Q4 (S)** — point `integration_test/app_test.dart` at the emulator suite instead of hard-coded
-prod creds: the `_useEmulators` path already exists in `main.dart` (Auth :9099, Functions :5001,
-Firestore :8080 — but note 8080 clashes with the dev web build), and read test creds from
-`--dart-define`. Then the infra/polish P-series: **P2** light theme + `themeMode` switch (needs
-`shared_preferences`), **P5** a Settings screen to host it, **P3** Crashlytics/analytics, **P6**
-housekeeping (committed emulator logs / `firestore-debug.log`, empty documented dirs in
-`CLAUDE.md`, dead `getMyFriends` CF).
+The backlog is down to **infra/polish (P-series)**, in rough value order:
+
+- **P6 (S)** — housekeeping / cheap wins: git-ignore & untrack committed emulator logs
+  (`firestore-debug.log` at repo root and `functions/`), reconcile `CLAUDE.md`'s documented-but-
+  empty dirs (`lib/features/games/`, `lib/features/sessions/` — real code is in `library/` +
+  `plays/`), and flag/remove the dead `getMyFriends` CF (superseded by `watchMyFriends`).
+- **P2 (M)** — light theme + `themeMode` switch (needs `shared_preferences`), plus **P5 (S)** a
+  Settings screen to host the toggle (and later theme/notifications/about).
+- **P3** — Crashlytics first, then analytics for key funnels (login, add-play, add-friend).
+- **H6** — "Forgot password?" link (S, quick) is also still open; avatar upload needs
+  `image_picker` + Storage (P4-dependent).
+
+Recommended: **P6** (fast, tidies the repo) or **H6a** (fast, user-facing) next; **P2+P5** is the
+biggest remaining polish chunk.

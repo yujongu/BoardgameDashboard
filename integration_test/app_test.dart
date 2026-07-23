@@ -1,15 +1,39 @@
+// End-to-end UI test. Run against the Firebase Emulator Suite so it never
+// touches production:
+//
+//   1. cd functions && npm run build
+//   2. firebase emulators:start --only auth,functions,firestore
+//      (Auth :9099, Functions :5001, Firestore :8080 — see main.dart)
+//   3. flutter test integration_test/app_test.dart \
+//        --dart-define=USE_EMULATORS=true \
+//        [--dart-define=TEST_EMAIL=... --dart-define=TEST_PASSWORD=... ...]
+//
+// Credentials come from --dart-define; the defaults below are throwaway
+// accounts created in the Auth emulator, so no real credentials live in source.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import 'package:board_game_dashboard/main.dart' as app;
 
-const _mainEmail = 'thisemailcannotexist@gmail.com';
-const _mainPassword = 'joeyqwer1!';
+const _mainEmail = String.fromEnvironment(
+  'TEST_EMAIL',
+  defaultValue: 'testmain@gameshelf.test',
+);
+const _mainPassword = String.fromEnvironment(
+  'TEST_PASSWORD',
+  defaultValue: 'TestPass1!',
+);
 const _mainDisplayName = 'Test User';
 
-const _user2Email = 'testuser2@gameshelf.test';
-const _user2Password = 'TestPass2!';
+const _user2Email = String.fromEnvironment(
+  'TEST_EMAIL2',
+  defaultValue: 'testuser2@gameshelf.test',
+);
+const _user2Password = String.fromEnvironment(
+  'TEST_PASSWORD2',
+  defaultValue: 'TestPass2!',
+);
 const _user2DisplayName = 'Test User Two';
 
 // Generous settle timeout for Firebase round-trips.

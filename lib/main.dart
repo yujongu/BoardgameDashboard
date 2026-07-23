@@ -16,10 +16,12 @@ import 'features/auth/login_screen.dart';
 import 'features/auth/profile_setup_screen.dart';
 import 'features/shell/main_shell.dart';
 
-// Set to true ONLY when `firebase emulators:start` is running locally.
-// Auth and Functions emulators must BOTH be running, or BOTH be off.
-// Mixing emulator auth tokens with production Functions causes INTERNAL errors.
-const bool _useEmulators = false;
+// Enable the Firebase Emulator Suite with --dart-define=USE_EMULATORS=true
+// (defaults to false → production, so normal runs are unaffected). Auth and
+// Functions emulators must BOTH be running, or BOTH be off — mixing emulator
+// auth tokens with production Functions causes INTERNAL errors. The integration
+// test suite passes this define so it never touches production.
+const bool _useEmulators = bool.fromEnvironment('USE_EMULATORS');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
