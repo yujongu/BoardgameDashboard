@@ -23,12 +23,10 @@ lib/
   main.dart
   features/
     auth/                   # Login & profile setup
-    friends/                # Friend management
-    games/                  # Game library & detail views
+    friends/                # Friend management & profiles
     home/                   # Home dashboard
-    library/                # Game library browsing
-    plays/                  # Play logging
-    sessions/               # Play session logging & history
+    library/                # Game library, game detail & catalog browse
+    plays/                  # Play logging, history & detail
     shell/                  # Main navigation shell
     tools/                  # Game-specific utility tools
       <game_name>/          # One subfolder per game with tools
