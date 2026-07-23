@@ -29,6 +29,19 @@ export async function seedUser(uid: string, opts: SeedUserOptions): Promise<void
     });
 }
 
+// ─── Board game catalog seeding ─────────────────────────────────────────────
+
+/**
+ * Seeds a boardGames/{gameId} catalog document. listBoardGames orders and
+ * prefix-filters on the `name` field.
+ */
+export async function seedBoardGame(gameId: string, name: string): Promise<void> {
+  await db.collection("boardGames").doc(gameId).set({
+    name,
+    name_lower: name.toLowerCase(),
+  });
+}
+
 // ─── Play seeding ─────────────────────────────────────────────────────────────
 
 export interface SeedPlayOptions {

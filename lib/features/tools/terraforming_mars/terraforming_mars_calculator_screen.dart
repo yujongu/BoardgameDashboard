@@ -4,6 +4,23 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_theme.dart';
 
+/// Final score for one player: Terraform Rating + 5 VP per claimed milestone +
+/// award VP + greenery tiles (1 VP each) + city-adjacency VP + card VP.
+int terraformingMarsTotal({
+  required int terraformRating,
+  required int milestones,
+  required int awardVp,
+  required int greeneries,
+  required int cityPoints,
+  required int cardVp,
+}) =>
+    terraformRating +
+    milestones * 5 +
+    awardVp +
+    greeneries +
+    cityPoints +
+    cardVp;
+
 class TerraformingMarsCalculatorScreen extends StatefulWidget {
   const TerraformingMarsCalculatorScreen({super.key});
 
@@ -23,8 +40,14 @@ class _TerraformingMarsCalculatorScreenState
   int _cityPoints = 0;
   int _cardVp = 0;
 
-  int get _total =>
-      _tr + _milestones * 5 + _awardVp + _greeneries + _cityPoints + _cardVp;
+  int get _total => terraformingMarsTotal(
+    terraformRating: _tr,
+    milestones: _milestones,
+    awardVp: _awardVp,
+    greeneries: _greeneries,
+    cityPoints: _cityPoints,
+    cardVp: _cardVp,
+  );
 
   void _reset() {
     setState(() {
