@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/crew_campaign.dart';
 import '../../shared/providers/repository_providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 
 /// Campaign record sheet for The Crew: crew roster plus the mission the whole
 /// crew has reached. Loads and saves the signed-in user's campaign doc.
@@ -74,26 +74,26 @@ class _CrewRecordSectionState extends ConsumerState<CrewRecordSection> {
         Text(
           AppStrings.of(context).crewCampaignRecord,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 22,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.3,
           ),
         ),
         const SizedBox(height: 10),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
         const SizedBox(height: 12),
         if (_error != null)
           _LoadErrorRow(onRetry: _load)
         else if (_campaign == null)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   strokeWidth: 2,
                 ),
               ),
@@ -123,7 +123,10 @@ class _LoadErrorRow extends StatelessWidget {
         Expanded(
           child: Text(
             s.crewLoadFailed,
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 13,
+            ),
           ),
         ),
         GestureDetector(
@@ -131,7 +134,7 @@ class _LoadErrorRow extends StatelessWidget {
           child: Text(
             s.commonRetry,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
@@ -215,8 +218,8 @@ class CrewRecordCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -230,12 +233,12 @@ class CrewRecordCard extends StatelessWidget {
                 onTap: () => _addMember(context),
                 child: Row(
                   children: [
-                    const Icon(Icons.add, color: kColorPrimary, size: 14),
+                    Icon(Icons.add, color: context.colors.primary, size: 14),
                     const SizedBox(width: 2),
                     Text(
                       s.crewAdd,
                       style: GoogleFonts.spaceGrotesk(
-                        color: kColorPrimary,
+                        color: context.colors.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
@@ -251,7 +254,7 @@ class CrewRecordCard extends StatelessWidget {
             Text(
               s.crewNoMembers,
               style: GoogleFonts.newsreader(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
               ),
@@ -269,7 +272,7 @@ class CrewRecordCard extends StatelessWidget {
               ],
             ),
           const SizedBox(height: 16),
-          Container(height: 1, color: kColorOutlineVariant),
+          Container(height: 1, color: context.colors.outlineVariant),
           const SizedBox(height: 14),
           Center(child: _CaptionLabel(s.crewCurrentMission)),
           const SizedBox(height: 4),
@@ -278,8 +281,8 @@ class CrewRecordCard extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left),
-                color: kColorPrimary,
-                disabledColor: kColorOutlineVariant,
+                color: context.colors.primary,
+                disabledColor: context.colors.outlineVariant,
                 onPressed: campaign.currentMission > 1
                     ? () => _setMission(campaign.currentMission - 1)
                     : null,
@@ -295,7 +298,7 @@ class CrewRecordCard extends StatelessWidget {
                       Text(
                         '${campaign.currentMission}',
                         style: GoogleFonts.newsreader(
-                          color: kColorPrimary,
+                          color: context.colors.primary,
                           fontSize: 38,
                           fontWeight: FontWeight.w600,
                         ),
@@ -303,7 +306,7 @@ class CrewRecordCard extends StatelessWidget {
                       Text(
                         s.crewMissionDenominator(missionCount),
                         style: GoogleFonts.newsreader(
-                          color: kColorOutline,
+                          color: context.colors.outline,
                           fontSize: 18,
                         ),
                       ),
@@ -313,8 +316,8 @@ class CrewRecordCard extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
-                color: kColorPrimary,
-                disabledColor: kColorOutlineVariant,
+                color: context.colors.primary,
+                disabledColor: context.colors.outlineVariant,
                 onPressed: campaign.currentMission < missionCount
                     ? () => _setMission(campaign.currentMission + 1)
                     : null,
@@ -337,7 +340,7 @@ class _CaptionLabel extends StatelessWidget {
     return Text(
       text,
       style: GoogleFonts.spaceGrotesk(
-        color: kColorOnSurfaceVariant,
+        color: context.colors.onSurfaceVariant,
         fontSize: 11,
         fontWeight: FontWeight.w700,
         letterSpacing: 1,
@@ -357,9 +360,9 @@ class _MemberChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 6, 6, 6),
       decoration: BoxDecoration(
-        color: kColorSurface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kColorOutlineVariant),
+        border: Border.all(color: context.colors.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -367,7 +370,7 @@ class _MemberChip extends StatelessWidget {
           Text(
             name,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -375,7 +378,7 @@ class _MemberChip extends StatelessWidget {
           const SizedBox(width: 6),
           GestureDetector(
             onTap: onRemove,
-            child: const Icon(Icons.close, color: kColorOutline, size: 14),
+            child: Icon(Icons.close, color: context.colors.outline, size: 14),
           ),
         ],
       ),
@@ -413,10 +416,13 @@ class _TextInputDialogState extends State<_TextInputDialog> {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     return AlertDialog(
-      backgroundColor: kColorSurfaceHigh,
+      backgroundColor: context.colors.surfaceHigh,
       title: Text(
         widget.title,
-        style: GoogleFonts.newsreader(color: kColorOnSurface, fontSize: 20),
+        style: GoogleFonts.newsreader(
+          color: context.colors.onSurface,
+          fontSize: 20,
+        ),
       ),
       content: TextField(
         controller: _controller,
@@ -427,18 +433,21 @@ class _TextInputDialogState extends State<_TextInputDialog> {
         inputFormatters: widget.numeric
             ? [FilteringTextInputFormatter.digitsOnly]
             : null,
-        style: GoogleFonts.spaceGrotesk(color: kColorOnSurface, fontSize: 15),
+        style: GoogleFonts.spaceGrotesk(
+          color: context.colors.onSurface,
+          fontSize: 15,
+        ),
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: GoogleFonts.spaceGrotesk(
-            color: kColorOutline,
+            color: context.colors.outline,
             fontSize: 15,
           ),
-          enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: kColorOutlineVariant),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: context.colors.outlineVariant),
           ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: kColorPrimary),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: context.colors.primary),
           ),
         ),
         onSubmitted: (_) => _submit(),
@@ -449,7 +458,7 @@ class _TextInputDialogState extends State<_TextInputDialog> {
           child: Text(
             s.commonCancelCaps,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOutline,
+              color: context.colors.outline,
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
@@ -461,7 +470,7 @@ class _TextInputDialogState extends State<_TextInputDialog> {
           child: Text(
             s.commonOk,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,

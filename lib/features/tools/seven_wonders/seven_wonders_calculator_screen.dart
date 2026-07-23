@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/theme/app_theme.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../presentation/widgets/calculator_widgets.dart';
 
 /// Science (Green) VP: each symbol type scores count squared, plus 7 VP per
@@ -192,21 +192,21 @@ class _SevenWondersCalculatorScreenState
     );
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: kColorAppBarBackground,
+        backgroundColor: context.colors.appBarBackground,
         leadingWidth: 64,
         leading: Padding(
           padding: const EdgeInsets.only(left: 8),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+            icon: Icon(Icons.arrow_back, color: context.colors.primary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
         title: Text(
           s.sevenWondersTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -221,7 +221,7 @@ class _SevenWondersCalculatorScreenState
               child: Text(
                 s.calcReset,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -232,7 +232,7 @@ class _SevenWondersCalculatorScreenState
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -311,7 +311,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         label,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOnSurfaceVariant,
+          color: context.colors.onSurfaceVariant,
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 1,

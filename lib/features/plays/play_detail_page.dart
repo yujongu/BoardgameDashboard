@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import 'edit_play_page.dart';
 import 'play_detail_controller.dart';
 
@@ -38,9 +38,9 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
         SnackBar(
           content: Text(
             AppStrings.of(context).playDetailSaveFailed,
-            style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
           ),
-          backgroundColor: kColorSurfaceHigh,
+          backgroundColor: context.colors.surfaceHigh,
         ),
       );
     }
@@ -51,19 +51,22 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: kColorSurfaceHigh,
+        backgroundColor: context.colors.surfaceHigh,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         title: Text(
           s.playDeleteTitle,
           style: GoogleFonts.newsreader(
-            color: kColorOnSurface,
+            color: context.colors.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
         content: Text(
           s.playDeleteBody,
-          style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 14),
+          style: GoogleFonts.spaceGrotesk(
+            color: context.colors.outline,
+            fontSize: 14,
+          ),
         ),
         actions: [
           TextButton(
@@ -71,7 +74,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
             child: Text(
               s.commonCancelCaps,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.5,
@@ -115,16 +118,16 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
         Navigator.of(context).pop(_mutated);
       },
       child: Scaffold(
-        backgroundColor: kColorBackground,
+        backgroundColor: context.colors.background,
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: const Color(0xFF0A0905),
+              backgroundColor: context.colors.appBarBackground,
               expandedHeight: kToolbarHeight,
               collapsedHeight: kToolbarHeight,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+                icon: Icon(Icons.arrow_back, color: context.colors.primary),
                 onPressed: () => Navigator.of(context).pop(_mutated),
               ),
               actions: [
@@ -132,8 +135,8 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                   icon: Icon(
                     Icons.edit_outlined,
                     color: state.participants != null
-                        ? kColorPrimary
-                        : kColorOutline,
+                        ? context.colors.primary
+                        : context.colors.outline,
                     size: 20,
                   ),
                   tooltip: s.commonEdit,
@@ -154,7 +157,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
               ],
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(1),
-                child: Container(height: 1, color: kColorAmberBorder),
+                child: Container(height: 1, color: context.colors.amberBorder),
               ),
               flexibleSpace: SafeArea(
                 child: Padding(
@@ -165,7 +168,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                       state.gameName.toUpperCase(),
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.newsreader(
-                        color: kColorPrimary,
+                        color: context.colors.primary,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.italic,
@@ -268,8 +271,8 @@ class _SessionInfo extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -304,13 +307,13 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: kColorOutline, size: 16),
+        Icon(icon, color: context.colors.outline, size: 16),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             text,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 14,
             ),
           ),
@@ -340,7 +343,7 @@ class _SectionHeader extends StatelessWidget {
             Text(
               title,
               style: GoogleFonts.newsreader(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
               ),
@@ -348,7 +351,7 @@ class _SectionHeader extends StatelessWidget {
             Text(
               AppStrings.of(context).playersCountCaps(count),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1.5,
@@ -357,7 +360,7 @@ class _SectionHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
       ],
     );
   }
@@ -392,8 +395,8 @@ class _SkeletonCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -402,8 +405,8 @@ class _SkeletonCard extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: kColorSurface,
-              border: Border.all(color: kColorOutlineVariant),
+              color: context.colors.surface,
+              border: Border.all(color: context.colors.outlineVariant),
               borderRadius: BorderRadius.circular(3),
             ),
           ),
@@ -416,7 +419,7 @@ class _SkeletonCard extends StatelessWidget {
                   height: 12,
                   width: 120,
                   decoration: BoxDecoration(
-                    color: kColorSurface,
+                    color: context.colors.surface,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -425,7 +428,7 @@ class _SkeletonCard extends StatelessWidget {
                   height: 8,
                   width: 60,
                   decoration: BoxDecoration(
-                    color: kColorSurface,
+                    color: context.colors.surface,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -453,11 +456,14 @@ class _ParticipantsError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: kColorOutline, size: 32),
+          Icon(Icons.error_outline, color: context.colors.outline, size: 32),
           const SizedBox(height: 12),
           Text(
             s.playDetailPlayersLoadFailed,
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 12),
           GestureDetector(
@@ -465,7 +471,7 @@ class _ParticipantsError extends StatelessWidget {
             child: Text(
               s.commonRetry,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
@@ -496,9 +502,13 @@ class _ParticipantCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isWinner ? kColorPrimary.withAlpha(18) : kColorSurfaceHigh,
+        color: isWinner
+            ? context.colors.primary.withAlpha(18)
+            : context.colors.surfaceHigh,
         border: Border.all(
-          color: isWinner ? kColorPrimary.withAlpha(140) : kColorAmberBorder,
+          color: isWinner
+              ? context.colors.primary.withAlpha(140)
+              : context.colors.amberBorder,
           width: isWinner ? 1.5 : 1,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -509,17 +519,19 @@ class _ParticipantCard extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: isWinner ? kColorPrimary.withAlpha(30) : kColorSurface,
+              color: isWinner
+                  ? context.colors.primary.withAlpha(30)
+                  : context.colors.surface,
               border: Border.all(
                 color: isWinner
-                    ? kColorPrimary.withAlpha(100)
-                    : kColorOutlineVariant,
+                    ? context.colors.primary.withAlpha(100)
+                    : context.colors.outlineVariant,
               ),
               borderRadius: BorderRadius.circular(3),
             ),
             child: Icon(
               isWinner ? Icons.emoji_events : Icons.person_outline,
-              color: isWinner ? kColorPrimary : kColorOutline,
+              color: isWinner ? context.colors.primary : context.colors.outline,
               size: 20,
             ),
           ),
@@ -531,7 +543,9 @@ class _ParticipantCard extends StatelessWidget {
                 Text(
                   participant.name,
                   style: GoogleFonts.newsreader(
-                    color: isWinner ? kColorPrimary : kColorOnSurface,
+                    color: isWinner
+                        ? context.colors.primary
+                        : context.colors.onSurface,
                     fontSize: 16,
                     fontWeight: isWinner ? FontWeight.w600 : FontWeight.w500,
                   ),
@@ -541,7 +555,7 @@ class _ParticipantCard extends StatelessWidget {
                   Text(
                     s.playDetailScore(_formatScore(participant.score!)),
                     style: GoogleFonts.spaceGrotesk(
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       fontSize: 11,
                     ),
                   ),
@@ -550,11 +564,11 @@ class _ParticipantCard extends StatelessWidget {
             ),
           ),
           if (isWinner)
-            _Badge(label: s.playDetailWinner, color: kColorPrimary)
+            _Badge(label: s.playDetailWinner, color: context.colors.primary)
           else if (participant.rank != null)
             _Badge(
               label: s.playDetailRank(participant.rank!),
-              color: kColorOutline,
+              color: context.colors.outline,
             ),
         ],
       ),

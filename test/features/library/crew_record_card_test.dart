@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:board_game_dashboard/shared/theme/app_colors.dart';
 
 import 'package:board_game_dashboard/features/library/crew_record_section.dart';
 import 'package:board_game_dashboard/l10n/app_localizations.dart';
@@ -8,6 +9,7 @@ import 'package:board_game_dashboard/shared/models/crew_campaign.dart';
 void main() {
   Widget wrap(CrewCampaign campaign, ValueChanged<CrewCampaign> onChanged) {
     return MaterialApp(
+      theme: buildDarkTheme(),
       localizationsDelegates: AppStrings.localizationsDelegates,
       supportedLocales: AppStrings.supportedLocales,
       home: Scaffold(

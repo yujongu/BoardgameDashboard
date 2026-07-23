@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -199,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           AppStrings.of(context).appTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 40,
             fontWeight: FontWeight.w600,
             fontStyle: FontStyle.italic,
@@ -212,9 +212,9 @@ class _LoginScreenState extends State<LoginScreen> {
           _isRegistering
               ? AppStrings.of(context).authSubtitleCreate
               : AppStrings.of(context).authSubtitleSignIn,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: kColorOnSurfaceVariant),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: context.colors.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -227,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
       autocorrect: false,
-      style: const TextStyle(color: kColorOnSurface),
+      style: TextStyle(color: context.colors.onSurface),
       decoration: _inputDecoration(
         AppStrings.of(context).authEmailLabel,
         Icons.mail_outline,
@@ -247,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.done,
       onFieldSubmitted: (_) => _submit(),
-      style: const TextStyle(color: kColorOnSurface),
+      style: TextStyle(color: context.colors.onSurface),
       decoration:
           _inputDecoration(
             AppStrings.of(context).authPasswordLabel,
@@ -258,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 _obscurePassword
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
-                color: kColorOutline,
+                color: context.colors.outline,
                 size: 20,
               ),
               onPressed: () =>
@@ -279,17 +279,17 @@ class _LoginScreenState extends State<LoginScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: kColorOutline),
-      prefixIcon: Icon(icon, color: kColorOutline, size: 20),
+      labelStyle: TextStyle(color: context.colors.outline),
+      prefixIcon: Icon(icon, color: context.colors.outline, size: 20),
       filled: true,
-      fillColor: kColorSurface,
+      fillColor: context.colors.surface,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: kColorOutlineVariant),
+        borderSide: BorderSide(color: context.colors.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: kColorPrimary, width: 1.5),
+        borderSide: BorderSide(color: context.colors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -309,7 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: TextButton(
         onPressed: _isLoading ? null : _resetPassword,
         style: TextButton.styleFrom(
-          foregroundColor: kColorPrimary,
+          foregroundColor: context.colors.primary,
           padding: const EdgeInsets.symmetric(vertical: 4),
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -339,9 +339,11 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: kColorPrimary,
-          foregroundColor: kColorOnPrimary,
-          disabledBackgroundColor: kColorPrimaryDim.withValues(alpha: 0.4),
+          backgroundColor: context.colors.primary,
+          foregroundColor: context.colors.onPrimary,
+          disabledBackgroundColor: context.colors.primaryDim.withValues(
+            alpha: 0.4,
+          ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: GoogleFonts.workSans(
             fontSize: 15,
@@ -350,12 +352,12 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         child: _isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: kColorOnPrimary,
+                  color: context.colors.onPrimary,
                 ),
               )
             : Text(
@@ -375,7 +377,10 @@ class _LoginScreenState extends State<LoginScreen> {
           _isRegistering
               ? AppStrings.of(context).authHaveAccount
               : AppStrings.of(context).authNoAccount,
-          style: const TextStyle(color: kColorOnSurfaceVariant, fontSize: 13),
+          style: TextStyle(
+            color: context.colors.onSurfaceVariant,
+            fontSize: 13,
+          ),
         ),
         TextButton(
           onPressed: _isLoading
@@ -385,7 +390,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   _errorMessage = null;
                 }),
           style: TextButton.styleFrom(
-            foregroundColor: kColorPrimary,
+            foregroundColor: context.colors.primary,
             padding: const EdgeInsets.symmetric(horizontal: 6),
           ),
           child: Text(
@@ -402,15 +407,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildDivider() {
     return Row(
       children: [
-        const Expanded(child: Divider(color: kColorOutlineVariant)),
+        Expanded(child: Divider(color: context.colors.outlineVariant)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             AppStrings.of(context).authOr,
-            style: const TextStyle(color: kColorOnSurfaceVariant, fontSize: 13),
+            style: TextStyle(
+              color: context.colors.onSurfaceVariant,
+              fontSize: 13,
+            ),
           ),
         ),
-        const Expanded(child: Divider(color: kColorOutlineVariant)),
+        Expanded(child: Divider(color: context.colors.outlineVariant)),
       ],
     );
   }
@@ -421,8 +429,8 @@ class _LoginScreenState extends State<LoginScreen> {
       child: OutlinedButton(
         onPressed: _isLoading ? null : _signInWithGoogle,
         style: OutlinedButton.styleFrom(
-          foregroundColor: kColorOnSurface,
-          side: const BorderSide(color: kColorOutlineVariant),
+          foregroundColor: context.colors.onSurface,
+          side: BorderSide(color: context.colors.outlineVariant),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: GoogleFonts.workSans(
             fontSize: 15,

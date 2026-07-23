@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/catalog_game.dart';
 import '../../shared/providers/game_catalog_provider.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import 'game_detail_page.dart';
 
 /// Browse/search the full board-game catalog (not just games you've logged) and
@@ -53,17 +53,17 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
     final catalog = ref.watch(gameCatalogProvider);
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+          icon: Icon(Icons.arrow_back, color: context.colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           s.catalogBrowseTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -72,7 +72,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -90,8 +90,8 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
   Widget _buildBody(GameCatalogState catalog) {
     final s = AppStrings.of(context);
     if (catalog.loading && catalog.games == null) {
-      return const Center(
-        child: CircularProgressIndicator(color: kColorPrimary),
+      return Center(
+        child: CircularProgressIndicator(color: context.colors.primary),
       );
     }
 
@@ -102,13 +102,17 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: kColorOutline, size: 32),
+              Icon(
+                Icons.error_outline,
+                color: context.colors.outline,
+                size: 32,
+              ),
               const SizedBox(height: 12),
               Text(
                 s.gamePickerLoadFailed,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 12,
                 ),
               ),
@@ -118,7 +122,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                 child: Text(
                   s.commonRetry,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorPrimary,
+                    color: context.colors.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
@@ -137,7 +141,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
         child: Text(
           s.gamePickerNoGames,
           style: GoogleFonts.newsreader(
-            color: kColorOnSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
             fontSize: 16,
             fontStyle: FontStyle.italic,
           ),
@@ -169,38 +173,38 @@ class _SearchField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
-            const Icon(Icons.search, color: kColorOutline, size: 18),
+            Icon(Icons.search, color: context.colors.outline, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
                 controller: controller,
                 autofocus: false,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOnSurface,
+                  color: context.colors.onSurface,
                   fontSize: 14,
                 ),
                 decoration: InputDecoration.collapsed(
                   hintText: AppStrings.of(context).gamePickerSearchHint,
                   hintStyle: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 14,
                   ),
                 ),
               ),
             ),
             if (remoteLoading)
-              const SizedBox(
+              SizedBox(
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 1.5,
-                  color: kColorOutline,
+                  color: context.colors.outline,
                 ),
               )
             else
@@ -209,9 +213,9 @@ class _SearchField extends StatelessWidget {
                 builder: (_, value, child) => value.text.isNotEmpty
                     ? GestureDetector(
                         onTap: controller.clear,
-                        child: const Icon(
+                        child: Icon(
                           Icons.close,
-                          color: kColorOutline,
+                          color: context.colors.outline,
                           size: 16,
                         ),
                       )
@@ -247,13 +251,17 @@ class _GameTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
-            const Icon(Icons.casino_outlined, color: kColorOutline, size: 18),
+            Icon(
+              Icons.casino_outlined,
+              color: context.colors.outline,
+              size: 18,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -262,7 +270,7 @@ class _GameTile extends StatelessWidget {
                   Text(
                     game.name,
                     style: GoogleFonts.newsreader(
-                      color: kColorOnSurface,
+                      color: context.colors.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -272,7 +280,7 @@ class _GameTile extends StatelessWidget {
                     Text(
                       range,
                       style: GoogleFonts.spaceGrotesk(
-                        color: kColorOutline,
+                        color: context.colors.outline,
                         fontSize: 11,
                       ),
                     ),
@@ -280,7 +288,7 @@ class _GameTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: kColorOutline, size: 20),
+            Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
           ],
         ),
       ),

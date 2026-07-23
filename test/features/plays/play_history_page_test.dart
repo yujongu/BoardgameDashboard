@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:board_game_dashboard/shared/theme/app_colors.dart';
 
 import 'package:board_game_dashboard/features/plays/play_history_page.dart';
 import 'package:board_game_dashboard/l10n/app_localizations.dart';
@@ -41,6 +42,7 @@ class _FakePlayRepo implements PlayRepository {
 Widget _wrap(PlayRepository repo) => ProviderScope(
   overrides: [playRepositoryProvider.overrideWithValue(repo)],
   child: MaterialApp(
+    theme: buildDarkTheme(),
     localizationsDelegates: AppStrings.localizationsDelegates,
     supportedLocales: AppStrings.supportedLocales,
     home: const PlayHistoryPage(),

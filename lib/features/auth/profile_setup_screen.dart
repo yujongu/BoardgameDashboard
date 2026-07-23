@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -79,7 +79,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   Text(
                     s.appTitle,
                     style: GoogleFonts.newsreader(
-                      color: kColorPrimary,
+                      color: context.colors.primary,
                       fontSize: 40,
                       fontWeight: FontWeight.w600,
                       fontStyle: FontStyle.italic,
@@ -91,7 +91,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   Text(
                     s.profileSetupSubtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: kColorOnSurfaceVariant,
+                      color: context.colors.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -99,7 +99,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   Text(
                     s.profileSetupPrompt,
                     style: GoogleFonts.newsreader(
-                      color: kColorOnSurface,
+                      color: context.colors.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
                     ),
@@ -112,23 +112,23 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _save(),
                     autofocus: true,
-                    style: const TextStyle(color: kColorOnSurface),
+                    style: TextStyle(color: context.colors.onSurface),
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
                       hintText: s.profileNameHint,
-                      hintStyle: const TextStyle(color: kColorOutline),
+                      hintStyle: TextStyle(color: context.colors.outline),
                       filled: true,
-                      fillColor: kColorSurface,
+                      fillColor: context.colors.surface,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: kColorOutlineVariant,
+                        borderSide: BorderSide(
+                          color: context.colors.outlineVariant,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: kColorPrimary,
+                        borderSide: BorderSide(
+                          color: context.colors.primary,
                           width: 1.5,
                         ),
                       ),
@@ -158,11 +158,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _save,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: kColorPrimary,
-                        foregroundColor: kColorOnPrimary,
-                        disabledBackgroundColor: kColorPrimaryDim.withValues(
-                          alpha: 0.4,
-                        ),
+                        backgroundColor: context.colors.primary,
+                        foregroundColor: context.colors.onPrimary,
+                        disabledBackgroundColor: context.colors.primaryDim
+                            .withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -172,12 +171,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         ),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: kColorOnPrimary,
+                                color: context.colors.onPrimary,
                               ),
                             )
                           : Text(s.commonContinue),

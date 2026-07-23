@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/theme/app_theme.dart';
+import '../../../shared/theme/app_colors.dart';
 import 'score_row.dart';
 
 /// Category VP plus floored coin VP for one player.
@@ -165,21 +165,21 @@ class _SevenWondersDuelCalculatorScreenState
     final result = sevenWondersResult(player1: v1, player2: v2);
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: kColorAppBarBackground,
+        backgroundColor: context.colors.appBarBackground,
         leadingWidth: 64,
         leading: Padding(
           padding: const EdgeInsets.only(left: 8),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+            icon: Icon(Icons.arrow_back, color: context.colors.primary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
         title: Text(
           AppStrings.of(context).sevenWondersDuelTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -194,7 +194,7 @@ class _SevenWondersDuelCalculatorScreenState
               child: Text(
                 AppStrings.of(context).calcReset,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -205,7 +205,7 @@ class _SevenWondersDuelCalculatorScreenState
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -268,9 +268,9 @@ class _TotalsBar extends StatelessWidget {
     final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      decoration: const BoxDecoration(
-        color: kColorAppBarBackground,
-        border: Border(top: BorderSide(color: kColorOutlineVariant)),
+      decoration: BoxDecoration(
+        color: context.colors.appBarBackground,
+        border: Border(top: BorderSide(color: context.colors.outlineVariant)),
       ),
       child: Column(
         children: [
@@ -280,7 +280,7 @@ class _TotalsBar extends StatelessWidget {
               Text(
                 total1.toString(),
                 style: GoogleFonts.newsreader(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   fontSize: 38,
                   fontWeight: FontWeight.w600,
                 ),
@@ -288,7 +288,7 @@ class _TotalsBar extends StatelessWidget {
               Text(
                 s.calcTotal,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOnSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 2,
@@ -297,7 +297,7 @@ class _TotalsBar extends StatelessWidget {
               Text(
                 total2.toString(),
                 style: GoogleFonts.newsreader(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   fontSize: 38,
                   fontWeight: FontWeight.w600,
                 ),
@@ -308,7 +308,7 @@ class _TotalsBar extends StatelessWidget {
           Text(
             _winnerLabel(s),
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,

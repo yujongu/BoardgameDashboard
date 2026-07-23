@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/repository_providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import 'play_detail_page.dart';
 
 /// Full, paginated history of the caller's plays (newest first), backed by the
@@ -78,17 +78,17 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+          icon: Icon(Icons.arrow_back, color: context.colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           AppStrings.of(context).playHistoryTitleCaps,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -97,7 +97,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: _buildBody(),
@@ -111,8 +111,8 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
     }
     // First page still loading.
     if (_plays.isEmpty && _loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: kColorPrimary),
+      return Center(
+        child: CircularProgressIndicator(color: context.colors.primary),
       );
     }
     if (_plays.isEmpty) {
@@ -143,7 +143,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
 
   Widget _buildFooter() {
     if (_loading) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(
           child: SizedBox(
@@ -151,7 +151,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
             height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              color: kColorPrimary,
+              color: context.colors.primary,
             ),
           ),
         ),
@@ -166,7 +166,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
             child: Text(
               AppStrings.of(context).historyTapToRetry,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
@@ -215,8 +215,8 @@ class _PlayRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
@@ -225,13 +225,13 @@ class _PlayRow extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: kColorSurface,
-                border: Border.all(color: kColorOutlineVariant),
+                color: context.colors.surface,
+                border: Border.all(color: context.colors.outlineVariant),
                 borderRadius: BorderRadius.circular(3),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.casino_outlined,
-                color: kColorOutline,
+                color: context.colors.outline,
                 size: 18,
               ),
             ),
@@ -243,7 +243,7 @@ class _PlayRow extends StatelessWidget {
                   Text(
                     play.gameName,
                     style: GoogleFonts.newsreader(
-                      color: kColorOnSurface,
+                      color: context.colors.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -252,7 +252,7 @@ class _PlayRow extends StatelessWidget {
                   Text(
                     AppStrings.of(context).playersCount(play.participantCount),
                     style: GoogleFonts.spaceGrotesk(
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       fontSize: 11,
                       letterSpacing: 0.3,
                     ),
@@ -263,7 +263,7 @@ class _PlayRow extends StatelessWidget {
             Text(
               _formatDate(local),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
@@ -289,7 +289,7 @@ class _EmptyView extends StatelessWidget {
         child: Text(
           AppStrings.of(context).homeEmptyTitle,
           style: GoogleFonts.newsreader(
-            color: kColorOnSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
             fontSize: 18,
             fontStyle: FontStyle.italic,
           ),
@@ -313,12 +313,12 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: kColorOutline, size: 40),
+            Icon(Icons.error_outline, color: context.colors.outline, size: 40),
             const SizedBox(height: 16),
             Text(
               s.historyLoadFailed,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 13,
               ),
             ),
@@ -328,7 +328,7 @@ class _ErrorView extends StatelessWidget {
               child: Text(
                 s.commonRetry,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,

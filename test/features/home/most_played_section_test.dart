@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:board_game_dashboard/shared/theme/app_colors.dart';
 
 import 'package:board_game_dashboard/features/home/home_tab.dart';
 import 'package:board_game_dashboard/l10n/app_localizations.dart';
@@ -13,6 +14,7 @@ LibraryEntry _entry(String name, int plays) => LibraryEntry(
 );
 
 Widget _wrap(List<LibraryEntry> library) => MaterialApp(
+  theme: buildDarkTheme(),
   localizationsDelegates: AppStrings.localizationsDelegates,
   supportedLocales: AppStrings.supportedLocales,
   home: Scaffold(body: MostPlayedSection(library: library)),

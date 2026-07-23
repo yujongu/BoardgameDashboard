@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/theme/app_colors.dart';
 
 /// Horizontal row of selectable chips with a leading caption label.
 class SelectorChipRow extends StatelessWidget {
@@ -27,7 +27,7 @@ class SelectorChipRow extends StatelessWidget {
           child: Text(
             label,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOnSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 1,
@@ -74,16 +74,20 @@ class _Chip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? kColorSurfaceHigh : Colors.transparent,
+          color: selected ? context.colors.surfaceHigh : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? kColorPrimary : kColorOutlineVariant,
+            color: selected
+                ? context.colors.primary
+                : context.colors.outlineVariant,
           ),
         ),
         child: Text(
           label,
           style: GoogleFonts.spaceGrotesk(
-            color: selected ? kColorPrimary : kColorOnSurfaceVariant,
+            color: selected
+                ? context.colors.primary
+                : context.colors.onSurfaceVariant,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -116,7 +120,7 @@ class ScoreInputRow extends StatelessWidget {
           child: Text(
             label,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -132,7 +136,7 @@ class ScoreInputRow extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w500,
             ),
@@ -140,7 +144,7 @@ class ScoreInputRow extends StatelessWidget {
               isDense: true,
               hintText: '0',
               hintStyle: GoogleFonts.newsreader(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 18,
               ),
               contentPadding: const EdgeInsets.symmetric(
@@ -148,14 +152,14 @@ class ScoreInputRow extends StatelessWidget {
                 horizontal: 8,
               ),
               filled: true,
-              fillColor: kColorSurfaceHigh,
+              fillColor: context.colors.surfaceHigh,
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: kColorOutlineVariant),
+                borderSide: BorderSide(color: context.colors.outlineVariant),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: kColorPrimary),
+                borderSide: BorderSide(color: context.colors.primary),
               ),
             ),
           ),
@@ -182,9 +186,9 @@ class CalculatorTotalsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      decoration: const BoxDecoration(
-        color: kColorAppBarBackground,
-        border: Border(top: BorderSide(color: kColorOutlineVariant)),
+      decoration: BoxDecoration(
+        color: context.colors.appBarBackground,
+        border: Border(top: BorderSide(color: context.colors.outlineVariant)),
       ),
       child: Column(
         children: [
@@ -194,7 +198,7 @@ class CalculatorTotalsBar extends StatelessWidget {
               Text(
                 totalLabel,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOnSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 2,
@@ -203,7 +207,7 @@ class CalculatorTotalsBar extends StatelessWidget {
               Text(
                 total.toString(),
                 style: GoogleFonts.newsreader(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   fontSize: 38,
                   fontWeight: FontWeight.w600,
                 ),
@@ -215,7 +219,7 @@ class CalculatorTotalsBar extends StatelessWidget {
             Text(
               resultLabel!,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
+                color: context.colors.onSurface,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,

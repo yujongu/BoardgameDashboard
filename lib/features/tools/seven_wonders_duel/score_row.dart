@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/theme/app_theme.dart';
+import '../../../shared/theme/app_colors.dart';
 
 enum SevenWondersCategory {
   civilian,
@@ -34,7 +34,7 @@ class ScoreHeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final style = GoogleFonts.spaceGrotesk(
-      color: kColorOnSurfaceVariant,
+      color: context.colors.onSurfaceVariant,
       fontSize: 12,
       fontWeight: FontWeight.w700,
       letterSpacing: 1,
@@ -77,7 +77,7 @@ class ScoreRow extends StatelessWidget {
           child: Text(
             category.label(AppStrings.of(context)),
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -103,24 +103,27 @@ class _ScoreField extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(decimal: false),
       textAlign: TextAlign.center,
       style: GoogleFonts.newsreader(
-        color: kColorOnSurface,
+        color: context.colors.onSurface,
         fontSize: 18,
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
         isDense: true,
         hintText: '0',
-        hintStyle: GoogleFonts.newsreader(color: kColorOutline, fontSize: 18),
+        hintStyle: GoogleFonts.newsreader(
+          color: context.colors.outline,
+          fontSize: 18,
+        ),
         contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         filled: true,
-        fillColor: kColorSurfaceHigh,
+        fillColor: context.colors.surfaceHigh,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: kColorOutlineVariant),
+          borderSide: BorderSide(color: context.colors.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: kColorPrimary),
+          borderSide: BorderSide(color: context.colors.primary),
         ),
       ),
     );

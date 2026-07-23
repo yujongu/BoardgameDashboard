@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/providers/providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import '../auth/profile_screen.dart';
 import '../friends/friends_screen.dart';
 import '../home/home_tab.dart';
@@ -42,7 +42,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         ref.watch(currentUserProvider).valueOrNull?.displayName ?? '';
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       body: IndexedStack(
         index: _selectedIndex,
         children: [
@@ -78,8 +78,8 @@ class _AddFab extends StatelessWidget {
       child: Container(
         width: 56,
         height: 56,
-        decoration: const BoxDecoration(
-          color: kColorPrimary,
+        decoration: BoxDecoration(
+          color: context.colors.primary,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -94,7 +94,7 @@ class _AddFab extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(Icons.add, color: kColorOnPrimary, size: 28),
+        child: Icon(Icons.add, color: context.colors.onPrimary, size: 28),
       ),
     );
   }
@@ -111,9 +111,9 @@ class _BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A0905),
-        border: Border(top: BorderSide(color: kColorAmberBorder)),
+      decoration: BoxDecoration(
+        color: context.colors.appBarBackground,
+        border: Border(top: BorderSide(color: context.colors.amberBorder)),
       ),
       child: SafeArea(
         top: false,
@@ -167,7 +167,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? kColorPrimary : kColorOutline;
+    final color = selected ? context.colors.primary : context.colors.outline;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,

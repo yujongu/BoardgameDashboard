@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import '../friends/friends_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -81,17 +81,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final initials = _initials(_name);
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+          icon: Icon(Icons.arrow_back, color: context.colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           s.profileTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -100,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Padding(
@@ -117,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   _name,
                   style: GoogleFonts.newsreader(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 26,
                     fontWeight: FontWeight.w500,
                   ),
@@ -125,9 +125,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(width: 6),
                 GestureDetector(
                   onTap: _showEditNameDialog,
-                  child: const Icon(
+                  child: Icon(
                     Icons.edit_outlined,
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     size: 18,
                   ),
                 ),
@@ -137,12 +137,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               _email,
               style: GoogleFonts.workSans(
-                color: kColorOnSurfaceVariant,
+                color: context.colors.onSurfaceVariant,
                 fontSize: 14,
               ),
             ),
             const SizedBox(height: 40),
-            Container(height: 1, color: kColorOutlineVariant),
+            Container(height: 1, color: context.colors.outlineVariant),
             GestureDetector(
               onTap: () => Navigator.of(
                 context,
@@ -151,9 +151,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.group_outlined,
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       size: 20,
                     ),
                     const SizedBox(width: 14),
@@ -161,22 +161,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Text(
                         s.profileFriends,
                         style: GoogleFonts.workSans(
-                          color: kColorOnSurface,
+                          color: context.colors.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       size: 20,
                     ),
                   ],
                 ),
               ),
             ),
-            Container(height: 1, color: kColorOutlineVariant),
+            Container(height: 1, color: context.colors.outlineVariant),
             GestureDetector(
               onTap: () => Navigator.of(
                 context,
@@ -185,9 +185,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.settings_outlined,
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       size: 20,
                     ),
                     const SizedBox(width: 14),
@@ -195,22 +195,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Text(
                         s.profileSettings,
                         style: GoogleFonts.workSans(
-                          color: kColorOnSurface,
+                          color: context.colors.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       size: 20,
                     ),
                   ],
                 ),
               ),
             ),
-            Container(height: 1, color: kColorOutlineVariant),
+            Container(height: 1, color: context.colors.outlineVariant),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -220,8 +220,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: const Icon(Icons.logout, size: 18),
                 label: Text(s.profileSignOut),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: kColorPrimary,
-                  side: const BorderSide(color: kColorAmberBorder),
+                  foregroundColor: context.colors.primary,
+                  side: BorderSide(color: context.colors.amberBorder),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -294,11 +294,11 @@ class _EditNameDialogState extends State<_EditNameDialog> {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     return AlertDialog(
-      backgroundColor: kColorSurface,
+      backgroundColor: context.colors.surface,
       title: Text(
         s.profileEditNameTitle,
         style: GoogleFonts.newsreader(
-          color: kColorOnSurface,
+          color: context.colors.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w500,
         ),
@@ -311,19 +311,19 @@ class _EditNameDialogState extends State<_EditNameDialog> {
           textInputAction: TextInputAction.done,
           onFieldSubmitted: (_) => _submit(),
           autofocus: true,
-          style: const TextStyle(color: kColorOnSurface),
+          style: TextStyle(color: context.colors.onSurface),
           decoration: InputDecoration(
             hintText: s.profileNameHint,
-            hintStyle: const TextStyle(color: kColorOutline),
+            hintStyle: TextStyle(color: context.colors.outline),
             filled: true,
-            fillColor: kColorSurfaceHigh,
+            fillColor: context.colors.surfaceHigh,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: kColorOutlineVariant),
+              borderSide: BorderSide(color: context.colors.outlineVariant),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: kColorPrimary, width: 1.5),
+              borderSide: BorderSide(color: context.colors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -346,15 +346,17 @@ class _EditNameDialogState extends State<_EditNameDialog> {
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           child: Text(
             s.commonCancel,
-            style: GoogleFonts.workSans(color: kColorOnSurfaceVariant),
+            style: GoogleFonts.workSans(color: context.colors.onSurfaceVariant),
           ),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _submit,
           style: ElevatedButton.styleFrom(
-            backgroundColor: kColorPrimary,
-            foregroundColor: kColorOnPrimary,
-            disabledBackgroundColor: kColorPrimaryDim.withValues(alpha: 0.4),
+            backgroundColor: context.colors.primary,
+            foregroundColor: context.colors.onPrimary,
+            disabledBackgroundColor: context.colors.primaryDim.withValues(
+              alpha: 0.4,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -364,12 +366,12 @@ class _EditNameDialogState extends State<_EditNameDialog> {
             ),
           ),
           child: _isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: kColorOnPrimary,
+                    color: context.colors.onPrimary,
                   ),
                 )
               : Text(s.commonSave),
@@ -392,16 +394,16 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: kColorPrimary.withValues(alpha: 0.55),
+          color: context.colors.primary.withValues(alpha: 0.55),
           width: 2,
         ),
-        color: kColorSurfaceHigh,
+        color: context.colors.surfaceHigh,
       ),
       child: Center(
         child: Text(
           initials,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 28,
             fontWeight: FontWeight.w600,
           ),

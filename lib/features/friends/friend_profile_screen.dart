@@ -9,7 +9,7 @@ import '../../shared/models/friend_profile.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/providers/repository_providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import '../plays/play_detail_page.dart';
 
 class FriendProfileScreen extends ConsumerStatefulWidget {
@@ -50,15 +50,15 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: kColorSurfaceHigh,
+        backgroundColor: context.colors.surfaceHigh,
         title: Text(
           s.friendUnfriendTitle(widget.friendName),
-          style: GoogleFonts.newsreader(color: kColorOnSurface),
+          style: GoogleFonts.newsreader(color: context.colors.onSurface),
         ),
         content: Text(
           s.friendUnfriendBody,
           style: GoogleFonts.spaceGrotesk(
-            color: kColorOnSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
             fontSize: 14,
           ),
         ),
@@ -67,7 +67,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
               s.commonCancel,
-              style: GoogleFonts.spaceGrotesk(color: kColorOutline),
+              style: GoogleFonts.spaceGrotesk(color: context.colors.outline),
             ),
           ),
           TextButton(
@@ -102,9 +102,9 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
         SnackBar(
           content: Text(
             AppStrings.of(context).friendUnfriendFailed,
-            style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
           ),
-          backgroundColor: kColorSurfaceHigh,
+          backgroundColor: context.colors.surfaceHigh,
         ),
       );
     }
@@ -114,17 +114,17 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: kColorAppBarBackground,
+        backgroundColor: context.colors.appBarBackground,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+          icon: Icon(Icons.arrow_back, color: context.colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           s.profileTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -133,19 +133,19 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: FutureBuilder<FriendProfile>(
         future: _profileFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   strokeWidth: 1.5,
                 ),
               ),
@@ -157,7 +157,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
               child: Text(
                 s.friendProfileLoadFailed,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 14,
                 ),
               ),
@@ -214,7 +214,7 @@ class _ProfileBody extends StatelessWidget {
           child: Text(
             profile.name,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 24,
               fontWeight: FontWeight.w600,
             ),
@@ -226,7 +226,7 @@ class _ProfileBody extends StatelessWidget {
             child: Text(
               s.friendLastPlayed(_timeAgo(s, profile.lastPlayedAt!)),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 12,
               ),
             ),
@@ -320,7 +320,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: GoogleFonts.spaceGrotesk(
-        color: kColorOutline,
+        color: context.colors.outline,
         fontSize: 10,
         fontWeight: FontWeight.w600,
         letterSpacing: 2,
@@ -339,8 +339,8 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -348,7 +348,7 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.newsreader(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
@@ -357,7 +357,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOutline,
+              color: context.colors.outline,
               fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.5,
@@ -379,8 +379,8 @@ class _GameRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -389,7 +389,7 @@ class _GameRow extends StatelessWidget {
             child: Text(
               game.gameName,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
+                color: context.colors.onSurface,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -399,7 +399,10 @@ class _GameRow extends StatelessWidget {
             AppStrings.of(
               context,
             ).friendGameStat(game.playCount, game.winCount),
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 11),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
@@ -419,14 +422,14 @@ class _SharedPlays extends StatelessWidget {
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   strokeWidth: 1.5,
                 ),
               ),
@@ -436,7 +439,10 @@ class _SharedPlays extends StatelessWidget {
         if (snapshot.hasError || !snapshot.hasData) {
           return Text(
             s.friendSharedPlaysError,
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 13,
+            ),
           );
         }
         final plays = snapshot.data!;
@@ -444,7 +450,7 @@ class _SharedPlays extends StatelessWidget {
           return Text(
             s.friendNoSharedPlays,
             style: GoogleFonts.newsreader(
-              color: kColorOutline,
+              color: context.colors.outline,
               fontSize: 15,
               fontStyle: FontStyle.italic,
             ),
@@ -458,7 +464,7 @@ class _SharedPlays extends StatelessWidget {
               child: Text(
                 s.friendSharedCount(plays.length),
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOnSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -507,8 +513,8 @@ class _SharedPlayRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
@@ -520,7 +526,7 @@ class _SharedPlayRow extends StatelessWidget {
                   Text(
                     play.gameName,
                     style: GoogleFonts.newsreader(
-                      color: kColorOnSurface,
+                      color: context.colors.onSurface,
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                     ),
@@ -529,7 +535,7 @@ class _SharedPlayRow extends StatelessWidget {
                   Text(
                     _formatDate(play.playedAt),
                     style: GoogleFonts.spaceGrotesk(
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       fontSize: 11,
                     ),
                   ),
@@ -539,14 +545,14 @@ class _SharedPlayRow extends StatelessWidget {
             Text(
               AppStrings.of(context).playersCount(play.participantCount),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 11,
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(
+            Icon(
               Icons.chevron_right,
-              color: kColorOutlineVariant,
+              color: context.colors.outlineVariant,
               size: 18,
             ),
           ],
@@ -567,17 +573,17 @@ class _Avatar extends StatelessWidget {
       return CircleAvatar(
         radius: 40,
         backgroundImage: NetworkImage(photoUrl!),
-        backgroundColor: kColorSurfaceHighest,
+        backgroundColor: context.colors.surfaceHighest,
       );
     }
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return CircleAvatar(
       radius: 40,
-      backgroundColor: kColorSurfaceHighest,
+      backgroundColor: context.colors.surfaceHighest,
       child: Text(
         initial,
         style: GoogleFonts.newsreader(
-          color: kColorPrimary,
+          color: context.colors.primary,
           fontSize: 32,
           fontWeight: FontWeight.w600,
         ),

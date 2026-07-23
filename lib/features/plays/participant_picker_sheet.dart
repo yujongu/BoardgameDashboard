@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import 'add_play_notifier.dart';
 import 'participant_list_section.dart';
 import 'participant_picker_controller.dart';
@@ -63,15 +63,15 @@ class _ParticipantPickerBottomSheetState
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.85,
       child: Container(
-        decoration: const BoxDecoration(
-          color: kColorSurface,
+        decoration: BoxDecoration(
+          color: context.colors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         child: Column(
           children: [
             _handle(),
             _sheetTitle(),
-            Container(height: 1, color: kColorAmberBorder),
+            Container(height: 1, color: context.colors.amberBorder),
             ParticipantSearchField(controller: _searchController),
             if (atMax)
               Padding(
@@ -79,7 +79,7 @@ class _ParticipantPickerBottomSheetState
                 child: Text(
                   AppStrings.of(context).participantMaxReached,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorPrimary,
+                    color: context.colors.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.5,
@@ -98,7 +98,7 @@ class _ParticipantPickerBottomSheetState
     width: 40,
     height: 4,
     decoration: BoxDecoration(
-      color: kColorOutlineVariant,
+      color: context.colors.outlineVariant,
       borderRadius: BorderRadius.circular(2),
     ),
   );
@@ -113,7 +113,9 @@ class _ParticipantPickerBottomSheetState
             ? s.participantGuestAdded(guestName)
             : s.participantAddTitle,
         style: GoogleFonts.spaceGrotesk(
-          color: guestName != null ? kColorPrimary : kColorOutline,
+          color: guestName != null
+              ? context.colors.primary
+              : context.colors.outline,
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 2,

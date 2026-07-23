@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:board_game_dashboard/shared/theme/app_colors.dart';
 
 import 'package:board_game_dashboard/features/plays/add_play_notifier.dart';
 import 'package:board_game_dashboard/features/plays/add_play_screen.dart';
 import 'package:board_game_dashboard/l10n/app_localizations.dart';
 
 MaterialApp _app({Widget home = const AddPlayScreen()}) => MaterialApp(
+  theme: buildDarkTheme(),
   localizationsDelegates: AppStrings.localizationsDelegates,
   supportedLocales: AppStrings.supportedLocales,
   home: home,

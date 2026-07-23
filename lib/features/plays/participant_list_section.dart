@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend.dart';
 import '../../shared/providers/friend_provider.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import 'add_play_notifier.dart';
 import 'participant_picker_controller.dart';
 
@@ -33,8 +33,9 @@ class ParticipantListSection extends ConsumerWidget {
     // copyWithPrevious, previous data stays visible instead of flashing a
     // full-screen spinner.
     return friendsAsync.when(
-      loading: () =>
-          const Center(child: CircularProgressIndicator(color: kColorPrimary)),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: context.colors.primary),
+      ),
       error: (err, stack) {
         dev.log(
           'friendListProvider error',
@@ -47,6 +48,7 @@ class ParticipantListSection extends ConsumerWidget {
         );
       },
       data: (friends) => _buildList(
+        context: context,
         s: s,
         pickerState: pickerState,
         friends: friends,
@@ -57,6 +59,7 @@ class ParticipantListSection extends ConsumerWidget {
   }
 
   Widget _buildList({
+    required BuildContext context,
     required AppStrings s,
     required PickerSearchState pickerState,
     required List<FriendSummary> friends,
@@ -102,7 +105,7 @@ class ParticipantListSection extends ConsumerWidget {
               s.participantNoFriends,
               textAlign: TextAlign.center,
               style: GoogleFonts.newsreader(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 16,
                 fontStyle: FontStyle.italic,
               ),
@@ -111,14 +114,14 @@ class ParticipantListSection extends ConsumerWidget {
 
         if (query.isNotEmpty) ...[
           if (pickerState.loadingSearch)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
                 child: SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     strokeWidth: 1.5,
                   ),
                 ),
@@ -163,16 +166,16 @@ class _FriendsErrorPanel extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_outlined,
-              color: kColorOutline,
+              color: context.colors.outline,
               size: 32,
             ),
             const SizedBox(height: 12),
             Text(
               s.participantLoadFailed,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 13,
               ),
             ),
@@ -182,7 +185,7 @@ class _FriendsErrorPanel extends StatelessWidget {
               child: Text(
                 s.commonRetry,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
@@ -208,7 +211,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         text,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOutline,
+          color: context.colors.outline,
           fontSize: 10,
           fontWeight: FontWeight.w600,
           letterSpacing: 2,
@@ -242,9 +245,11 @@ class FriendListItem extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
+          color: context.colors.surfaceHigh,
           border: Border.all(
-            color: isSelected ? kColorPrimary.withAlpha(80) : kColorAmberBorder,
+            color: isSelected
+                ? context.colors.primary.withAlpha(80)
+                : context.colors.amberBorder,
           ),
           borderRadius: BorderRadius.circular(4),
         ),
@@ -257,8 +262,8 @@ class FriendListItem extends StatelessWidget {
                 name,
                 style: GoogleFonts.spaceGrotesk(
                   color: disabled && !isSelected
-                      ? kColorOutline
-                      : kColorOnSurface,
+                      ? context.colors.outline
+                      : context.colors.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -268,12 +273,12 @@ class FriendListItem extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check, color: kColorPrimary, size: 14),
+                  Icon(Icons.check, color: context.colors.primary, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     AppStrings.of(context).participantAdded,
                     style: GoogleFonts.spaceGrotesk(
-                      color: kColorPrimary,
+                      color: context.colors.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -283,7 +288,9 @@ class FriendListItem extends StatelessWidget {
             else
               Icon(
                 Icons.add,
-                color: disabled ? kColorOutlineVariant : kColorOutline,
+                color: disabled
+                    ? context.colors.outlineVariant
+                    : context.colors.outline,
                 size: 20,
               ),
           ],
@@ -315,8 +322,8 @@ class UserListItem extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
@@ -327,7 +334,9 @@ class UserListItem extends StatelessWidget {
               child: Text(
                 name,
                 style: GoogleFonts.spaceGrotesk(
-                  color: disabled ? kColorOutline : kColorOnSurface,
+                  color: disabled
+                      ? context.colors.outline
+                      : context.colors.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -335,7 +344,9 @@ class UserListItem extends StatelessWidget {
             ),
             Icon(
               Icons.add,
-              color: disabled ? kColorOutlineVariant : kColorOutline,
+              color: disabled
+                  ? context.colors.outlineVariant
+                  : context.colors.outline,
               size: 20,
             ),
           ],
@@ -368,8 +379,8 @@ class GuestListItem extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border.all(
             color: disabled
-                ? kColorOutlineVariant.withAlpha(80)
-                : kColorOutlineVariant,
+                ? context.colors.outlineVariant.withAlpha(80)
+                : context.colors.outlineVariant,
           ),
           borderRadius: BorderRadius.circular(4),
         ),
@@ -378,7 +389,9 @@ class GuestListItem extends StatelessWidget {
             Icon(
               Icons.person_add_outlined,
               size: 18,
-              color: disabled ? kColorOutlineVariant : kColorOutline,
+              color: disabled
+                  ? context.colors.outlineVariant
+                  : context.colors.outline,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -386,7 +399,7 @@ class GuestListItem extends StatelessWidget {
                   ? Text(
                       s.participantGuestHint,
                       style: GoogleFonts.spaceGrotesk(
-                        color: kColorOutlineVariant,
+                        color: context.colors.outlineVariant,
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
                       ),
@@ -395,8 +408,8 @@ class GuestListItem extends StatelessWidget {
                       text: TextSpan(
                         style: GoogleFonts.spaceGrotesk(
                           color: disabled
-                              ? kColorOutlineVariant
-                              : kColorOutline,
+                              ? context.colors.outlineVariant
+                              : context.colors.outline,
                           fontSize: 13,
                         ),
                         children: [
@@ -405,8 +418,8 @@ class GuestListItem extends StatelessWidget {
                             text: '"$query"',
                             style: GoogleFonts.spaceGrotesk(
                               color: disabled
-                                  ? kColorOutlineVariant
-                                  : kColorOnSurface,
+                                  ? context.colors.outlineVariant
+                                  : context.colors.onSurface,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -434,17 +447,17 @@ class _Avatar extends StatelessWidget {
       return CircleAvatar(
         radius: 16,
         backgroundImage: NetworkImage(photoUrl!),
-        backgroundColor: kColorSurfaceHighest,
+        backgroundColor: context.colors.surfaceHighest,
       );
     }
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return CircleAvatar(
       radius: 16,
-      backgroundColor: kColorSurfaceHighest,
+      backgroundColor: context.colors.surfaceHighest,
       child: Text(
         initial,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOnSurfaceVariant,
+          color: context.colors.onSurfaceVariant,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),

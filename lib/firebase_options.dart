@@ -67,8 +67,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '295999324490',
     projectId: 'gameshelf-283dc',
     storageBucket: 'gameshelf-283dc.firebasestorage.app',
-    androidClientId: '295999324490-26508lv18fdgiq23be3q7in07bhu44rv.apps.googleusercontent.com',
-    iosClientId: '295999324490-s7e31mm8lo7vlsgioafk2fabd1nccdi3.apps.googleusercontent.com',
+    androidClientId:
+        '295999324490-26508lv18fdgiq23be3q7in07bhu44rv.apps.googleusercontent.com',
+    iosClientId:
+        '295999324490-s7e31mm8lo7vlsgioafk2fabd1nccdi3.apps.googleusercontent.com',
     iosBundleId: 'com.yujongu.boardGameDashboard',
   );
 
@@ -78,9 +80,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '295999324490',
     projectId: 'gameshelf-283dc',
     storageBucket: 'gameshelf-283dc.firebasestorage.app',
-    androidClientId: '295999324490-26508lv18fdgiq23be3q7in07bhu44rv.apps.googleusercontent.com',
-    iosClientId: '295999324490-s7e31mm8lo7vlsgioafk2fabd1nccdi3.apps.googleusercontent.com',
+    androidClientId:
+        '295999324490-26508lv18fdgiq23be3q7in07bhu44rv.apps.googleusercontent.com',
+    iosClientId:
+        '295999324490-s7e31mm8lo7vlsgioafk2fabd1nccdi3.apps.googleusercontent.com',
     iosBundleId: 'com.yujongu.boardGameDashboard',
   );
-
 }

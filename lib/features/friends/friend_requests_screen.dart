@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 
 class FriendRequestsScreen extends ConsumerStatefulWidget {
   const FriendRequestsScreen({super.key});
@@ -48,9 +48,9 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
       SnackBar(
         content: Text(
           message,
-          style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
+          style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
         ),
-        backgroundColor: kColorSurfaceHigh,
+        backgroundColor: context.colors.surfaceHigh,
       ),
     );
   }
@@ -65,17 +65,17 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
     final outgoingCount = outgoingAsync.valueOrNull?.length;
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+          icon: Icon(Icons.arrow_back, color: context.colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           s.friendsRequestsTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -84,7 +84,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: ListView(
@@ -150,7 +150,7 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         text,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOutline,
+          color: context.colors.outline,
           fontSize: 10,
           fontWeight: FontWeight.w600,
           letterSpacing: 2,
@@ -180,8 +180,8 @@ class _IncomingRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -195,7 +195,7 @@ class _IncomingRow extends StatelessWidget {
                 Text(
                   request.name,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -203,7 +203,7 @@ class _IncomingRow extends StatelessWidget {
                 Text(
                   _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 11,
                   ),
                 ),
@@ -215,14 +215,16 @@ class _IncomingRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: kColorPrimary.withAlpha(20),
-                border: Border.all(color: kColorPrimary.withAlpha(100)),
+                color: context.colors.primary.withAlpha(20),
+                border: Border.all(
+                  color: context.colors.primary.withAlpha(100),
+                ),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 s.friendsAccept,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
@@ -236,7 +238,7 @@ class _IncomingRow extends StatelessWidget {
             child: Text(
               s.friendsDecline,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
@@ -264,8 +266,8 @@ class _OutgoingRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -279,7 +281,7 @@ class _OutgoingRow extends StatelessWidget {
                 Text(
                   request.name,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -287,7 +289,7 @@ class _OutgoingRow extends StatelessWidget {
                 Text(
                   _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 11,
                   ),
                 ),
@@ -299,7 +301,7 @@ class _OutgoingRow extends StatelessWidget {
             child: Text(
               s.commonCancelCaps,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
@@ -319,14 +321,14 @@ class _LoadingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.symmetric(vertical: 20),
       child: Center(
         child: SizedBox(
           width: 18,
           height: 18,
           child: CircularProgressIndicator(
-            color: kColorOutline,
+            color: context.colors.outline,
             strokeWidth: 1.5,
           ),
         ),
@@ -346,7 +348,10 @@ class _MessageTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Text(
         text,
-        style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+        style: GoogleFonts.spaceGrotesk(
+          color: context.colors.outline,
+          fontSize: 13,
+        ),
       ),
     );
   }
@@ -366,17 +371,17 @@ class _Avatar extends StatelessWidget {
       return CircleAvatar(
         radius: 16,
         backgroundImage: NetworkImage(photoUrl!),
-        backgroundColor: kColorSurfaceHighest,
+        backgroundColor: context.colors.surfaceHighest,
       );
     }
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return CircleAvatar(
       radius: 16,
-      backgroundColor: kColorSurfaceHighest,
+      backgroundColor: context.colors.surfaceHighest,
       child: Text(
         initial,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOnSurfaceVariant,
+          color: context.colors.onSurfaceVariant,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),

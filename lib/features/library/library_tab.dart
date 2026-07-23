@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import '../../shared/widgets/profile_app_bar.dart';
 import 'catalog_browse_screen.dart';
 import 'game_detail_page.dart';
@@ -44,7 +44,7 @@ class _LibraryTabState extends ConsumerState<LibraryTab> {
           displayName: widget.displayName,
           onProfileTap: widget.onProfileTap,
           trailing: IconButton(
-            icon: const Icon(Icons.travel_explore, color: kColorPrimary),
+            icon: Icon(Icons.travel_explore, color: context.colors.primary),
             tooltip: AppStrings.of(context).catalogBrowseTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const CatalogBrowseScreen()),
@@ -52,11 +52,11 @@ class _LibraryTabState extends ConsumerState<LibraryTab> {
           ),
         ),
         libraryAsync.when(
-          loading: () => const SliverToBoxAdapter(
+          loading: () => SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.only(top: 48),
               child: Center(
-                child: CircularProgressIndicator(color: kColorPrimary),
+                child: CircularProgressIndicator(color: context.colors.primary),
               ),
             ),
           ),
@@ -133,7 +133,7 @@ class _SectionHeader extends StatelessWidget {
             Text(
               s.libraryCollection,
               style: GoogleFonts.newsreader(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
@@ -142,7 +142,7 @@ class _SectionHeader extends StatelessWidget {
             Text(
               s.gamesCount(count),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1.5,
@@ -151,7 +151,7 @@ class _SectionHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
       ],
     );
   }
@@ -211,8 +211,8 @@ class _LibraryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
           boxShadow: const [
             BoxShadow(
@@ -241,7 +241,7 @@ class _LibraryCard extends StatelessWidget {
               ),
               child: Icon(
                 Icons.casino_outlined,
-                color: kColorPrimary.withAlpha(50),
+                color: context.colors.primary.withAlpha(50),
                 size: 32,
               ),
             ),
@@ -262,7 +262,7 @@ class _LibraryCard extends StatelessWidget {
                           child: Text(
                             entry.gameName,
                             style: GoogleFonts.newsreader(
-                              color: kColorOnSurface,
+                              color: context.colors.onSurface,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -272,7 +272,7 @@ class _LibraryCard extends StatelessWidget {
                         Text(
                           '$_winPercent%',
                           style: GoogleFonts.spaceGrotesk(
-                            color: kColorPrimary,
+                            color: context.colors.primary,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
@@ -293,7 +293,7 @@ class _LibraryCard extends StatelessWidget {
                           widthFactor: _winRate.clamp(0.0, 1.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: kColorPrimary,
+                              color: context.colors.primary,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -306,7 +306,7 @@ class _LibraryCard extends StatelessWidget {
                         Text(
                           s.libraryWinsShort(entry.winCount),
                           style: GoogleFonts.spaceGrotesk(
-                            color: kColorPrimary,
+                            color: context.colors.primary,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -314,7 +314,7 @@ class _LibraryCard extends StatelessWidget {
                         Text(
                           s.libraryPlaysSuffix(entry.playCount),
                           style: GoogleFonts.spaceGrotesk(
-                            color: kColorOutline,
+                            color: context.colors.outline,
                             fontSize: 10,
                           ),
                         ),
@@ -323,7 +323,7 @@ class _LibraryCard extends StatelessWidget {
                           Text(
                             _formatLastPlayed(lastPlayed.toLocal()),
                             style: GoogleFonts.spaceGrotesk(
-                              color: kColorOutlineVariant,
+                              color: context.colors.outlineVariant,
                               fontSize: 9,
                               letterSpacing: 0.3,
                             ),
@@ -357,14 +357,14 @@ class _EmptyLibraryView extends StatelessWidget {
         children: [
           Icon(
             Icons.menu_book_outlined,
-            color: kColorPrimary.withAlpha(80),
+            color: context.colors.primary.withAlpha(80),
             size: 48,
           ),
           const SizedBox(height: 16),
           Text(
             s.libraryEmptyTitle,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
               fontSize: 18,
               fontStyle: FontStyle.italic,
             ),
@@ -372,7 +372,10 @@ class _EmptyLibraryView extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             s.libraryEmptySubtitle,
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -393,12 +396,15 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: kColorOutline, size: 40),
+          Icon(Icons.error_outline, color: context.colors.outline, size: 40),
           const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 20),
           GestureDetector(
@@ -406,7 +412,7 @@ class _ErrorView extends StatelessWidget {
             child: Text(
               AppStrings.of(context).commonRetry,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,

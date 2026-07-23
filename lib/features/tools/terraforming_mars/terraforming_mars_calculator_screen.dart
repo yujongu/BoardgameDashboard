@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/theme/app_theme.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Final score for one player: Terraform Rating + 5 VP per claimed milestone +
 /// award VP + greenery tiles (1 VP each) + city-adjacency VP + card VP.
@@ -64,21 +64,21 @@ class _TerraformingMarsCalculatorScreenState
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leadingWidth: 64,
         leading: Padding(
           padding: const EdgeInsets.only(left: 8),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+            icon: Icon(Icons.arrow_back, color: context.colors.primary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
         title: Text(
           s.terraformingMarsTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -93,7 +93,7 @@ class _TerraformingMarsCalculatorScreenState
               child: Text(
                 s.calcReset,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -104,7 +104,7 @@ class _TerraformingMarsCalculatorScreenState
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -178,9 +178,11 @@ class _TerraformingMarsCalculatorScreenState
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            decoration: const BoxDecoration(
-              color: Color(0xFF0A0905),
-              border: Border(top: BorderSide(color: kColorOutlineVariant)),
+            decoration: BoxDecoration(
+              color: context.colors.appBarBackground,
+              border: Border(
+                top: BorderSide(color: context.colors.outlineVariant),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -188,7 +190,7 @@ class _TerraformingMarsCalculatorScreenState
                 Text(
                   s.calcTotal,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurfaceVariant,
+                    color: context.colors.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 2,
@@ -197,7 +199,7 @@ class _TerraformingMarsCalculatorScreenState
                 Text(
                   '$_total',
                   style: GoogleFonts.newsreader(
-                    color: kColorPrimary,
+                    color: context.colors.primary,
                     fontSize: 38,
                     fontWeight: FontWeight.w600,
                   ),
@@ -238,9 +240,9 @@ class _ScoreRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: kColorSurface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kColorOutlineVariant),
+        border: Border.all(color: context.colors.outlineVariant),
       ),
       child: Row(
         children: [
@@ -251,7 +253,7 @@ class _ScoreRow extends StatelessWidget {
                 Text(
                   label,
                   style: GoogleFonts.newsreader(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                   ),
@@ -260,7 +262,7 @@ class _ScoreRow extends StatelessWidget {
                 Text(
                   hint,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 10,
                     letterSpacing: 0.3,
                   ),
@@ -274,7 +276,7 @@ class _ScoreRow extends StatelessWidget {
               '+$vp',
               textAlign: TextAlign.center,
               style: GoogleFonts.spaceGrotesk(
-                color: vp > 0 ? color : kColorOutline,
+                color: vp > 0 ? color : context.colors.outline,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -388,7 +390,7 @@ class _StepperControlState extends State<_StepperControl> {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textAlign: TextAlign.center,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.w500,
             ),
@@ -436,7 +438,7 @@ class _StepButtonState extends State<_StepButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.enabled ? widget.color : kColorOutlineVariant;
+    final color = widget.enabled ? widget.color : context.colors.outlineVariant;
     return GestureDetector(
       onTapDown: widget.enabled ? (_) => setState(() => _pressed = true) : null,
       onTapUp: widget.enabled
