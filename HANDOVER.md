@@ -3,8 +3,26 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1, P1** (earlier) and now **H4 — friend shared-play
-history** (this session). Next: **M1** (catalog browse), then **M2/M3** (nav + dashboard).
+Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4** and now **M1 — browse the full game catalog**.
+Also added **Flutter web support** this session (see the web commit). Next: **M2** (promote
+Friends into the bottom nav) and **M3** (Home leaderboard from `gameStats`).
+
+### M1 completed
+
+- New `lib/features/library/catalog_browse_screen.dart` (`CatalogBrowseScreen`) — full-screen
+  search over the whole `boardGames` catalog, reusing `gameCatalogProvider` (the same hybrid
+  local+remote search that backs the play game-picker). Tapping any game opens `GameDetailPage`
+  (works for un-played games: empty history + any registered tools/campaign sheet). Shows a
+  `min–max players` subtitle when available. Loading / error / empty states mirror the picker.
+- **Entry point**: an explore action (`Icons.travel_explore`) on the **Library** header, not a
+  new nav tab — deliberately leaves the shell's 2-tab nav untouched so **M2** can restructure it.
+  `ProfileAppBar` gained an optional `trailing` widget (Home passes none; Library passes the
+  explore button); its title is now `Expanded` + ellipsis so the action fits.
+- Tested via `test/features/library/catalog_browse_screen_test.dart` (fake catalog repo through
+  the Q2 `gameCatalogRepositoryProvider`): lists games + player range, and the empty state.
+  `flutter analyze` clean; `flutter test` **74 pass**.
+- Not visually confirmed on a device (Windows box). The running web build predates this change —
+  it needs a hot-restart to show the new screen.
 
 ### H4 completed this session
 
@@ -107,8 +125,8 @@ history** (this session). Next: **M1** (catalog browse), then **M2/M3** (nav + d
 
 ## Next Immediate Step
 
-**M1 — browse the full game catalog.** There's no way to reach the 115-game catalog except the
-game-picker while logging a play; "Library" only shows already-played games. Add a browse/explore
-screen (reuse `game_catalog_provider.dart` search + the `game_picker_sheet` patterns) that opens
-`GameDetailPage` for any game — as a 3rd nav tab or a header action on Library. After that,
-**M2** (promote Friends into the bottom nav) and **M3** (Home leaderboard from `gameStats`).
+**M2 — promote Friends into the bottom nav.** `main_shell.dart` is a 2-item `IndexedStack`
+(Home, Library); Friends/Profile hang off the app-bar avatar only. Add a Friends (or "Social")
+destination to `_BottomNav` and the `IndexedStack`. Keep imperative `Navigator`. After that,
+**M3** — a Home leaderboard/most-played list from `stats/{uid}` + `gameStats` (data already
+exists server-side; start with simple bars like `library_tab`'s win-rate bar).

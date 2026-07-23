@@ -7,6 +7,7 @@ import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/profile_app_bar.dart';
+import 'catalog_browse_screen.dart';
 import 'game_detail_page.dart';
 
 class LibraryTab extends ConsumerStatefulWidget {
@@ -42,6 +43,13 @@ class _LibraryTabState extends ConsumerState<LibraryTab> {
         ProfileAppBar(
           displayName: widget.displayName,
           onProfileTap: widget.onProfileTap,
+          trailing: IconButton(
+            icon: const Icon(Icons.travel_explore, color: kColorPrimary),
+            tooltip: AppStrings.of(context).catalogBrowseTooltip,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CatalogBrowseScreen()),
+            ),
+          ),
         ),
         libraryAsync.when(
           loading: () => const SliverToBoxAdapter(

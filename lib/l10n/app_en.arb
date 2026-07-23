@@ -335,6 +335,16 @@
   "gamePickerLoadFailed": "Could not load games",
   "gamePickerNoGames": "No games found",
 
+  "catalogBrowseTitle": "BROWSE GAMES",
+  "catalogBrowseTooltip": "Browse all games",
+  "catalogPlayerRange": "{min}–{max} players",
+  "@catalogPlayerRange": {
+    "placeholders": {
+      "min": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+
   "toolScoreCalculator": "Score Calculator",
   "toolLostCitiesDesc": "Calculate Lost Cities scores quickly",
   "toolTerraformingMarsDesc": "Tally TR, milestones, awards, and card VP",

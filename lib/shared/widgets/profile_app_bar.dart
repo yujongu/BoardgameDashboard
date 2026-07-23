@@ -7,10 +7,15 @@ class ProfileAppBar extends StatelessWidget {
   final String displayName;
   final VoidCallback onProfileTap;
 
+  /// Optional action rendered at the trailing edge of the bar (e.g. an
+  /// explore/search button). Null on tabs that don't need one.
+  final Widget? trailing;
+
   const ProfileAppBar({
     super.key,
     required this.displayName,
     required this.onProfileTap,
+    this.trailing,
   });
 
   String get _initials {
@@ -47,16 +52,20 @@ class ProfileAppBar extends StatelessWidget {
                   child: _ProfileAvatar(initials: _initials),
                 ),
                 const SizedBox(width: 14),
-                Text(
-                  displayName.toUpperCase(),
-                  style: GoogleFonts.newsreader(
-                    color: kColorPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    fontStyle: FontStyle.italic,
-                    letterSpacing: 4,
+                Expanded(
+                  child: Text(
+                    displayName.toUpperCase(),
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.newsreader(
+                      color: kColorPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 4,
+                    ),
                   ),
                 ),
+                ?trailing,
               ],
             ),
           ),
