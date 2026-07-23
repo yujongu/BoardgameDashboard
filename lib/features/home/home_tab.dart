@@ -57,6 +57,14 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           ),
         ),
 
+        // Most-played leaderboard (hidden until at least one game is logged)
+        SliverToBoxAdapter(
+          child: libraryAsync.maybeWhen(
+            data: (library) => MostPlayedSection(library: library),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ),
+
         // "Recent Plays" section header
         SliverToBoxAdapter(
           child: Padding(
@@ -219,6 +227,104 @@ class _StatsShimmer extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Most-played leaderboard ──────────────────────────────────────────────────
+
+/// Top games by play count, each with a bar sized relative to the most-played
+/// game. Sourced from the already-watched library data (no extra read). Public
+/// so it can be unit-tested in isolation with sample [LibraryEntry] data.
+class MostPlayedSection extends StatelessWidget {
+  final List<LibraryEntry> library;
+
+  const MostPlayedSection({super.key, required this.library});
+
+  @override
+  Widget build(BuildContext context) {
+    final ranked = library.where((e) => e.playCount > 0).toList()
+      ..sort((a, b) => b.playCount.compareTo(a.playCount));
+    final top = ranked.take(5).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    final maxPlays = top.first.playCount;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        children: [
+          _SectionHeader(title: AppStrings.of(context).homeMostPlayed),
+          const SizedBox(height: 12),
+          for (final e in top)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _LeaderboardRow(entry: e, maxPlays: maxPlays),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeaderboardRow extends StatelessWidget {
+  final LibraryEntry entry;
+  final int maxPlays;
+
+  const _LeaderboardRow({required this.entry, required this.maxPlays});
+
+  @override
+  Widget build(BuildContext context) {
+    final frac = maxPlays == 0 ? 0.0 : entry.playCount / maxPlays;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                entry.gameName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.newsreader(
+                  color: kColorOnSurface,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Relative play-volume bar (mirrors library_tab's win-rate bar).
+              Container(
+                height: 3,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1510),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: frac.clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: kColorPrimary,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 14),
+        Text(
+          '${entry.playCount}',
+          style: GoogleFonts.spaceGrotesk(
+            color: kColorPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

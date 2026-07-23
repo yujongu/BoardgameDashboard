@@ -3,9 +3,24 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1** and now **M2 — Friends in the bottom nav**.
-Also added **Flutter web support** this session (see the web commit). Next: **M3** (Home
-leaderboard from `gameStats`).
+Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2** and now **M3 — Home most-played
+leaderboard**. Also added **Flutter web support** this session (see the web commit). Next:
+**M4** (generic registry-driven campaign system) — the last non-infra backlog item.
+
+### M3 completed
+
+- New public `MostPlayedSection` widget in `home_tab.dart`: top-5 games by `playCount`, each with
+  a bar sized relative to the most-played game (mirrors `library_tab`'s win-rate bar) + the count.
+  Inserted as a sliver between the stats row and the "Recent Plays" header; hidden until at least
+  one game is logged.
+- **No new Firestore read**: sourced from the already-watched `libraryProvider` data (the library
+  subcollection carries per-game `playCount`/`winCount`), rather than a separate `gameStats` read.
+  `stats/{uid}/gameStats` holds the same per-game counts if a server-sourced version is ever wanted.
+- Made `MostPlayedSection` public specifically so it's unit-testable without faking Firebase —
+  `test/features/home/most_played_section_test.dart` checks ranking + the top-5 cap + zero-play
+  exclusion, and the "renders nothing" empty case. `homeMostPlayed` l10n key added.
+  `flutter analyze` clean; `flutter test` **76 pass**.
+- Not visually confirmed on a device; the running web build needs a hot-restart to show it.
 
 ### M2 completed
 
@@ -140,9 +155,9 @@ leaderboard from `gameStats`).
 
 ## Next Immediate Step
 
-**M3 — Home dashboard trends/leaderboard.** Home shows only three client-computed numbers
-(plays, wins, win%). Add a per-game win-count leaderboard / most-played list sourced from
-`stats/{uid}` + its `gameStats` subcollection (data already exists server-side; the friend
-profile already reads `gameStats` via `getFriendProfileDirect` — mirror that for the current
-user). Start with simple bars like `library_tab`'s win-rate bar; charts are optional and would
-need a chart package (none today). Then consider **M4** (generic registry-driven campaign system).
+**M4 — generic registry-driven campaign system.** The campaign record sheet is hard-coded to
+`the-crew-the-quest-for-planet-nine-2019` (`crew_record_section.dart`, `kTheCrewMissionCount = 50`)
+and gated by an `if (gameId == kTheCrewPlanetNineGameId)` in `game_detail_page.dart`; the second
+seeded Crew game has no sheet. Generalize into a registry mirroring the tools registry
+(`kCampaignRegistry[gameId] -> CampaignSpec`) so campaign sheets scale like tools do. This is the
+last non-infra backlog item (P-series is infra/polish: strings=done, theming, analytics, settings).
