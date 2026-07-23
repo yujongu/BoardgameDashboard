@@ -11,7 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
-import 'shared/theme/app_theme.dart';
+import 'shared/theme/app_colors.dart';
+import 'shared/providers/theme_mode_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/profile_setup_screen.dart';
 import 'features/shell/main_shell.dart';
@@ -58,14 +59,14 @@ Future<void> main() async {
   runApp(const ProviderScope(child: BoardGameApp()));
 }
 
-class BoardGameApp extends StatefulWidget {
+class BoardGameApp extends ConsumerStatefulWidget {
   const BoardGameApp({super.key});
 
   @override
-  State<BoardGameApp> createState() => _BoardGameAppState();
+  ConsumerState<BoardGameApp> createState() => _BoardGameAppState();
 }
 
-class _BoardGameAppState extends State<BoardGameApp> {
+class _BoardGameAppState extends ConsumerState<BoardGameApp> {
   String? _profileSetupUid;
 
   Widget _buildHome(User? user) {
@@ -94,7 +95,9 @@ class _BoardGameAppState extends State<BoardGameApp> {
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppStrings.localizationsDelegates,
       supportedLocales: AppStrings.supportedLocales,
-      theme: buildAppTheme(),
+      theme: buildLightTheme(),
+      darkTheme: buildDarkTheme(),
+      themeMode: ref.watch(themeModeProvider),
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
@@ -116,8 +119,10 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator(color: kColorPrimary)),
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(color: context.colors.primary),
+      ),
     );
   }
 }
@@ -136,9 +141,9 @@ class _AuthErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.cloud_off_outlined,
-                color: kColorPrimary,
+                color: context.colors.primary,
                 size: 40,
               ),
               const SizedBox(height: 16),

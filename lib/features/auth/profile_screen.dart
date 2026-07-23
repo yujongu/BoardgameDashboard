@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_theme.dart';
 import '../friends/friends_screen.dart';
+import '../settings/settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -159,6 +160,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: Text(
                         s.profileFriends,
+                        style: GoogleFonts.workSans(
+                          color: kColorOnSurface,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: kColorOutline,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(height: 1, color: kColorOutlineVariant),
+            GestureDetector(
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.settings_outlined,
+                      color: kColorOutline,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        s.profileSettings,
                         style: GoogleFonts.workSans(
                           color: kColorOnSurface,
                           fontSize: 16,

@@ -49,11 +49,21 @@
 
   "profileTitle": "PROFILE",
   "profileFriends": "Friends",
+  "profileSettings": "Settings",
   "profileSignOut": "Sign Out",
   "profileEditNameTitle": "Edit display name",
   "profileNameUpdated": "Display name updated.",
   "profileNameUpdateFailed": "Failed to update name. Try again.",
   "profileNameEmpty": "Name cannot be empty.",
+
+  "settingsTitle": "SETTINGS",
+  "settingsAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsAbout": "About",
+  "settingsVersion": "Version",
 
   "commonRetry": "RETRY",
 
