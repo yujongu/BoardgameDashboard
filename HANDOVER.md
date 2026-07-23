@@ -1,11 +1,30 @@
-# Handover — 2026-07-22
+# Handover — 2026-07-24
 
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1–H5, Q1–Q4, P1, P6, M1–M4** and now **H6a — forgot-password link**. Also added
-**Flutter web support** this session. Remaining: infra/polish (**P2, P3, P5**), plus **H6b**
-(avatar upload — needs `image_picker` + Storage, the `P4` capability work).
+Done to date: **H1–H5, H6a, Q1–Q4, P1, P6, M1–M4**, and now **P2 + P5 — light theme + persisted
+theme switch + Settings screen**. Also added **Flutter web support** earlier. Remaining:
+**P3** (Crashlytics/analytics) and **H6b/P4** (avatar upload — `image_picker` + Storage).
+
+### P2 + P5 completed this session (full light-mode migration)
+
+- **New theming system** (`lib/shared/theme/app_colors.dart`): an `AppColors` `ThemeExtension`
+  holding the 14 semantic tokens, with `kDarkColors` (legacy look) + `kLightColors` (warm "paper")
+  instances, a `context.colors.<token>` accessor, and `buildLightTheme()`/`buildDarkTheme()`.
+  `app_theme.dart` is now **just the raw `kColor*` dark palette consts** (kept as the source for
+  `kDarkColors`; no more `buildAppTheme`). Import direction is one-way `app_colors → app_theme`.
+- **Persisted `ThemeMode`** (`shared/providers/theme_mode_provider.dart`, `StateNotifier` +
+  `shared_preferences`, key `themeMode`, defaults to dark). `main.dart` is now a
+  `ConsumerStatefulWidget` wiring `theme/darkTheme/themeMode`.
+- **Settings screen** (`features/settings/settings_screen.dart`, P5): System/Light/Dark selector +
+  About/version (`kAppVersion = '1.0.0'`). Reached via a new **Profile → Settings** row.
+- **Migrated all 643 `kColor*` call sites** across 30 files to `context.colors.<token>`, plus the
+  15 duplicated `Color(0xFF0A0905)` app-bar hexes → `context.colors.appBarBackground`, so both
+  palettes cascade everywhere. `const` was stripped only where a widget now paints a runtime color.
+- New l10n keys: `profileSettings`, `settings*`. Each pumped test `MaterialApp` now sets
+  `theme: buildDarkTheme()` so `context.colors` resolves. `flutter analyze` clean; `flutter test`
+  **91 pass**. Committed in 2 chunks (theme infra + Settings; then the call-site migration).
 
 ### H6a completed
 
@@ -234,18 +253,31 @@ emulator needs Java, which isn't on PATH here — start it with Android Studio's
 - Month abbreviations in `_formatDate` helpers were intentionally left as-is (date data, not UI
   copy). Switch to `intl`'s `DateFormat` if true locale-aware dates are ever wanted.
 - `rank` is still never set by the client (scores entered, ranks not derived). (from H1)
+- **Theming (P2) gravel:**
+  - All screen colors now go through `context.colors.<token>` — **new UI must use it, not the raw
+    `kColor*` consts** (those remain only to seed `kDarkColors`). Adding a color means adding a
+    field to `AppColors` (+ `copyWith`/`lerp`) and to both palette instances.
+  - The 643-site migration was mechanical (sed for the name+import swap; a scratch Python script
+    stripped the nearest enclosing `const` per `invalid_constant` until analyze was clean). `const`
+    is therefore gone from every widget that paints a runtime color — that's inherent to runtime
+    theming and trades against CLAUDE.md's "const everywhere" rule; theming wins where they meet.
+  - **Light `primary` is a deep bronze (`0xFF7A5E0A`), not the dark theme's bright gold.** Primary
+    doubles as accent-text *and* button-fill; bronze stays legible as text on the cream background
+    while white `onPrimary` reads on the bronze fill. If you retune, keep both roles legible.
+  - Lost Cities' expedition accent list (`Color(0xFFF2CA50)` etc. in `lost_cities_calculator_screen`)
+    is a **context-less brand palette, deliberately left fixed** — it does not theme-switch.
+  - Status-bar icon brightness follows the theme via each `ThemeData`'s
+    `appBarTheme.systemOverlayStyle` (light/dark). `main.dart` still calls
+    `SystemChrome.setSystemUIOverlayStyle(... light)` once at startup — harmless, the appbar theme
+    overrides it per-screen.
 
 ## Next Immediate Step
 
 Only infra/polish remains, in rough value order:
 
-- **P2 (M) + P5 (S)** — light theme + `themeMode` switch (needs `shared_preferences`), plus a
-  Settings screen to host the toggle (and later notifications/about/version). Biggest remaining
-  chunk; `app_theme.dart` is currently a single `const` dark palette and `MaterialApp` has no
-  `darkTheme`/`themeMode`.
 - **P3** — Crashlytics first, then analytics for key funnels (login, add-play, add-friend).
 - **H6b / P4** — avatar upload for email/password users: `image_picker` + Firebase Storage
   (currently `photoUrl` only ever comes from Google). Charts (would enrich the M3 leaderboard)
   are also gated on a chart package.
 
-Recommended: **P2 + P5** for the biggest visible polish (theming + a real Settings screen).
+Recommended next: **P3** (Crashlytics) — highest value for a shipping app.
