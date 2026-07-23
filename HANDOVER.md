@@ -3,9 +3,31 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2, M3** and now **M4 — registry-driven
-campaign system**. Also added **Flutter web support** this session. **All H- and M-tier feature
-items are now complete.** What remains is quality (Q3, Q4) and infra/polish (P2–P6; P1 done).
+Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2, M3, M4** and now **Q3 — calculator +
+backend test coverage**. Also added **Flutter web support** this session. All H/M features and
+Q1–Q3 are done. Remaining: **Q4** (integration test → emulator) and infra/polish (P2–P6; P1 done).
+
+### Q3 completed
+
+- **Flutter**: `calculateExpeditionScore` (Lost Cities) is now unit-tested; extracted a pure
+  `terraformingMarsTotal(...)` from the widget State so Terraforming Mars scoring is testable too,
+  and tested it. Both files also have a build-smoke test. (`flutter test` **89 pass**.)
+- **Backend (jest, against the Firestore emulator)**: new `functions/test/library.test.ts`
+  (listBoardGames — ordering, limit, `` prefix search, blank-search, auth + validation) and
+  `functions/test/userSearch.test.ts` (the onCreate/onUpdate triggers). Added `callListBoardGames`
+  wrappers to `test/helpers/callables.ts` and `seedBoardGame` to `test/helpers/seed.ts`.
+  (`npm test` in `functions/` = **7 suites, 122 tests pass**.)
+- **How the trigger tests work**: firebase-functions v2 sets `func.run = handler` (verified in
+  `node_modules/.../v2/providers/firestore.js`), so `.run(event)` calls the bare handler — the
+  tests pass a minimal `{ params:{userId}, data:{ data()/before/after } }` event, no
+  firebase-functions-test needed.
+
+### Running the backend tests (important — port clash)
+
+`npm test` in `functions/` needs the **Firestore emulator on 127.0.0.1:8080** (hard-coded in
+`test/envSetup.ts`). The dev **web build also uses 8080**, so only one can run at a time. The
+emulator needs Java, which isn't on PATH here — start it with Android Studio's JDK:
+`$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; $env:PATH="$env:JAVA_HOME\bin;C:\Users\yujon\AppData\Roaming\npm;$env:PATH"; firebase emulators:start --only firestore --project demo-boardgame-test` (from repo root), then `npm test` in `functions/`.
 
 ### M4 completed
 
@@ -175,17 +197,10 @@ items are now complete.** What remains is quality (Q3, Q4) and infra/polish (P2�
 
 ## Next Immediate Step
 
-Feature backlog (H/M tiers) is done. Remaining work is **quality** and **infra/polish** — pick by
-appetite:
-
-- **Q3 (S)** — add the missing unit tests: `lost_cities` + `terraforming_mars` calculator scoring
-  (mirror `wingspan_calculator_test.dart`), and jest tests for `listBoardGames` + the
-  `syncUserSearchOnCreate/OnUpdate` triggers under `functions/`.
-- **Q4 (S)** — point `integration_test/app_test.dart` at the emulator suite (the `_useEmulators`
-  path in `main.dart` exists) and read creds from `--dart-define` instead of hard-coded prod creds.
-- **P2 (M)** — light theme + `themeMode` switch (needs `shared_preferences`); **P5 (S)** a Settings
-  screen to host it; **P3** Crashlytics/analytics; **P6** housekeeping (committed emulator logs,
-  empty documented dirs in `CLAUDE.md`, dead `getMyFriends` CF).
-
-Recommended: **Q3 then Q4** (cheap, shrinks the test-coverage gap the audit flagged) before the
-P-series infra work.
+**Q4 (S)** — point `integration_test/app_test.dart` at the emulator suite instead of hard-coded
+prod creds: the `_useEmulators` path already exists in `main.dart` (Auth :9099, Functions :5001,
+Firestore :8080 — but note 8080 clashes with the dev web build), and read test creds from
+`--dart-define`. Then the infra/polish P-series: **P2** light theme + `themeMode` switch (needs
+`shared_preferences`), **P5** a Settings screen to host it, **P3** Crashlytics/analytics, **P6**
+housekeeping (committed emulator logs / `firestore-debug.log`, empty documented dirs in
+`CLAUDE.md`, dead `getMyFriends` CF).
