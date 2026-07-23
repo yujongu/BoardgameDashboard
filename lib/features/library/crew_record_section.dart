@@ -8,15 +8,18 @@ import '../../shared/models/crew_campaign.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
 
-const kTheCrewPlanetNineGameId = 'the-crew-the-quest-for-planet-nine-2019';
-const kTheCrewMissionCount = 50;
-
 /// Campaign record sheet for The Crew: crew roster plus the mission the whole
 /// crew has reached. Loads and saves the signed-in user's campaign doc.
+/// [missionCount] (the game's logbook length) comes from the campaign registry.
 class CrewRecordSection extends ConsumerStatefulWidget {
   final String gameId;
+  final int missionCount;
 
-  const CrewRecordSection({super.key, required this.gameId});
+  const CrewRecordSection({
+    super.key,
+    required this.gameId,
+    required this.missionCount,
+  });
 
   @override
   ConsumerState<CrewRecordSection> createState() => _CrewRecordSectionState();
@@ -97,7 +100,11 @@ class _CrewRecordSectionState extends ConsumerState<CrewRecordSection> {
             ),
           )
         else
-          CrewRecordCard(campaign: _campaign!, onChanged: _update),
+          CrewRecordCard(
+            campaign: _campaign!,
+            onChanged: _update,
+            missionCount: widget.missionCount,
+          ),
       ],
     );
   }
@@ -140,18 +147,20 @@ class _LoadErrorRow extends StatelessWidget {
 class CrewRecordCard extends StatelessWidget {
   final CrewCampaign campaign;
   final ValueChanged<CrewCampaign> onChanged;
+  final int missionCount;
 
   const CrewRecordCard({
     super.key,
     required this.campaign,
     required this.onChanged,
+    required this.missionCount,
   });
 
   void _setMission(int mission) {
     onChanged(
       CrewCampaign(
         crewMembers: campaign.crewMembers,
-        currentMission: mission.clamp(1, kTheCrewMissionCount),
+        currentMission: mission.clamp(1, missionCount),
       ),
     );
   }
@@ -191,7 +200,7 @@ class CrewRecordCard extends StatelessWidget {
       context: context,
       builder: (_) => _TextInputDialog(
         title: s.crewSetMissionTitle,
-        hintText: s.crewMissionRangeHint(kTheCrewMissionCount),
+        hintText: s.crewMissionRangeHint(missionCount),
         numeric: true,
       ),
     );
@@ -292,7 +301,7 @@ class CrewRecordCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        s.crewMissionDenominator(kTheCrewMissionCount),
+                        s.crewMissionDenominator(missionCount),
                         style: GoogleFonts.newsreader(
                           color: kColorOutline,
                           fontSize: 18,
@@ -306,7 +315,7 @@ class CrewRecordCard extends StatelessWidget {
                 icon: const Icon(Icons.chevron_right),
                 color: kColorPrimary,
                 disabledColor: kColorOutlineVariant,
-                onPressed: campaign.currentMission < kTheCrewMissionCount
+                onPressed: campaign.currentMission < missionCount
                     ? () => _setMission(campaign.currentMission + 1)
                     : null,
               ),

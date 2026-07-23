@@ -11,7 +11,11 @@ void main() {
       localizationsDelegates: AppStrings.localizationsDelegates,
       supportedLocales: AppStrings.supportedLocales,
       home: Scaffold(
-        body: CrewRecordCard(campaign: campaign, onChanged: onChanged),
+        body: CrewRecordCard(
+          campaign: campaign,
+          onChanged: onChanged,
+          missionCount: 50,
+        ),
       ),
     );
   }

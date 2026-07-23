@@ -8,6 +8,7 @@ import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../plays/play_detail_page.dart';
 import '../tools/presentation/widgets/tool_card.dart';
+import 'campaign_registry.dart';
 import 'crew_record_section.dart';
 import '../tools/registry/game_tools_registry.dart';
 
@@ -138,6 +139,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
   // ── Data ─────────────────────────────────────────────────────────────────────
 
   Widget _buildDataScaffold(List<PlaySummary> plays) {
+    final campaign = campaignForGame(widget.gameId);
     return Scaffold(
       backgroundColor: kColorBackground,
       body: CustomScrollView(
@@ -185,12 +187,15 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
             ),
           ),
 
-          // Campaign record sheet (The Crew only)
-          if (widget.gameId == kTheCrewPlanetNineGameId)
+          // Campaign record sheet — shown for any game in the campaign registry.
+          if (campaign != null)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-                child: CrewRecordSection(gameId: widget.gameId),
+                child: CrewRecordSection(
+                  gameId: widget.gameId,
+                  missionCount: campaign.missionCount,
+                ),
               ),
             ),
 

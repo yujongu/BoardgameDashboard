@@ -3,9 +3,29 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2** and now **M3 — Home most-played
-leaderboard**. Also added **Flutter web support** this session (see the web commit). Next:
-**M4** (generic registry-driven campaign system) — the last non-infra backlog item.
+Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2, M3** and now **M4 — registry-driven
+campaign system**. Also added **Flutter web support** this session. **All H- and M-tier feature
+items are now complete.** What remains is quality (Q3, Q4) and infra/polish (P2–P6; P1 done).
+
+### M4 completed
+
+- New `lib/features/library/campaign_registry.dart`: `CampaignSpec { int missionCount }` +
+  `kCampaignRegistry<gameId, CampaignSpec>` + `campaignForGame(gameId)`. Mirrors the tools
+  registry. Registered **both** seeded Crew games — Planet Nine (50 missions) and, newly,
+  **Mission Deep Sea (96 missions)**, which previously had no sheet.
+- `crew_record_section.dart`: dropped the `kTheCrewPlanetNineGameId` / `kTheCrewMissionCount`
+  consts; `CrewRecordSection` and `CrewRecordCard` now take a `missionCount` param (used for the
+  clamp, stepper bound, range hint, and denominator) instead of the hard-coded 50.
+- `game_detail_page.dart`: the `if (gameId == kTheCrewPlanetNineGameId)` gate is now
+  `final campaign = campaignForGame(gameId); if (campaign != null) CrewRecordSection(...,
+  missionCount: campaign.missionCount)` — so any registered game gets a sheet.
+- Tests: new `campaign_registry_test.dart` (both games' mission counts + null for others);
+  `crew_record_card_test.dart` updated to pass `missionCount: 50`. `flutter analyze` clean;
+  `flutter test` **78 pass**.
+- Note: `CrewCampaign`/`CrewRecordCard` are still Crew-shaped (crew roster + mission). That's fine
+  — every seeded campaign game is a Crew game. A genuinely different campaign *type* would need a
+  new spec+widget, but that's YAGNI today.
+- Not visually confirmed on a device; the running web build needs a hot-restart to show it.
 
 ### M3 completed
 
@@ -155,9 +175,17 @@ leaderboard**. Also added **Flutter web support** this session (see the web comm
 
 ## Next Immediate Step
 
-**M4 — generic registry-driven campaign system.** The campaign record sheet is hard-coded to
-`the-crew-the-quest-for-planet-nine-2019` (`crew_record_section.dart`, `kTheCrewMissionCount = 50`)
-and gated by an `if (gameId == kTheCrewPlanetNineGameId)` in `game_detail_page.dart`; the second
-seeded Crew game has no sheet. Generalize into a registry mirroring the tools registry
-(`kCampaignRegistry[gameId] -> CampaignSpec`) so campaign sheets scale like tools do. This is the
-last non-infra backlog item (P-series is infra/polish: strings=done, theming, analytics, settings).
+Feature backlog (H/M tiers) is done. Remaining work is **quality** and **infra/polish** — pick by
+appetite:
+
+- **Q3 (S)** — add the missing unit tests: `lost_cities` + `terraforming_mars` calculator scoring
+  (mirror `wingspan_calculator_test.dart`), and jest tests for `listBoardGames` + the
+  `syncUserSearchOnCreate/OnUpdate` triggers under `functions/`.
+- **Q4 (S)** — point `integration_test/app_test.dart` at the emulator suite (the `_useEmulators`
+  path in `main.dart` exists) and read creds from `--dart-define` instead of hard-coded prod creds.
+- **P2 (M)** — light theme + `themeMode` switch (needs `shared_preferences`); **P5 (S)** a Settings
+  screen to host it; **P3** Crashlytics/analytics; **P6** housekeeping (committed emulator logs,
+  empty documented dirs in `CLAUDE.md`, dead `getMyFriends` CF).
+
+Recommended: **Q3 then Q4** (cheap, shrinks the test-coverage gap the audit flagged) before the
+P-series infra work.
