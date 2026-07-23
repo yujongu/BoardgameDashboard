@@ -32,6 +32,14 @@
   "authRegister": "Register",
   "authOr": "or",
   "authContinueWithGoogle": "Continue with Google",
+  "authForgotPassword": "Forgot password?",
+  "authResetEmailNeeded": "Enter your email above to reset your password.",
+  "authResetSent": "Password reset link sent to {email}.",
+  "@authResetSent": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
 
   "profileSetupSubtitle": "One last step",
   "profileSetupPrompt": "What should we call you?",

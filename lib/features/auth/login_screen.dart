@@ -102,6 +102,40 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _resetPassword() async {
+    final s = AppStrings.of(context);
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _errorMessage = s.authResetEmailNeeded);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      _showResetSent(email);
+    } on FirebaseAuthException catch (e) {
+      // Don't reveal whether an account exists for that address.
+      if (e.code == 'user-not-found') {
+        _showResetSent(email);
+      } else {
+        setState(() => _errorMessage = _friendlyError(e.code));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showResetSent(String email) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppStrings.of(context).authResetSent(email))),
+    );
+  }
+
   String _friendlyError(String code) {
     final s = AppStrings.of(context);
     switch (code) {
@@ -140,6 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   _buildEmailField(),
                   const SizedBox(height: 16),
                   _buildPasswordField(),
+                  if (!_isRegistering) _buildForgotPassword(),
                   const SizedBox(height: 24),
                   if (_errorMessage != null) _buildError(),
                   _buildSubmitButton(),
@@ -265,6 +300,25 @@ class _LoginScreenState extends State<LoginScreen> {
         borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
       ),
       errorStyle: const TextStyle(color: Colors.redAccent),
+    );
+  }
+
+  Widget _buildForgotPassword() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: _isLoading ? null : _resetPassword,
+        style: TextButton.styleFrom(
+          foregroundColor: kColorPrimary,
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          AppStrings.of(context).authForgotPassword,
+          style: const TextStyle(fontSize: 13),
+        ),
+      ),
     );
   }
 

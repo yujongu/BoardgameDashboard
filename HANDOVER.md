@@ -3,9 +3,21 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1, M2, M3, M4, Q3, Q4** and now **P6 —
-housekeeping**. Also added **Flutter web support** this session. **All H/M/Q items and P1/P6 are
-done.** Remaining: infra/polish (P2, P3, P4, P5) and H6.
+Done to date: **H1–H5, Q1–Q4, P1, P6, M1–M4** and now **H6a — forgot-password link**. Also added
+**Flutter web support** this session. Remaining: infra/polish (**P2, P3, P5**), plus **H6b**
+(avatar upload — needs `image_picker` + Storage, the `P4` capability work).
+
+### H6a completed
+
+- `login_screen.dart`: added a right-aligned **"Forgot password?"** link (sign-in mode only) that
+  calls `FirebaseAuth.sendPasswordResetEmail` with the email already typed. Empty/invalid email →
+  inline prompt; success → SnackBar; `user-not-found` is treated as success (no account
+  enumeration). New l10n keys `authForgotPassword` / `authResetEmailNeeded` / `authResetSent`.
+- Test `test/features/auth/login_screen_test.dart`: link visibility (shown in sign-in, hidden in
+  register mode) + the empty-email guard (that branch returns before any Firebase call, so it's
+  testable without Firebase). The actual send path isn't unit-tested — `login_screen` uses
+  `FirebaseAuth.instance` directly (not injected), so it needs the emulator/a device to exercise.
+  `flutter analyze` clean; `flutter test` **91 pass**.
 
 ### P6 completed / notes
 
@@ -225,14 +237,15 @@ emulator needs Java, which isn't on PATH here — start it with Android Studio's
 
 ## Next Immediate Step
 
-Only infra/polish + H6 remain, in rough value order:
+Only infra/polish remains, in rough value order:
 
-- **H6a (S)** — "Forgot password?" link on `login_screen.dart` (`sendPasswordResetEmail`). Quick,
-  user-facing.
 - **P2 (M) + P5 (S)** — light theme + `themeMode` switch (needs `shared_preferences`), plus a
-  Settings screen to host the toggle (and later notifications/about/version). Biggest chunk.
+  Settings screen to host the toggle (and later notifications/about/version). Biggest remaining
+  chunk; `app_theme.dart` is currently a single `const` dark palette and `MaterialApp` has no
+  `darkTheme`/`themeMode`.
 - **P3** — Crashlytics first, then analytics for key funnels (login, add-play, add-friend).
-- **P4 / H6b** — capability packages as their features are scheduled: `image_picker` +
-  Firebase Storage for avatar upload; `shared_preferences` (P2); charts (would enrich M3).
+- **H6b / P4** — avatar upload for email/password users: `image_picker` + Firebase Storage
+  (currently `photoUrl` only ever comes from Google). Charts (would enrich the M3 leaderboard)
+  are also gated on a chart package.
 
-Recommended: **H6a** for a fast user-facing win, or **P2+P5** for the biggest remaining polish.
+Recommended: **P2 + P5** for the biggest visible polish (theming + a real Settings screen).
