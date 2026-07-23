@@ -3,9 +3,24 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4** and now **M1 — browse the full game catalog**.
-Also added **Flutter web support** this session (see the web commit). Next: **M2** (promote
-Friends into the bottom nav) and **M3** (Home leaderboard from `gameStats`).
+Done to date: **H1, H2, H3, H5, Q2, Q1, P1, H4, M1** and now **M2 — Friends in the bottom nav**.
+Also added **Flutter web support** this session (see the web commit). Next: **M3** (Home
+leaderboard from `gameStats`).
+
+### M2 completed
+
+- `main_shell.dart` is now a **3-tab** shell (Home, Library, **Friends**): added a `Friends`
+  `_NavItem` (`Icons.group`) and `const FriendsScreen(embedded: true)` as the third
+  `IndexedStack` child. The add-play FAB is hidden on the Friends tab (`_selectedIndex < 2`).
+- `FriendsScreen` gained an **`embedded`** flag: as a tab it hides the back button
+  (`automaticallyImplyLeading: false`, `leading: null`); pushed as a route (default
+  `embedded: false`, e.g. the Profile → Friends row) it keeps the back button. Nesting its
+  Scaffold inside the shell Scaffold is fine — the outer Scaffold already reserves the bottom-nav
+  height, so no overlap.
+- `navFriends` l10n key added. `flutter analyze` clean; `flutter test` **74 pass**.
+- The **Profile → Friends** row still works (pushes the non-embedded FriendsScreen). It's now
+  somewhat redundant with the tab — left in place (harmless); remove if you want a single entry.
+- Not visually confirmed on a device; the running web build needs a hot-restart to show the tab.
 
 ### M1 completed
 
@@ -125,8 +140,9 @@ Friends into the bottom nav) and **M3** (Home leaderboard from `gameStats`).
 
 ## Next Immediate Step
 
-**M2 — promote Friends into the bottom nav.** `main_shell.dart` is a 2-item `IndexedStack`
-(Home, Library); Friends/Profile hang off the app-bar avatar only. Add a Friends (or "Social")
-destination to `_BottomNav` and the `IndexedStack`. Keep imperative `Navigator`. After that,
-**M3** — a Home leaderboard/most-played list from `stats/{uid}` + `gameStats` (data already
-exists server-side; start with simple bars like `library_tab`'s win-rate bar).
+**M3 — Home dashboard trends/leaderboard.** Home shows only three client-computed numbers
+(plays, wins, win%). Add a per-game win-count leaderboard / most-played list sourced from
+`stats/{uid}` + its `gameStats` subcollection (data already exists server-side; the friend
+profile already reads `gameStats` via `getFriendProfileDirect` — mirror that for the current
+user). Start with simple bars like `library_tab`'s win-rate bar; charts are optional and would
+need a chart package (none today). Then consider **M4** (generic registry-driven campaign system).

@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../auth/profile_screen.dart';
+import '../friends/friends_screen.dart';
 import '../home/home_tab.dart';
 import '../library/library_tab.dart';
 import '../plays/add_play_screen.dart';
@@ -47,9 +48,13 @@ class _MainShellState extends ConsumerState<MainShell> {
         children: [
           HomeTab(displayName: displayName, onProfileTap: _openProfile),
           LibraryTab(displayName: displayName, onProfileTap: _openProfile),
+          const FriendsScreen(embedded: true),
         ],
       ),
-      floatingActionButton: _AddFab(onTap: _openAddPlay),
+      // Logging a play only makes sense on Home/Library, not the Friends tab.
+      floatingActionButton: _selectedIndex < 2
+          ? _AddFab(onTap: _openAddPlay)
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: _BottomNav(
         selectedIndex: _selectedIndex,
@@ -129,6 +134,13 @@ class _BottomNav extends StatelessWidget {
                 label: AppStrings.of(context).navLibrary,
                 selected: selectedIndex == 1,
                 onTap: () => onTap(1),
+              ),
+              _NavItem(
+                icon: Icons.group_outlined,
+                activeIcon: Icons.group,
+                label: AppStrings.of(context).navFriends,
+                selected: selectedIndex == 2,
+                onTap: () => onTap(2),
               ),
             ],
           ),

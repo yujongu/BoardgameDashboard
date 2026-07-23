@@ -16,7 +16,11 @@ import 'friend_requests_screen.dart';
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 class FriendsScreen extends ConsumerStatefulWidget {
-  const FriendsScreen({super.key});
+  /// True when hosted as a bottom-nav tab (no back button); false when pushed
+  /// as its own route (e.g. from the profile screen), which shows a back button.
+  final bool embedded;
+
+  const FriendsScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<FriendsScreen> createState() => _FriendsScreenState();
@@ -147,10 +151,13 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       backgroundColor: kColorBackground,
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A0905),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
         title: Text(
           s.friendsTitle,
           style: GoogleFonts.newsreader(
