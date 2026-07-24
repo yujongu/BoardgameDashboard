@@ -296,7 +296,7 @@ class _LeaderboardRow extends StatelessWidget {
               Container(
                 height: 3,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1510),
+                  color: context.colors.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: Align(

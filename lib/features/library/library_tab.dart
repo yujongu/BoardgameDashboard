@@ -165,15 +165,29 @@ class _LibraryCard extends StatelessWidget {
 
   const _LibraryCard({required this.entry, required this.onTap});
 
-  List<Color> get _gradientColors {
-    const palette = [
-      [Color(0xFF1A2A1A), Color(0xFF2D4A1E)],
-      [Color(0xFF1A1A2A), Color(0xFF1E2A4A)],
-      [Color(0xFF2A1A1A), Color(0xFF4A2A1E)],
-      [Color(0xFF1A2020), Color(0xFF1E3A3A)],
-      [Color(0xFF201A2A), Color(0xFF3A1E4A)],
-      [Color(0xFF2A2010), Color(0xFF4A3A10)],
-    ];
+  static const _darkPalette = [
+    [Color(0xFF1A2A1A), Color(0xFF2D4A1E)],
+    [Color(0xFF1A1A2A), Color(0xFF1E2A4A)],
+    [Color(0xFF2A1A1A), Color(0xFF4A2A1E)],
+    [Color(0xFF1A2020), Color(0xFF1E3A3A)],
+    [Color(0xFF201A2A), Color(0xFF3A1E4A)],
+    [Color(0xFF2A2010), Color(0xFF4A3A10)],
+  ];
+
+  // Same six hues as the dark palette, as tints instead of shades.
+  static const _lightPalette = [
+    [Color(0xFFDCE8D2), Color(0xFFB9D3A0)],
+    [Color(0xFFD9DFF0), Color(0xFFAEC0E4)],
+    [Color(0xFFF0DCD4), Color(0xFFE0B49C)],
+    [Color(0xFFD4E6E6), Color(0xFFA6CCCC)],
+    [Color(0xFFE2D9EC), Color(0xFFC0A8D8)],
+    [Color(0xFFEFE4C4), Color(0xFFDCC68A)],
+  ];
+
+  List<Color> _gradientColors(Brightness brightness) {
+    final palette = brightness == Brightness.dark
+        ? _darkPalette
+        : _lightPalette;
     final idx = entry.gameId.hashCode.abs() % palette.length;
     return palette[idx];
   }
@@ -204,7 +218,7 @@ class _LibraryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    final colors = _gradientColors;
+    final colors = _gradientColors(Theme.of(context).brightness);
     final lastPlayed = entry.lastPlayedAt;
 
     return GestureDetector(
@@ -284,7 +298,7 @@ class _LibraryCard extends StatelessWidget {
                     Container(
                       height: 3,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1A1510),
+                        color: context.colors.outlineVariant,
                         borderRadius: BorderRadius.circular(2),
                       ),
                       child: Align(
