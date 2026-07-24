@@ -32,6 +32,9 @@ class TerraformingMarsCalculatorScreen extends StatefulWidget {
 class _TerraformingMarsCalculatorScreenState
     extends State<TerraformingMarsCalculatorScreen> {
   static const _marsRed = Color(0xFFD95B2B);
+  // Deepened for the light theme — the bright original drops to ~3.5:1 against
+  // the paper background, marginal for the small +VP labels.
+  static const _marsRedLight = Color(0xFFB2401A);
 
   int _tr = 20;
   int _milestones = 0;
@@ -63,6 +66,9 @@ class _TerraformingMarsCalculatorScreenState
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
+    final marsRed = Theme.of(context).brightness == Brightness.dark
+        ? _marsRed
+        : _marsRedLight;
     return Scaffold(
       backgroundColor: context.colors.background,
       appBar: AppBar(
@@ -120,7 +126,7 @@ class _TerraformingMarsCalculatorScreenState
                   vp: _tr,
                   min: 0,
                   max: 63,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _tr = v),
                 ),
                 _ScoreRow(
@@ -130,7 +136,7 @@ class _TerraformingMarsCalculatorScreenState
                   vp: _milestones * 5,
                   min: 0,
                   max: 3,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _milestones = v),
                 ),
                 _ScoreRow(
@@ -140,7 +146,7 @@ class _TerraformingMarsCalculatorScreenState
                   vp: _awardVp,
                   min: 0,
                   max: 15,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _awardVp = v),
                 ),
                 _ScoreRow(
@@ -150,7 +156,7 @@ class _TerraformingMarsCalculatorScreenState
                   vp: _greeneries,
                   min: 0,
                   max: 50,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _greeneries = v),
                 ),
                 _ScoreRow(
@@ -160,7 +166,7 @@ class _TerraformingMarsCalculatorScreenState
                   vp: _cityPoints,
                   min: 0,
                   max: 50,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _cityPoints = v),
                 ),
                 _ScoreRow(
@@ -170,7 +176,7 @@ class _TerraformingMarsCalculatorScreenState
                   vp: _cardVp,
                   min: 0,
                   max: 100,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _cardVp = v),
                 ),
               ],
