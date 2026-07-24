@@ -22,6 +22,16 @@ class _LostCitiesCalculatorScreenState
     Color(0xFFE32636),
   ];
 
+  // Same five suits deepened for the light theme — the bright versions drop to
+  // ~1.7:1 against the paper background as titles, borders and dot indicators.
+  static const _expeditionColorsLight = [
+    Color(0xFF7A5E0A),
+    Color(0xFF1F4E8C),
+    Color(0xFF5B2C72),
+    Color(0xFF1F6B45),
+    Color(0xFF9B1721),
+  ];
+
   late final List<int> _scores;
   late final PageController _pageController;
   int _currentPage = 0;
@@ -62,6 +72,9 @@ class _LostCitiesCalculatorScreenState
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
+    final expeditionColors = Theme.of(context).brightness == Brightness.dark
+        ? _expeditionColors
+        : _expeditionColorsLight;
     final titles = [
       s.lostCitiesGold,
       s.lostCitiesBlue,
@@ -121,9 +134,9 @@ class _LostCitiesCalculatorScreenState
             padding: const EdgeInsets.only(top: 14, bottom: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_expeditionColors.length, (i) {
+              children: List.generate(expeditionColors.length, (i) {
                 final active = i == _currentPage;
-                final color = _expeditionColors[i];
+                final color = expeditionColors[i];
                 return GestureDetector(
                   onTap: () => _pageController.animateToPage(
                     i,
@@ -150,12 +163,12 @@ class _LostCitiesCalculatorScreenState
             child: PageView.builder(
               controller: _pageController,
               physics: const _HighThresholdScrollPhysics(),
-              itemCount: _expeditionColors.length,
+              itemCount: expeditionColors.length,
               itemBuilder: (context, index) {
                 return ExpeditionColumn(
                   key: ValueKey('$index-$_resetToken'),
                   title: titles[index],
-                  color: _expeditionColors[index],
+                  color: expeditionColors[index],
                   onScoreChanged: (score) => _onScoreChanged(index, score),
                 );
               },
@@ -188,7 +201,7 @@ class _LostCitiesCalculatorScreenState
                   style: GoogleFonts.newsreader(
                     color: _grandTotal >= 0
                         ? context.colors.primary
-                        : const Color(0xFFFF6B6B),
+                        : Theme.of(context).colorScheme.error,
                     fontSize: 38,
                     fontWeight: FontWeight.w600,
                   ),

@@ -92,7 +92,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [color.withAlpha(25), const Color(0xFF1F1B13)],
+          colors: [color.withAlpha(25), context.colors.surface],
         ),
         border: Border.all(color: color, width: 1.5),
         boxShadow: [BoxShadow(color: color.withAlpha(20), blurRadius: 20)],
@@ -139,7 +139,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                           color: _isStarted
                               ? (_currentScore >= 0
                                     ? context.colors.onSurface
-                                    : const Color(0xFFFF6B6B))
+                                    : Theme.of(context).colorScheme.error)
                               : context.colors.outline,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -294,7 +294,7 @@ class _NumberButtonState extends State<_NumberButton> {
               ? color.withAlpha(_pressed ? 170 : 220)
               : _pressed
               ? color.withAlpha(35)
-              : const Color(0xFF1A1510),
+              : context.colors.background,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected || _pressed
@@ -315,7 +315,9 @@ class _NumberButtonState extends State<_NumberButton> {
         child: Text(
           '${widget.number}',
           style: GoogleFonts.newsreader(
-            color: isSelected ? Colors.black87 : context.colors.onSurface,
+            color: isSelected
+                ? context.colors.onPrimary
+                : context.colors.onSurface,
             fontSize: 26,
             fontWeight: FontWeight.w500,
           ),
