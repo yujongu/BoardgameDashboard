@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+// Raw dark palette. These are the semantic color tokens for the dark theme;
+// the runtime, theme-aware equivalents live in `app_colors.dart` (`context.colors`).
+// Kept as top-level consts so screens that haven't migrated yet keep compiling.
 const kColorBackground = Color(0xFF16130B);
 const kColorSurface = Color(0xFF231F17);
 const kColorSurfaceHigh = Color(0xFF2D2A21);
@@ -15,66 +17,3 @@ const kColorOutlineVariant = Color(0xFF4D4635);
 const kColorAmberBorder = Color(0x4DD4AF37);
 const kColorAmberGlow = Color(0x1AD4AF37);
 const kColorAppBarBackground = Color(0xFF0A0905);
-
-ThemeData buildAppTheme() {
-  return ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: kColorBackground,
-    colorScheme: const ColorScheme.dark(
-      brightness: Brightness.dark,
-      primary: kColorPrimary,
-      onPrimary: kColorOnPrimary,
-      surface: kColorSurface,
-      onSurface: kColorOnSurface,
-      surfaceContainerHigh: kColorSurfaceHigh,
-      surfaceContainerHighest: kColorSurfaceHighest,
-      outline: kColorOutline,
-      outlineVariant: kColorOutlineVariant,
-    ),
-    textTheme: GoogleFonts.workSansTextTheme(ThemeData.dark().textTheme)
-        .copyWith(
-          displayLarge: GoogleFonts.newsreader(
-            color: kColorPrimary,
-            fontSize: 32,
-            fontWeight: FontWeight.w600,
-            fontStyle: FontStyle.italic,
-            letterSpacing: 0.5,
-          ),
-          headlineMedium: GoogleFonts.newsreader(
-            color: kColorOnSurface,
-            fontSize: 22,
-            fontWeight: FontWeight.w500,
-          ),
-          headlineSmall: GoogleFonts.newsreader(
-            color: kColorOnSurface,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-          labelSmall: GoogleFonts.spaceGrotesk(
-            color: kColorOnSurfaceVariant,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
-          ),
-        ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: kColorAppBarBackground,
-      foregroundColor: kColorOnSurface,
-      elevation: 0,
-      titleTextStyle: GoogleFonts.newsreader(
-        color: kColorPrimary,
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-        fontStyle: FontStyle.italic,
-        letterSpacing: 3,
-      ),
-    ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: kColorPrimary,
-      foregroundColor: kColorOnPrimary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      elevation: 6,
-    ),
-  );
-}

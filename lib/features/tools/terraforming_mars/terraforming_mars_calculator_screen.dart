@@ -1,7 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../shared/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/theme/app_colors.dart';
+
+/// Final score for one player: Terraform Rating + 5 VP per claimed milestone +
+/// award VP + greenery tiles (1 VP each) + city-adjacency VP + card VP.
+int terraformingMarsTotal({
+  required int terraformRating,
+  required int milestones,
+  required int awardVp,
+  required int greeneries,
+  required int cityPoints,
+  required int cardVp,
+}) =>
+    terraformRating +
+    milestones * 5 +
+    awardVp +
+    greeneries +
+    cityPoints +
+    cardVp;
 
 class TerraformingMarsCalculatorScreen extends StatefulWidget {
   const TerraformingMarsCalculatorScreen({super.key});
@@ -14,6 +32,9 @@ class TerraformingMarsCalculatorScreen extends StatefulWidget {
 class _TerraformingMarsCalculatorScreenState
     extends State<TerraformingMarsCalculatorScreen> {
   static const _marsRed = Color(0xFFD95B2B);
+  // Deepened for the light theme — the bright original drops to ~3.5:1 against
+  // the paper background, marginal for the small +VP labels.
+  static const _marsRedLight = Color(0xFFB2401A);
 
   int _tr = 20;
   int _milestones = 0;
@@ -22,8 +43,14 @@ class _TerraformingMarsCalculatorScreenState
   int _cityPoints = 0;
   int _cardVp = 0;
 
-  int get _total =>
-      _tr + _milestones * 5 + _awardVp + _greeneries + _cityPoints + _cardVp;
+  int get _total => terraformingMarsTotal(
+    terraformRating: _tr,
+    milestones: _milestones,
+    awardVp: _awardVp,
+    greeneries: _greeneries,
+    cityPoints: _cityPoints,
+    cardVp: _cardVp,
+  );
 
   void _reset() {
     setState(() {
@@ -38,22 +65,26 @@ class _TerraformingMarsCalculatorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final marsRed = Theme.of(context).brightness == Brightness.dark
+        ? _marsRed
+        : _marsRedLight;
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leadingWidth: 64,
         leading: Padding(
           padding: const EdgeInsets.only(left: 8),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+            icon: Icon(Icons.arrow_back, color: context.colors.primary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
         title: Text(
-          'TERRAFORMING MARS',
+          s.terraformingMarsTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -66,9 +97,9 @@ class _TerraformingMarsCalculatorScreenState
             child: TextButton(
               onPressed: _reset,
               child: Text(
-                'RESET',
+                s.calcReset,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -79,7 +110,7 @@ class _TerraformingMarsCalculatorScreenState
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -89,63 +120,63 @@ class _TerraformingMarsCalculatorScreenState
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
                 _ScoreRow(
-                  label: 'Terraform Rating',
-                  hint: '1 VP each',
+                  label: s.tmTerraformRating,
+                  hint: s.tmVpEach,
                   value: _tr,
                   vp: _tr,
                   min: 0,
                   max: 63,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _tr = v),
                 ),
                 _ScoreRow(
-                  label: 'Milestones Claimed',
-                  hint: '5 VP each · max 3',
+                  label: s.tmMilestones,
+                  hint: s.tmMilestonesHint,
                   value: _milestones,
                   vp: _milestones * 5,
                   min: 0,
                   max: 3,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _milestones = v),
                 ),
                 _ScoreRow(
-                  label: 'Award Points',
-                  hint: '1st place: 5 VP · 2nd place: 2 VP',
+                  label: s.tmAward,
+                  hint: s.tmAwardHint,
                   value: _awardVp,
                   vp: _awardVp,
                   min: 0,
                   max: 15,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _awardVp = v),
                 ),
                 _ScoreRow(
-                  label: 'Greenery Tiles',
-                  hint: '1 VP each',
+                  label: s.tmGreenery,
+                  hint: s.tmVpEach,
                   value: _greeneries,
                   vp: _greeneries,
                   min: 0,
                   max: 50,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _greeneries = v),
                 ),
                 _ScoreRow(
-                  label: 'City Adjacency',
-                  hint: '1 VP per adjacent greenery',
+                  label: s.tmCity,
+                  hint: s.tmCityHint,
                   value: _cityPoints,
                   vp: _cityPoints,
                   min: 0,
                   max: 50,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _cityPoints = v),
                 ),
                 _ScoreRow(
-                  label: 'Card VP',
-                  hint: 'VP icons on played cards',
+                  label: s.tmCardVp,
+                  hint: s.tmCardVpHint,
                   value: _cardVp,
                   vp: _cardVp,
                   min: 0,
                   max: 100,
-                  color: _marsRed,
+                  color: marsRed,
                   onChanged: (v) => setState(() => _cardVp = v),
                 ),
               ],
@@ -153,17 +184,19 @@ class _TerraformingMarsCalculatorScreenState
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            decoration: const BoxDecoration(
-              color: Color(0xFF0A0905),
-              border: Border(top: BorderSide(color: kColorOutlineVariant)),
+            decoration: BoxDecoration(
+              color: context.colors.appBarBackground,
+              border: Border(
+                top: BorderSide(color: context.colors.outlineVariant),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'TOTAL',
+                  s.calcTotal,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurfaceVariant,
+                    color: context.colors.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 2,
@@ -172,7 +205,7 @@ class _TerraformingMarsCalculatorScreenState
                 Text(
                   '$_total',
                   style: GoogleFonts.newsreader(
-                    color: kColorPrimary,
+                    color: context.colors.primary,
                     fontSize: 38,
                     fontWeight: FontWeight.w600,
                   ),
@@ -213,9 +246,9 @@ class _ScoreRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: kColorSurface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kColorOutlineVariant),
+        border: Border.all(color: context.colors.outlineVariant),
       ),
       child: Row(
         children: [
@@ -226,7 +259,7 @@ class _ScoreRow extends StatelessWidget {
                 Text(
                   label,
                   style: GoogleFonts.newsreader(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                   ),
@@ -235,7 +268,7 @@ class _ScoreRow extends StatelessWidget {
                 Text(
                   hint,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 10,
                     letterSpacing: 0.3,
                   ),
@@ -249,7 +282,7 @@ class _ScoreRow extends StatelessWidget {
               '+$vp',
               textAlign: TextAlign.center,
               style: GoogleFonts.spaceGrotesk(
-                color: vp > 0 ? color : kColorOutline,
+                color: vp > 0 ? color : context.colors.outline,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -363,7 +396,7 @@ class _StepperControlState extends State<_StepperControl> {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textAlign: TextAlign.center,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.w500,
             ),
@@ -411,7 +444,7 @@ class _StepButtonState extends State<_StepButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.enabled ? widget.color : kColorOutlineVariant;
+    final color = widget.enabled ? widget.color : context.colors.outlineVariant;
     return GestureDetector(
       onTapDown: widget.enabled ? (_) => setState(() => _pressed = true) : null,
       onTapUp: widget.enabled

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/providers/providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import '../auth/profile_screen.dart';
+import '../friends/friends_screen.dart';
 import '../home/home_tab.dart';
 import '../library/library_tab.dart';
 import '../plays/add_play_screen.dart';
@@ -40,15 +42,19 @@ class _MainShellState extends ConsumerState<MainShell> {
         ref.watch(currentUserProvider).valueOrNull?.displayName ?? '';
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       body: IndexedStack(
         index: _selectedIndex,
         children: [
           HomeTab(displayName: displayName, onProfileTap: _openProfile),
           LibraryTab(displayName: displayName, onProfileTap: _openProfile),
+          const FriendsScreen(embedded: true),
         ],
       ),
-      floatingActionButton: _AddFab(onTap: _openAddPlay),
+      // Logging a play only makes sense on Home/Library, not the Friends tab.
+      floatingActionButton: _selectedIndex < 2
+          ? _AddFab(onTap: _openAddPlay)
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: _BottomNav(
         selectedIndex: _selectedIndex,
@@ -72,8 +78,8 @@ class _AddFab extends StatelessWidget {
       child: Container(
         width: 56,
         height: 56,
-        decoration: const BoxDecoration(
-          color: kColorPrimary,
+        decoration: BoxDecoration(
+          color: context.colors.primary,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -82,13 +88,13 @@ class _AddFab extends StatelessWidget {
               offset: Offset(0, 4),
             ),
             BoxShadow(
-              color: Color(0x1AF2CA50),
+              color: context.colors.primary.withAlpha(26),
               blurRadius: 12,
               spreadRadius: 2,
             ),
           ],
         ),
-        child: const Icon(Icons.add, color: kColorOnPrimary, size: 28),
+        child: Icon(Icons.add, color: context.colors.onPrimary, size: 28),
       ),
     );
   }
@@ -105,9 +111,9 @@ class _BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A0905),
-        border: Border(top: BorderSide(color: kColorAmberBorder)),
+      decoration: BoxDecoration(
+        color: context.colors.appBarBackground,
+        border: Border(top: BorderSide(color: context.colors.amberBorder)),
       ),
       child: SafeArea(
         top: false,
@@ -118,16 +124,23 @@ class _BottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home,
-                label: 'Home',
+                label: AppStrings.of(context).navHome,
                 selected: selectedIndex == 0,
                 onTap: () => onTap(0),
               ),
               _NavItem(
                 icon: Icons.menu_book_outlined,
                 activeIcon: Icons.menu_book,
-                label: 'Library',
+                label: AppStrings.of(context).navLibrary,
                 selected: selectedIndex == 1,
                 onTap: () => onTap(1),
+              ),
+              _NavItem(
+                icon: Icons.group_outlined,
+                activeIcon: Icons.group,
+                label: AppStrings.of(context).navFriends,
+                selected: selectedIndex == 2,
+                onTap: () => onTap(2),
               ),
             ],
           ),
@@ -154,7 +167,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? kColorPrimary : kColorOutline;
+    final color = selected ? context.colors.primary : context.colors.outline;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,

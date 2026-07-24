@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/crew_campaign.dart';
-import '../../shared/repositories/campaign_repository.dart';
-import '../../shared/theme/app_theme.dart';
-
-const kTheCrewPlanetNineGameId = 'the-crew-the-quest-for-planet-nine-2019';
-const kTheCrewMissionCount = 50;
+import '../../shared/providers/repository_providers.dart';
+import '../../shared/theme/app_colors.dart';
 
 /// Campaign record sheet for The Crew: crew roster plus the mission the whole
 /// crew has reached. Loads and saves the signed-in user's campaign doc.
-class CrewRecordSection extends StatefulWidget {
+/// [missionCount] (the game's logbook length) comes from the campaign registry.
+class CrewRecordSection extends ConsumerStatefulWidget {
   final String gameId;
+  final int missionCount;
 
-  const CrewRecordSection({super.key, required this.gameId});
+  const CrewRecordSection({
+    super.key,
+    required this.gameId,
+    required this.missionCount,
+  });
 
   @override
-  State<CrewRecordSection> createState() => _CrewRecordSectionState();
+  ConsumerState<CrewRecordSection> createState() => _CrewRecordSectionState();
 }
 
-class _CrewRecordSectionState extends State<CrewRecordSection> {
+class _CrewRecordSectionState extends ConsumerState<CrewRecordSection> {
   CrewCampaign? _campaign;
   Object? _error;
 
@@ -33,9 +38,9 @@ class _CrewRecordSectionState extends State<CrewRecordSection> {
   Future<void> _load() async {
     setState(() => _error = null);
     try {
-      final campaign = await CampaignRepository.instance.fetchCampaign(
-        widget.gameId,
-      );
+      final campaign = await ref
+          .read(campaignRepositoryProvider)
+          .fetchCampaign(widget.gameId);
       if (!mounted) return;
       setState(() {
         _campaign =
@@ -50,11 +55,13 @@ class _CrewRecordSectionState extends State<CrewRecordSection> {
   Future<void> _update(CrewCampaign next) async {
     setState(() => _campaign = next);
     try {
-      await CampaignRepository.instance.saveCampaign(widget.gameId, next);
+      await ref
+          .read(campaignRepositoryProvider)
+          .saveCampaign(widget.gameId, next);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not save campaign record')),
+        SnackBar(content: Text(AppStrings.of(context).crewSaveFailed)),
       );
     }
   }
@@ -65,35 +72,39 @@ class _CrewRecordSectionState extends State<CrewRecordSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Campaign Record',
+          AppStrings.of(context).crewCampaignRecord,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 22,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.3,
           ),
         ),
         const SizedBox(height: 10),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
         const SizedBox(height: 12),
         if (_error != null)
           _LoadErrorRow(onRetry: _load)
         else if (_campaign == null)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   strokeWidth: 2,
                 ),
               ),
             ),
           )
         else
-          CrewRecordCard(campaign: _campaign!, onChanged: _update),
+          CrewRecordCard(
+            campaign: _campaign!,
+            onChanged: _update,
+            missionCount: widget.missionCount,
+          ),
       ],
     );
   }
@@ -106,20 +117,24 @@ class _LoadErrorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Row(
       children: [
         Expanded(
           child: Text(
-            'Could not load campaign record',
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+            s.crewLoadFailed,
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 13,
+            ),
           ),
         ),
         GestureDetector(
           onTap: onRetry,
           child: Text(
-            'RETRY',
+            s.commonRetry,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
@@ -135,27 +150,32 @@ class _LoadErrorRow extends StatelessWidget {
 class CrewRecordCard extends StatelessWidget {
   final CrewCampaign campaign;
   final ValueChanged<CrewCampaign> onChanged;
+  final int missionCount;
 
   const CrewRecordCard({
     super.key,
     required this.campaign,
     required this.onChanged,
+    required this.missionCount,
   });
 
   void _setMission(int mission) {
     onChanged(
       CrewCampaign(
         crewMembers: campaign.crewMembers,
-        currentMission: mission.clamp(1, kTheCrewMissionCount),
+        currentMission: mission.clamp(1, missionCount),
       ),
     );
   }
 
   Future<void> _addMember(BuildContext context) async {
+    final s = AppStrings.of(context);
     final name = await showDialog<String>(
       context: context,
-      builder: (_) =>
-          const _TextInputDialog(title: 'Add crew member', hintText: 'Name'),
+      builder: (_) => _TextInputDialog(
+        title: s.crewAddMemberTitle,
+        hintText: s.crewNameHint,
+      ),
     );
     if (name == null) return;
     final trimmed = name.trim();
@@ -178,11 +198,12 @@ class CrewRecordCard extends StatelessWidget {
   }
 
   Future<void> _editMission(BuildContext context) async {
+    final s = AppStrings.of(context);
     final entered = await showDialog<String>(
       context: context,
-      builder: (_) => const _TextInputDialog(
-        title: 'Set current mission',
-        hintText: '1–$kTheCrewMissionCount',
+      builder: (_) => _TextInputDialog(
+        title: s.crewSetMissionTitle,
+        hintText: s.crewMissionRangeHint(missionCount),
         numeric: true,
       ),
     );
@@ -193,11 +214,12 @@ class CrewRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -206,17 +228,17 @@ class CrewRecordCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const _CaptionLabel('CREW'),
+              _CaptionLabel(s.crewSectionCrew),
               GestureDetector(
                 onTap: () => _addMember(context),
                 child: Row(
                   children: [
-                    const Icon(Icons.add, color: kColorPrimary, size: 14),
+                    Icon(Icons.add, color: context.colors.primary, size: 14),
                     const SizedBox(width: 2),
                     Text(
-                      'ADD',
+                      s.crewAdd,
                       style: GoogleFonts.spaceGrotesk(
-                        color: kColorPrimary,
+                        color: context.colors.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
@@ -230,9 +252,9 @@ class CrewRecordCard extends StatelessWidget {
           const SizedBox(height: 10),
           if (campaign.crewMembers.isEmpty)
             Text(
-              'No crew members yet',
+              s.crewNoMembers,
               style: GoogleFonts.newsreader(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
               ),
@@ -250,17 +272,17 @@ class CrewRecordCard extends StatelessWidget {
               ],
             ),
           const SizedBox(height: 16),
-          Container(height: 1, color: kColorOutlineVariant),
+          Container(height: 1, color: context.colors.outlineVariant),
           const SizedBox(height: 14),
-          const Center(child: _CaptionLabel('CURRENT MISSION')),
+          Center(child: _CaptionLabel(s.crewCurrentMission)),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left),
-                color: kColorPrimary,
-                disabledColor: kColorOutlineVariant,
+                color: context.colors.primary,
+                disabledColor: context.colors.outlineVariant,
                 onPressed: campaign.currentMission > 1
                     ? () => _setMission(campaign.currentMission - 1)
                     : null,
@@ -276,15 +298,15 @@ class CrewRecordCard extends StatelessWidget {
                       Text(
                         '${campaign.currentMission}',
                         style: GoogleFonts.newsreader(
-                          color: kColorPrimary,
+                          color: context.colors.primary,
                           fontSize: 38,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
-                        ' / $kTheCrewMissionCount',
+                        s.crewMissionDenominator(missionCount),
                         style: GoogleFonts.newsreader(
-                          color: kColorOutline,
+                          color: context.colors.outline,
                           fontSize: 18,
                         ),
                       ),
@@ -294,9 +316,9 @@ class CrewRecordCard extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
-                color: kColorPrimary,
-                disabledColor: kColorOutlineVariant,
-                onPressed: campaign.currentMission < kTheCrewMissionCount
+                color: context.colors.primary,
+                disabledColor: context.colors.outlineVariant,
+                onPressed: campaign.currentMission < missionCount
                     ? () => _setMission(campaign.currentMission + 1)
                     : null,
               ),
@@ -318,7 +340,7 @@ class _CaptionLabel extends StatelessWidget {
     return Text(
       text,
       style: GoogleFonts.spaceGrotesk(
-        color: kColorOnSurfaceVariant,
+        color: context.colors.onSurfaceVariant,
         fontSize: 11,
         fontWeight: FontWeight.w700,
         letterSpacing: 1,
@@ -338,9 +360,9 @@ class _MemberChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 6, 6, 6),
       decoration: BoxDecoration(
-        color: kColorSurface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kColorOutlineVariant),
+        border: Border.all(color: context.colors.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -348,7 +370,7 @@ class _MemberChip extends StatelessWidget {
           Text(
             name,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -356,7 +378,7 @@ class _MemberChip extends StatelessWidget {
           const SizedBox(width: 6),
           GestureDetector(
             onTap: onRemove,
-            child: const Icon(Icons.close, color: kColorOutline, size: 14),
+            child: Icon(Icons.close, color: context.colors.outline, size: 14),
           ),
         ],
       ),
@@ -392,11 +414,15 @@ class _TextInputDialogState extends State<_TextInputDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return AlertDialog(
-      backgroundColor: kColorSurfaceHigh,
+      backgroundColor: context.colors.surfaceHigh,
       title: Text(
         widget.title,
-        style: GoogleFonts.newsreader(color: kColorOnSurface, fontSize: 20),
+        style: GoogleFonts.newsreader(
+          color: context.colors.onSurface,
+          fontSize: 20,
+        ),
       ),
       content: TextField(
         controller: _controller,
@@ -407,18 +433,21 @@ class _TextInputDialogState extends State<_TextInputDialog> {
         inputFormatters: widget.numeric
             ? [FilteringTextInputFormatter.digitsOnly]
             : null,
-        style: GoogleFonts.spaceGrotesk(color: kColorOnSurface, fontSize: 15),
+        style: GoogleFonts.spaceGrotesk(
+          color: context.colors.onSurface,
+          fontSize: 15,
+        ),
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: GoogleFonts.spaceGrotesk(
-            color: kColorOutline,
+            color: context.colors.outline,
             fontSize: 15,
           ),
-          enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: kColorOutlineVariant),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: context.colors.outlineVariant),
           ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: kColorPrimary),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: context.colors.primary),
           ),
         ),
         onSubmitted: (_) => _submit(),
@@ -427,9 +456,9 @@ class _TextInputDialogState extends State<_TextInputDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
-            'CANCEL',
+            s.commonCancelCaps,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOutline,
+              color: context.colors.outline,
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
@@ -439,9 +468,9 @@ class _TextInputDialogState extends State<_TextInputDialog> {
         TextButton(
           onPressed: _submit,
           child: Text(
-            'OK',
+            s.commonOk,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,

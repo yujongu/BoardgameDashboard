@@ -26,6 +26,27 @@ class PlayRepository {
     await _fn.httpsCallable('deletePlay').call({'playId': playId});
   }
 
+  /// Fetches one page of the caller's plays, newest first, via the
+  /// `listMyPlays` Cloud Function. Pass [cursor] (a previous page's
+  /// [ListMyPlaysResult.nextCursor]) to fetch the following page.
+  Future<ListMyPlaysResult> listMyPlays({
+    int limit = 20,
+    String? cursor,
+  }) async {
+    final result = await _fn.httpsCallable('listMyPlays').call({
+      'limit': limit,
+      'cursor': ?cursor,
+    });
+    final data = Map<String, dynamic>.from(result.data as Map);
+    final plays = (data['plays'] as List)
+        .map((p) => PlaySummary.fromJson(Map<String, dynamic>.from(p as Map)))
+        .toList();
+    return ListMyPlaysResult(
+      plays: plays,
+      nextCursor: data['nextCursor'] as String?,
+    );
+  }
+
   Future<PlayDetail> getPlay(String playId) async {
     final playRef = _db.collection('plays').doc(playId);
     final playFuture = playRef.get();
@@ -73,6 +94,29 @@ class PlayRepository {
         .orderBy('playedAt', descending: true)
         .get();
     return qs.docs.map(_playSummaryFromDoc).toList();
+  }
+
+  /// Plays that both the caller and [friendId] participated in, newest first.
+  ///
+  /// Firestore permits only one `array-contains` per query, so we fetch the
+  /// caller's most recent plays (bounded by [scanLimit]) and client-filter for
+  /// the friend. Reads are permitted because the caller is always a participant.
+  Future<List<PlaySummary>> fetchSharedPlays(
+    String friendId, {
+    int scanLimit = 100,
+  }) async {
+    final uid = _uid;
+    if (uid == null) return [];
+    final qs = await _db
+        .collection('plays')
+        .where('participantIds', arrayContains: uid)
+        .orderBy('playedAt', descending: true)
+        .limit(scanLimit)
+        .get();
+    return qs.docs
+        .where((d) => (d.data()['participantIds'] as List).contains(friendId))
+        .map(_playSummaryFromDoc)
+        .toList();
   }
 
   Stream<List<PlaySummary>> watchRecentPlays({int limit = 20}) {

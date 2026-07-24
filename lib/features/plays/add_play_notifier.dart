@@ -3,21 +3,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/catalog_game.dart';
 import '../../shared/models/play.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/repositories/play_repository.dart';
 
 class ParticipantData {
   final String name;
   final bool isWinner;
   final String? userId;
+  final double? score;
 
-  const ParticipantData({this.name = '', this.isWinner = false, this.userId});
+  const ParticipantData({
+    this.name = '',
+    this.isWinner = false,
+    this.userId,
+    this.score,
+  });
 
-  ParticipantData copyWith({String? name, bool? isWinner, String? userId}) =>
-      ParticipantData(
-        name: name ?? this.name,
-        isWinner: isWinner ?? this.isWinner,
-        userId: userId ?? this.userId,
-      );
+  ParticipantData copyWith({
+    String? name,
+    bool? isWinner,
+    String? userId,
+    double? score,
+    bool clearScore = false,
+  }) => ParticipantData(
+    name: name ?? this.name,
+    isWinner: isWinner ?? this.isWinner,
+    userId: userId ?? this.userId,
+    score: clearScore ? null : score ?? this.score,
+  );
 }
 
 class AddPlayState {
@@ -52,21 +65,15 @@ class AddPlayState {
     return true;
   }
 
-  String get saveButtonText {
-    if (selectedGame != null && participants.length < _effectiveMin) {
-      return 'Minimum $_effectiveMin players needed';
-    }
-    return 'Save Play';
-  }
+  /// Minimum players required for the selected game (1 when none selected).
+  int get effectiveMinPlayers => _effectiveMin;
 
-  String get addButtonText =>
-      canAddParticipant ? '+ Add Participant' : 'Max players added';
+  /// True when a game is selected but not enough players have been added yet.
+  bool get belowMinPlayers =>
+      selectedGame != null && participants.length < _effectiveMin;
 
-  String get playerCountText {
-    final max = selectedGame?.maxPlayers;
-    if (max != null) return 'Players: ${participants.length} / $max';
-    return 'Players: ${participants.length}';
-  }
+  /// Max players for the selected game, or null when none is selected / unbounded.
+  int? get maxPlayers => selectedGame?.maxPlayers;
 
   AddPlayState copyWith({
     CatalogGame? selectedGame,
@@ -86,21 +93,27 @@ class AddPlayState {
 }
 
 class AddPlayNotifier extends StateNotifier<AddPlayState> {
-  AddPlayNotifier({String? currentUserName, String? currentUserId})
-    : super(
-        AddPlayState(
-          playedAt: DateTime.now(),
-          currentUserId: currentUserId,
-          participants: currentUserId != null
-              ? [
-                  ParticipantData(
-                    name: currentUserName ?? '',
-                    userId: currentUserId,
-                  ),
-                ]
-              : const [],
-        ),
-      );
+  AddPlayNotifier({
+    String? currentUserName,
+    String? currentUserId,
+    PlayRepository? repo,
+  }) : _repo = repo ?? PlayRepository.instance,
+       super(
+         AddPlayState(
+           playedAt: DateTime.now(),
+           currentUserId: currentUserId,
+           participants: currentUserId != null
+               ? [
+                   ParticipantData(
+                     name: currentUserName ?? '',
+                     userId: currentUserId,
+                   ),
+                 ]
+               : const [],
+         ),
+       );
+
+  final PlayRepository _repo;
 
   void onGameSelected(CatalogGame game) {
     state = state.copyWith(selectedGame: game);
@@ -147,6 +160,16 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
     state = state.copyWith(participants: updated);
   }
 
+  void updateParticipantScore(int index, double? score) {
+    if (index < 0 || index >= state.participants.length) return;
+    if (state.participants[index].score == score) return;
+    final updated = List<ParticipantData>.from(state.participants);
+    updated[index] = score == null
+        ? updated[index].copyWith(clearScore: true)
+        : updated[index].copyWith(score: score);
+    state = state.copyWith(participants: updated);
+  }
+
   void setPlayedAt(DateTime date) => state = state.copyWith(playedAt: date);
 
   Future<bool> save({String? location, String? notes}) async {
@@ -159,13 +182,14 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
             userId: p.userId,
             name: p.name.trim(),
             isWinner: p.isWinner,
+            score: p.score,
           ),
         )
         .toList();
 
     state = state.copyWith(saving: true, clearSaveError: true);
     try {
-      await PlayRepository.instance.createPlay(
+      await _repo.createPlay(
         CreatePlayInput(
           gameId: state.selectedGame!.gameId,
           gameName: state.selectedGame!.name,
@@ -197,5 +221,9 @@ final addPlayProvider =
         name = user?.displayName;
         uid = user?.uid;
       } catch (_) {}
-      return AddPlayNotifier(currentUserName: name, currentUserId: uid);
+      return AddPlayNotifier(
+        currentUserName: name,
+        currentUserId: uid,
+        repo: ref.watch(playRepositoryProvider),
+      );
     });

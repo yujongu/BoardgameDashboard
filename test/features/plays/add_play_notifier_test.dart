@@ -2,6 +2,27 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:board_game_dashboard/features/plays/add_play_notifier.dart';
 import 'package:board_game_dashboard/shared/models/catalog_game.dart';
+import 'package:board_game_dashboard/shared/models/play.dart';
+import 'package:board_game_dashboard/shared/repositories/play_repository.dart';
+
+/// Fake repo whose createPlay either records the call or throws. Only
+/// createPlay is exercised; everything else routes through noSuchMethod.
+class _FakePlayRepo implements PlayRepository {
+  _FakePlayRepo({this.throwOnCreate = false});
+
+  final bool throwOnCreate;
+  int createCalls = 0;
+
+  @override
+  Future<String> createPlay(CreatePlayInput input) async {
+    createCalls++;
+    if (throwOnCreate) throw Exception('boom');
+    return 'play-1';
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   group('AddPlayNotifier', () {
@@ -108,19 +129,18 @@ void main() {
       expect(notifier.state.canAddParticipant, isFalse);
     });
 
-    test('addButtonText is "Max players added" when at maxPlayers', () {
+    test('canAddParticipant is false when at maxPlayers', () {
       notifier.onGameSelected(game2to2);
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.addButtonText, 'Max players added');
+      expect(notifier.state.canAddParticipant, isFalse);
     });
 
-    test('addButtonText is "+ Add Participant" when below maxPlayers', () {
+    test('canAddParticipant is true when below maxPlayers', () {
       notifier.onGameSelected(game3to6);
 
       expect(notifier.state.canAddParticipant, isTrue);
-      expect(notifier.state.addButtonText, '+ Add Participant');
     });
 
     test('addParticipant is a no-op when already at maxPlayers', () {
@@ -146,20 +166,21 @@ void main() {
       expect(notifier.state.canSave, isFalse);
     });
 
-    test('saveButtonText shows minimum count when below minPlayers', () {
+    test('belowMinPlayers is true (and exposes min) when below minPlayers', () {
       notifier.onGameSelected(game3to6);
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.saveButtonText, 'Minimum 3 players needed');
+      expect(notifier.state.belowMinPlayers, isTrue);
+      expect(notifier.state.effectiveMinPlayers, 3);
     });
 
-    test('saveButtonText is "Save Play" when at or above minPlayers', () {
+    test('belowMinPlayers is false when at or above minPlayers', () {
       notifier.onGameSelected(game2to2);
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.saveButtonText, 'Save Play');
+      expect(notifier.state.belowMinPlayers, isFalse);
     });
 
     test('canSave is false when no winner is marked', () {
@@ -182,20 +203,43 @@ void main() {
 
     // ── playerCountText ──────────────────────────────────────────────────────
 
-    test('playerCountText shows count and max when game has maxPlayers', () {
+    test('participant count and maxPlayers reflect a game with maxPlayers', () {
       notifier.onGameSelected(game2to4);
       notifier.addParticipant();
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.playerCountText, 'Players: 3 / 4');
+      expect(notifier.state.participants.length, 3);
+      expect(notifier.state.maxPlayers, 4);
     });
 
-    test('playerCountText shows only count when no game is selected', () {
+    test('maxPlayers is null when no game is selected', () {
       notifier.addParticipant();
       notifier.addParticipant();
 
-      expect(notifier.state.playerCountText, 'Players: 2');
+      expect(notifier.state.participants.length, 2);
+      expect(notifier.state.maxPlayers, isNull);
+    });
+
+    // ── updateParticipantScore ───────────────────────────────────────────────
+
+    test('updateParticipantScore sets and clears a participant score', () {
+      addNamed('Alice');
+
+      notifier.updateParticipantScore(0, 42);
+      expect(notifier.state.participants[0].score, 42);
+
+      notifier.updateParticipantScore(0, null);
+      expect(notifier.state.participants[0].score, isNull);
+    });
+
+    test('updateParticipantScore ignores out-of-range indices', () {
+      addNamed('Alice');
+
+      notifier.updateParticipantScore(5, 10);
+
+      expect(notifier.state.participants.length, 1);
+      expect(notifier.state.participants[0].score, isNull);
     });
 
     // ── pre-filled current user ──────────────────────────────────────────────
@@ -223,5 +267,44 @@ void main() {
         expect(seeded.state.participants.first.userId, 'uid-123');
       },
     );
+
+    // ── save() — H3 error surfacing ──────────────────────────────────────────
+
+    AddPlayNotifier saveReady(PlayRepository repo) {
+      final n = AddPlayNotifier(
+        currentUserName: 'Me',
+        currentUserId: 'u1',
+        repo: repo,
+      );
+      n.onGameSelected(game2to2);
+      n.addParticipantWithData('Bob');
+      n.toggleWinner(0); // "Me" wins → a named winner is present
+      return n;
+    }
+
+    test('save() returns true and calls createPlay on success', () async {
+      final repo = _FakePlayRepo();
+      final n = saveReady(repo);
+      addTearDown(n.dispose);
+      expect(n.state.canSave, isTrue);
+
+      final ok = await n.save();
+
+      expect(ok, isTrue);
+      expect(repo.createCalls, 1);
+      expect(n.state.saveError, isNull);
+    });
+
+    test('save() returns false and surfaces saveError on failure', () async {
+      final repo = _FakePlayRepo(throwOnCreate: true);
+      final n = saveReady(repo);
+      addTearDown(n.dispose);
+
+      final ok = await n.save();
+
+      expect(ok, isFalse);
+      expect(n.state.saving, isFalse);
+      expect(n.state.saveError, isNotNull);
+    });
   });
 }

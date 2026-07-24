@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import '../../shared/widgets/profile_app_bar.dart';
+import 'catalog_browse_screen.dart';
 import 'game_detail_page.dart';
 
 class LibraryTab extends ConsumerStatefulWidget {
@@ -41,13 +43,20 @@ class _LibraryTabState extends ConsumerState<LibraryTab> {
         ProfileAppBar(
           displayName: widget.displayName,
           onProfileTap: widget.onProfileTap,
+          trailing: IconButton(
+            icon: Icon(Icons.travel_explore, color: context.colors.primary),
+            tooltip: AppStrings.of(context).catalogBrowseTooltip,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CatalogBrowseScreen()),
+            ),
+          ),
         ),
         libraryAsync.when(
-          loading: () => const SliverToBoxAdapter(
+          loading: () => SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.only(top: 48),
               child: Center(
-                child: CircularProgressIndicator(color: kColorPrimary),
+                child: CircularProgressIndicator(color: context.colors.primary),
               ),
             ),
           ),
@@ -113,6 +122,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Column(
       children: [
         Row(
@@ -121,18 +131,18 @@ class _SectionHeader extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              'My Collection',
+              s.libraryCollection,
               style: GoogleFonts.newsreader(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
               ),
             ),
             Text(
-              '$count ${count == 1 ? 'GAME' : 'GAMES'}',
+              s.gamesCount(count),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1.5,
@@ -141,7 +151,7 @@ class _SectionHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
       ],
     );
   }
@@ -155,15 +165,29 @@ class _LibraryCard extends StatelessWidget {
 
   const _LibraryCard({required this.entry, required this.onTap});
 
-  List<Color> get _gradientColors {
-    const palette = [
-      [Color(0xFF1A2A1A), Color(0xFF2D4A1E)],
-      [Color(0xFF1A1A2A), Color(0xFF1E2A4A)],
-      [Color(0xFF2A1A1A), Color(0xFF4A2A1E)],
-      [Color(0xFF1A2020), Color(0xFF1E3A3A)],
-      [Color(0xFF201A2A), Color(0xFF3A1E4A)],
-      [Color(0xFF2A2010), Color(0xFF4A3A10)],
-    ];
+  static const _darkPalette = [
+    [Color(0xFF1A2A1A), Color(0xFF2D4A1E)],
+    [Color(0xFF1A1A2A), Color(0xFF1E2A4A)],
+    [Color(0xFF2A1A1A), Color(0xFF4A2A1E)],
+    [Color(0xFF1A2020), Color(0xFF1E3A3A)],
+    [Color(0xFF201A2A), Color(0xFF3A1E4A)],
+    [Color(0xFF2A2010), Color(0xFF4A3A10)],
+  ];
+
+  // Same six hues as the dark palette, as tints instead of shades.
+  static const _lightPalette = [
+    [Color(0xFFDCE8D2), Color(0xFFB9D3A0)],
+    [Color(0xFFD9DFF0), Color(0xFFAEC0E4)],
+    [Color(0xFFF0DCD4), Color(0xFFE0B49C)],
+    [Color(0xFFD4E6E6), Color(0xFFA6CCCC)],
+    [Color(0xFFE2D9EC), Color(0xFFC0A8D8)],
+    [Color(0xFFEFE4C4), Color(0xFFDCC68A)],
+  ];
+
+  List<Color> _gradientColors(Brightness brightness) {
+    final palette = brightness == Brightness.dark
+        ? _darkPalette
+        : _lightPalette;
     final idx = entry.gameId.hashCode.abs() % palette.length;
     return palette[idx];
   }
@@ -193,15 +217,16 @@ class _LibraryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _gradientColors;
+    final s = AppStrings.of(context);
+    final colors = _gradientColors(Theme.of(context).brightness);
     final lastPlayed = entry.lastPlayedAt;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
           boxShadow: const [
             BoxShadow(
@@ -230,7 +255,7 @@ class _LibraryCard extends StatelessWidget {
               ),
               child: Icon(
                 Icons.casino_outlined,
-                color: kColorPrimary.withAlpha(50),
+                color: context.colors.primary.withAlpha(50),
                 size: 32,
               ),
             ),
@@ -251,7 +276,7 @@ class _LibraryCard extends StatelessWidget {
                           child: Text(
                             entry.gameName,
                             style: GoogleFonts.newsreader(
-                              color: kColorOnSurface,
+                              color: context.colors.onSurface,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -261,7 +286,7 @@ class _LibraryCard extends StatelessWidget {
                         Text(
                           '$_winPercent%',
                           style: GoogleFonts.spaceGrotesk(
-                            color: kColorPrimary,
+                            color: context.colors.primary,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
@@ -273,7 +298,7 @@ class _LibraryCard extends StatelessWidget {
                     Container(
                       height: 3,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1A1510),
+                        color: context.colors.outlineVariant,
                         borderRadius: BorderRadius.circular(2),
                       ),
                       child: Align(
@@ -282,7 +307,7 @@ class _LibraryCard extends StatelessWidget {
                           widthFactor: _winRate.clamp(0.0, 1.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: kColorPrimary,
+                              color: context.colors.primary,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -293,17 +318,17 @@ class _LibraryCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '${entry.winCount}W',
+                          s.libraryWinsShort(entry.winCount),
                           style: GoogleFonts.spaceGrotesk(
-                            color: kColorPrimary,
+                            color: context.colors.primary,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
-                          ' / ${entry.playCount} plays',
+                          s.libraryPlaysSuffix(entry.playCount),
                           style: GoogleFonts.spaceGrotesk(
-                            color: kColorOutline,
+                            color: context.colors.outline,
                             fontSize: 10,
                           ),
                         ),
@@ -312,7 +337,7 @@ class _LibraryCard extends StatelessWidget {
                           Text(
                             _formatLastPlayed(lastPlayed.toLocal()),
                             style: GoogleFonts.spaceGrotesk(
-                              color: kColorOutlineVariant,
+                              color: context.colors.outlineVariant,
                               fontSize: 9,
                               letterSpacing: 0.3,
                             ),
@@ -338,6 +363,7 @@ class _EmptyLibraryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(
@@ -345,22 +371,25 @@ class _EmptyLibraryView extends StatelessWidget {
         children: [
           Icon(
             Icons.menu_book_outlined,
-            color: kColorPrimary.withAlpha(80),
+            color: context.colors.primary.withAlpha(80),
             size: 48,
           ),
           const SizedBox(height: 16),
           Text(
-            'No games in collection',
+            s.libraryEmptyTitle,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
               fontSize: 18,
               fontStyle: FontStyle.italic,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            'Log a play to add games here',
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
+            s.libraryEmptySubtitle,
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -381,20 +410,23 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: kColorOutline, size: 40),
+          Icon(Icons.error_outline, color: context.colors.outline, size: 40),
           const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 20),
           GestureDetector(
             onTap: onRetry,
             child: Text(
-              'RETRY',
+              AppStrings.of(context).commonRetry,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../shared/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/theme/app_colors.dart';
 
 int calculateExpeditionScore(List<int> selectedNumbers, int handshakeCount) {
   if (selectedNumbers.isEmpty && handshakeCount == 0) return 0;
@@ -81,6 +82,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final s = AppStrings.of(context);
     final color = widget.color;
 
     return Container(
@@ -90,7 +92,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [color.withAlpha(25), const Color(0xFF1F1B13)],
+          colors: [color.withAlpha(25), context.colors.surface],
         ),
         border: Border.all(color: color, width: 1.5),
         boxShadow: [BoxShadow(color: color.withAlpha(20), blurRadius: 20)],
@@ -105,7 +107,9 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: kColorOutlineVariant.withAlpha(80)),
+                  bottom: BorderSide(
+                    color: context.colors.outlineVariant.withAlpha(80),
+                  ),
                 ),
               ),
               child: Column(
@@ -123,20 +127,20 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Score: ',
+                        s.lostCitiesScorePrefix,
                         style: GoogleFonts.spaceGrotesk(
-                          color: kColorOutline,
+                          color: context.colors.outline,
                           fontSize: 12,
                         ),
                       ),
                       Text(
-                        _isStarted ? _currentScore.toString() : '—',
+                        _isStarted ? _currentScore.toString() : s.scoreHint,
                         style: GoogleFonts.spaceGrotesk(
                           color: _isStarted
                               ? (_currentScore >= 0
-                                    ? kColorOnSurface
-                                    : const Color(0xFFFF6B6B))
-                              : kColorOutline,
+                                    ? context.colors.onSurface
+                                    : Theme.of(context).colorScheme.error)
+                              : context.colors.outline,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -181,7 +185,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                               border: Border.all(
                                 color: active || pressed
                                     ? color
-                                    : kColorOutlineVariant,
+                                    : context.colors.outlineVariant,
                                 width: 1.5,
                               ),
                               boxShadow: active || pressed
@@ -197,7 +201,9 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                             ),
                             child: Icon(
                               Icons.handshake,
-                              color: active || pressed ? color : kColorOutline,
+                              color: active || pressed
+                                  ? color
+                                  : context.colors.outline,
                               size: 22,
                             ),
                           ),
@@ -288,10 +294,12 @@ class _NumberButtonState extends State<_NumberButton> {
               ? color.withAlpha(_pressed ? 170 : 220)
               : _pressed
               ? color.withAlpha(35)
-              : const Color(0xFF1A1510),
+              : context.colors.background,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected || _pressed ? color : kColorOutlineVariant,
+            color: isSelected || _pressed
+                ? color
+                : context.colors.outlineVariant,
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected || _pressed
@@ -307,7 +315,9 @@ class _NumberButtonState extends State<_NumberButton> {
         child: Text(
           '${widget.number}',
           style: GoogleFonts.newsreader(
-            color: isSelected ? Colors.black87 : kColorOnSurface,
+            color: isSelected
+                ? context.colors.onPrimary
+                : context.colors.onSurface,
             fontSize: 26,
             fontWeight: FontWeight.w500,
           ),

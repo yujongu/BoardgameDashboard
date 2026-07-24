@@ -18,6 +18,7 @@ import {
   getGameStats,
   getLibrary,
   getParticipants,
+  getPlayDoc,
   playExists,
   db,
 } from "./setup";
@@ -83,6 +84,59 @@ describe("updatePlay", () => {
     // Library
     expect(await getLibrary("u1", "chess")).toMatchObject({ playCount: 1, winCount: 0 });
     expect(await getLibrary("u2", "chess")).toMatchObject({ playCount: 1, winCount: 1 });
+  });
+
+  // ── Location & notes ───────────────────────────────────────────────────────
+
+  it("updates location and notes on the play document", async () => {
+    const playId = await createChessPlay([
+      { userId: "u1", name: "Alice", isWinner: true },
+    ]);
+
+    await callUpdatePlay(
+      {
+        playId,
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [{ userId: "u1", name: "Alice", isWinner: true }],
+        location: "Joey's place",
+        notes: "close game",
+      },
+      "u1"
+    );
+
+    expect(await getPlayDoc(playId)).toMatchObject({
+      location: "Joey's place",
+      notes: "close game",
+    });
+  });
+
+  it("clears location and notes when omitted from an update", async () => {
+    const { playId } = await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [{ userId: "u1", name: "Alice", isWinner: true }],
+        location: "Joey's place",
+        notes: "close game",
+      },
+      "u1"
+    );
+
+    // Update without location/notes should remove the fields.
+    await callUpdatePlay(
+      {
+        playId,
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [{ userId: "u1", name: "Alice", isWinner: true }],
+      },
+      "u1"
+    );
+
+    const doc = await getPlayDoc(playId);
+    expect(doc?.location).toBeUndefined();
+    expect(doc?.notes).toBeUndefined();
   });
 
   // ── Same game: participant removed ─────────────────────────────────────────

@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 
 class ProfileAppBar extends StatelessWidget {
   final String displayName;
   final VoidCallback onProfileTap;
 
+  /// Optional action rendered at the trailing edge of the bar (e.g. an
+  /// explore/search button). Null on tabs that don't need one.
+  final Widget? trailing;
+
   const ProfileAppBar({
     super.key,
     required this.displayName,
     required this.onProfileTap,
+    this.trailing,
   });
 
   String get _initials {
@@ -28,12 +33,12 @@ class ProfileAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverAppBar(
       pinned: true,
-      backgroundColor: const Color(0xFF0A0905),
+      backgroundColor: context.colors.appBarBackground,
       expandedHeight: kToolbarHeight,
       collapsedHeight: kToolbarHeight,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: kColorAmberBorder),
+        child: Container(height: 1, color: context.colors.amberBorder),
       ),
       flexibleSpace: SafeArea(
         child: Padding(
@@ -47,16 +52,20 @@ class ProfileAppBar extends StatelessWidget {
                   child: _ProfileAvatar(initials: _initials),
                 ),
                 const SizedBox(width: 14),
-                Text(
-                  displayName.toUpperCase(),
-                  style: GoogleFonts.newsreader(
-                    color: kColorPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    fontStyle: FontStyle.italic,
-                    letterSpacing: 4,
+                Expanded(
+                  child: Text(
+                    displayName.toUpperCase(),
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.newsreader(
+                      color: context.colors.primary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 4,
+                    ),
                   ),
                 ),
+                ?trailing,
               ],
             ),
           ),
@@ -78,14 +87,17 @@ class _ProfileAvatar extends StatelessWidget {
       height: 36,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: kColorPrimary.withAlpha(140), width: 1.5),
-        color: kColorSurfaceHigh,
+        border: Border.all(
+          color: context.colors.primary.withAlpha(140),
+          width: 1.5,
+        ),
+        color: context.colors.surfaceHigh,
       ),
       child: Center(
         child: Text(
           initials,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary.withAlpha(180),
+            color: context.colors.primary.withAlpha(180),
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),

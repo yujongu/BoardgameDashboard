@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
@@ -41,6 +44,7 @@ dependencies:
 
   flutter_riverpod: ^2.6.1
   google_sign_in: ^6.2.2
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +65,9 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # Generate localization delegates from lib/l10n/*.arb (see l10n.yaml).
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

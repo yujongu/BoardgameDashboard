@@ -4,18 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend.dart';
 import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
-import '../../shared/repositories/friend_repository.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/providers/repository_providers.dart';
+import '../../shared/theme/app_colors.dart';
 import 'friend_profile_screen.dart';
 import 'friend_requests_screen.dart';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 class FriendsScreen extends ConsumerStatefulWidget {
-  const FriendsScreen({super.key});
+  /// True when hosted as a bottom-nav tab (no back button); false when pushed
+  /// as its own route (e.g. from the profile screen), which shows a back button.
+  final bool embedded;
+
+  const FriendsScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<FriendsScreen> createState() => _FriendsScreenState();
@@ -61,7 +66,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final expected = trimmed;
     _debounce = Timer(const Duration(milliseconds: 300), () async {
       try {
-        final results = await FriendRepository.instance.searchUsers(expected);
+        final results = await ref
+            .read(friendRepositoryProvider)
+            .searchUsers(expected);
         if (mounted && _searchController.text.trim() == expected) {
           setState(() {
             _searchResults = results;
@@ -79,7 +86,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   Future<void> _sendRequest(String userId) async {
     setState(() => _pendingSends.add(userId));
     try {
-      await FriendRepository.instance.sendFriendRequest(userId);
+      await ref.read(friendRepositoryProvider).sendFriendRequest(userId);
       if (!mounted) return;
       setState(() {
         _pendingSends.remove(userId);
@@ -97,14 +104,18 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final ok = await ref
         .read(incomingRequestsProvider.notifier)
         .accept(request.requestId);
-    if (!ok && mounted) _showSnackbar('Failed to accept. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsAcceptFailed);
+    }
   }
 
   Future<void> _reject(FriendRequestSummary request) async {
     final ok = await ref
         .read(incomingRequestsProvider.notifier)
         .reject(request.requestId);
-    if (!ok && mounted) _showSnackbar('Failed to decline. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsDeclineFailed);
+    }
   }
 
   void _showSnackbar(String message) {
@@ -112,40 +123,45 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       SnackBar(
         content: Text(
           message,
-          style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
+          style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
         ),
-        backgroundColor: kColorSurfaceHigh,
+        backgroundColor: context.colors.surfaceHigh,
       ),
     );
   }
 
   String _friendlyError(Object e) {
+    final s = AppStrings.of(context);
     final msg = e.toString().toLowerCase();
     if (msg.contains('already-exists')) {
-      return 'Already friends or request already pending.';
+      return s.friendsAlreadyExists;
     }
-    return 'Could not send request. Try again.';
+    return s.friendsSendFailed;
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final query = _searchController.text.trim();
     final incomingCount =
         ref.watch(incomingRequestsProvider).valueOrNull?.length ?? 0;
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        backgroundColor: context.colors.appBarBackground,
+        automaticallyImplyLeading: false,
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                icon: Icon(Icons.arrow_back, color: context.colors.primary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
         title: Text(
-          'FRIENDS',
+          s.friendsTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -154,22 +170,22 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Friend requests',
+            tooltip: s.friendsRequestsTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const FriendRequestsScreen()),
             ),
             icon: Badge(
               isLabelVisible: incomingCount > 0,
               label: Text('$incomingCount'),
-              backgroundColor: kColorPrimary,
-              textColor: kColorBackground,
-              child: const Icon(Icons.inbox_outlined, color: kColorPrimary),
+              backgroundColor: context.colors.primary,
+              textColor: context.colors.background,
+              child: Icon(Icons.inbox_outlined, color: context.colors.primary),
             ),
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -186,6 +202,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   // ─── Search results view ────────────────────────────────────────────────────
 
   Widget _buildSearchView() {
+    final s = AppStrings.of(context);
     // Always watch so these providers don't dispose mid-search.
     final friendIds =
         ref
@@ -204,12 +221,12 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final pendingIds = outgoingIds.union(_sentThisSession);
 
     if (_loadingSearch) {
-      return const Center(
+      return Center(
         child: SizedBox(
           width: 20,
           height: 20,
           child: CircularProgressIndicator(
-            color: kColorOutline,
+            color: context.colors.outline,
             strokeWidth: 1.5,
           ),
         ),
@@ -219,8 +236,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     if (_searchResults.isEmpty) {
       return Center(
         child: Text(
-          'No users found',
-          style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 14),
+          s.friendsNoUsers,
+          style: GoogleFonts.spaceGrotesk(
+            color: context.colors.outline,
+            fontSize: 14,
+          ),
         ),
       );
     }
@@ -248,6 +268,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   // ─── Sections view (no query) ───────────────────────────────────────────────
 
   Widget _buildSectionsView() {
+    final s = AppStrings.of(context);
     final incomingAsync = ref.watch(incomingRequestsProvider);
     final outgoingAsync = ref.watch(outgoingRequestsProvider);
     final friendsAsync = ref.watch(friendListProvider);
@@ -257,7 +278,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       children: [
         // Incoming requests — hidden while loading or on error; only shown when non-empty.
         if (incomingAsync.valueOrNull?.isNotEmpty == true) ...[
-          _SectionLabel('INCOMING (${incomingAsync.value!.length})'),
+          _SectionLabel(s.friendsIncomingCount(incomingAsync.value!.length)),
           ...incomingAsync.value!.map(
             (r) => _IncomingRequestRow(
               request: r,
@@ -270,13 +291,13 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
         // Outgoing / pending — hidden while loading or on error; only shown when non-empty.
         if (outgoingAsync.valueOrNull?.isNotEmpty == true) ...[
-          _SectionLabel('PENDING (${outgoingAsync.value!.length})'),
+          _SectionLabel(s.friendsPendingCount(outgoingAsync.value!.length)),
           ...outgoingAsync.value!.map((r) => _OutgoingRequestRow(request: r)),
           const SizedBox(height: 8),
         ],
 
         // Friends list — always shows the section header.
-        const _SectionLabel('FRIENDS'),
+        _SectionLabel(s.friendsTitle),
         ...friendsAsync.when<List<Widget>>(
           loading: () => [const _SectionLoadingTile()],
           error: (err, _) => [
@@ -320,15 +341,15 @@ class _SearchField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.person_search_outlined,
-              color: kColorOutline,
+              color: context.colors.outline,
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -337,13 +358,13 @@ class _SearchField extends StatelessWidget {
                 controller: controller,
                 autofocus: false,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOnSurface,
+                  color: context.colors.onSurface,
                   fontSize: 14,
                 ),
                 decoration: InputDecoration.collapsed(
-                  hintText: 'Search to add friends…',
+                  hintText: AppStrings.of(context).friendsSearchHint,
                   hintStyle: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 14,
                   ),
                 ),
@@ -354,9 +375,9 @@ class _SearchField extends StatelessWidget {
               builder: (_, value, child) => value.text.isNotEmpty
                   ? GestureDetector(
                       onTap: controller.clear,
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
-                        color: kColorOutline,
+                        color: context.colors.outline,
                         size: 16,
                       ),
                     )
@@ -394,8 +415,8 @@ class _SearchResultRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -406,29 +427,30 @@ class _SearchResultRow extends StatelessWidget {
             child: Text(
               name,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
+                color: context.colors.onSurface,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          _action(),
+          _action(context),
         ],
       ),
     );
   }
 
-  Widget _action() {
+  Widget _action(BuildContext context) {
+    final s = AppStrings.of(context);
     if (isFriend) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check, color: kColorPrimary, size: 13),
+          Icon(Icons.check, color: context.colors.primary, size: 13),
           const SizedBox(width: 4),
           Text(
-            'FRIENDS',
+            s.friendsStatusFriends,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
@@ -438,20 +460,20 @@ class _SearchResultRow extends StatelessWidget {
       );
     }
     if (isSending) {
-      return const SizedBox(
+      return SizedBox(
         width: 16,
         height: 16,
         child: CircularProgressIndicator(
-          color: kColorOutline,
+          color: context.colors.outline,
           strokeWidth: 1.5,
         ),
       );
     }
     if (isPending) {
       return Text(
-        'PENDING',
+        s.friendsStatusPending,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOutlineVariant,
+          color: context.colors.outlineVariant,
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
@@ -463,13 +485,13 @@ class _SearchResultRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          border: Border.all(color: kColorPrimary.withAlpha(140)),
+          border: Border.all(color: context.colors.primary.withAlpha(140)),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
-          'ADD',
+          s.friendsAdd,
           style: GoogleFonts.spaceGrotesk(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
@@ -494,7 +516,7 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         text,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOutline,
+          color: context.colors.outline,
           fontSize: 10,
           fontWeight: FontWeight.w600,
           letterSpacing: 2,
@@ -509,14 +531,14 @@ class _SectionLoadingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.symmetric(vertical: 20),
       child: Center(
         child: SizedBox(
           width: 18,
           height: 18,
           child: CircularProgressIndicator(
-            color: kColorOutline,
+            color: context.colors.outline,
             strokeWidth: 1.5,
           ),
         ),
@@ -540,12 +562,13 @@ class _IncomingRequestRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -559,15 +582,15 @@ class _IncomingRequestRow extends StatelessWidget {
                 Text(
                   request.name,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
-                  _timeAgo(request.createdAt),
+                  _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 11,
                   ),
                 ),
@@ -579,14 +602,16 @@ class _IncomingRequestRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: kColorPrimary.withAlpha(20),
-                border: Border.all(color: kColorPrimary.withAlpha(100)),
+                color: context.colors.primary.withAlpha(20),
+                border: Border.all(
+                  color: context.colors.primary.withAlpha(100),
+                ),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                'ACCEPT',
+                s.friendsAccept,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
@@ -598,9 +623,9 @@ class _IncomingRequestRow extends StatelessWidget {
           GestureDetector(
             onTap: onReject,
             child: Text(
-              'DECLINE',
+              s.friendsDecline,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
@@ -622,12 +647,13 @@ class _OutgoingRequestRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -641,15 +667,15 @@ class _OutgoingRequestRow extends StatelessWidget {
                 Text(
                   request.name,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
-                  _timeAgo(request.createdAt),
+                  _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 11,
                   ),
                 ),
@@ -657,9 +683,9 @@ class _OutgoingRequestRow extends StatelessWidget {
             ),
           ),
           Text(
-            'PENDING',
+            s.friendsStatusPending,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOutlineVariant,
+              color: context.colors.outlineVariant,
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
@@ -688,8 +714,8 @@ class _FriendRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
@@ -700,15 +726,15 @@ class _FriendRow extends StatelessWidget {
               child: Text(
                 friend.name,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOnSurface,
+                  color: context.colors.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right,
-              color: kColorOutlineVariant,
+              color: context.colors.outlineVariant,
               size: 18,
             ),
           ],
@@ -727,22 +753,26 @@ class _FriendErrorTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Could not load friends.',
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+            s.friendsLoadFailed,
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(width: 12),
           GestureDetector(
             onTap: onRetry,
             child: Text(
-              'RETRY',
+              s.commonRetry,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
@@ -763,10 +793,10 @@ class _EmptyFriendsTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Text(
-        'No friends yet.\nSearch above to add someone.',
+        AppStrings.of(context).friendsEmpty,
         textAlign: TextAlign.center,
         style: GoogleFonts.newsreader(
-          color: kColorOutline,
+          color: context.colors.outline,
           fontSize: 15,
           fontStyle: FontStyle.italic,
         ),
@@ -789,17 +819,17 @@ class _Avatar extends StatelessWidget {
       return CircleAvatar(
         radius: 16,
         backgroundImage: NetworkImage(photoUrl!),
-        backgroundColor: kColorSurfaceHighest,
+        backgroundColor: context.colors.surfaceHighest,
       );
     }
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return CircleAvatar(
       radius: 16,
-      backgroundColor: kColorSurfaceHighest,
+      backgroundColor: context.colors.surfaceHighest,
       child: Text(
         initial,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOnSurfaceVariant,
+          color: context.colors.onSurfaceVariant,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -808,12 +838,12 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-String _timeAgo(DateTime dt) {
+String _timeAgo(AppStrings s, DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inDays >= 365) return '${diff.inDays ~/ 365}y ago';
-  if (diff.inDays >= 30) return '${diff.inDays ~/ 30}mo ago';
-  if (diff.inDays >= 1) return '${diff.inDays}d ago';
-  if (diff.inHours >= 1) return '${diff.inHours}h ago';
-  if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
-  return 'just now';
+  if (diff.inDays >= 365) return s.timeYearsAgo(diff.inDays ~/ 365);
+  if (diff.inDays >= 30) return s.timeMonthsAgo(diff.inDays ~/ 30);
+  if (diff.inDays >= 1) return s.timeDaysAgo(diff.inDays);
+  if (diff.inHours >= 1) return s.timeHoursAgo(diff.inHours);
+  if (diff.inMinutes >= 1) return s.timeMinutesAgo(diff.inMinutes);
+  return s.timeJustNow;
 }

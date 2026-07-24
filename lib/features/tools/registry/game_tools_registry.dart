@@ -12,8 +12,8 @@ final Map<String, List<GameTool>> kGameToolsRegistry = {
   'lost-cities-1999': [
     GameTool(
       id: 'lost-cities-score-calculator',
-      title: 'Score Calculator',
-      description: 'Calculate Lost Cities scores quickly',
+      title: (s) => s.toolScoreCalculator,
+      description: (s) => s.toolLostCitiesDesc,
       icon: Icons.calculate,
       destinationBuilder: (_) => const LostCitiesCalculatorScreen(),
     ),
@@ -21,8 +21,8 @@ final Map<String, List<GameTool>> kGameToolsRegistry = {
   'terraforming-mars-2016': [
     GameTool(
       id: 'terraforming-mars-score-calculator',
-      title: 'Score Calculator',
-      description: 'Tally TR, milestones, awards, and card VP',
+      title: (s) => s.toolScoreCalculator,
+      description: (s) => s.toolTerraformingMarsDesc,
       icon: Icons.calculate,
       destinationBuilder: (_) => const TerraformingMarsCalculatorScreen(),
     ),
@@ -30,8 +30,8 @@ final Map<String, List<GameTool>> kGameToolsRegistry = {
   '7-wonders-duel-2015': [
     GameTool(
       id: 'seven-wonders-duel-score-calculator',
-      title: 'Score Calculator',
-      description: 'Tally 7 Wonders Duel civilian-victory scores',
+      title: (s) => s.toolScoreCalculator,
+      description: (s) => s.toolSevenWondersDuelDesc,
       icon: Icons.calculate,
       destinationBuilder: (_) => const SevenWondersDuelCalculatorScreen(),
     ),
@@ -39,8 +39,8 @@ final Map<String, List<GameTool>> kGameToolsRegistry = {
   '7-wonders-2010': [
     GameTool(
       id: 'seven-wonders-score-calculator',
-      title: 'Score Calculator',
-      description: 'Tally science sets, military, coins, and card VP',
+      title: (s) => s.toolScoreCalculator,
+      description: (s) => s.toolSevenWondersDesc,
       icon: Icons.calculate,
       destinationBuilder: (_) => const SevenWondersCalculatorScreen(),
     ),
@@ -48,8 +48,8 @@ final Map<String, List<GameTool>> kGameToolsRegistry = {
   'wingspan-2019': [
     GameTool(
       id: 'wingspan-score-calculator',
-      title: 'Score Calculator',
-      description: 'Sum birds, bonuses, goals, eggs, food, and tucked cards',
+      title: (s) => s.toolScoreCalculator,
+      description: (s) => s.toolWingspanDesc,
       icon: Icons.calculate,
       destinationBuilder: (_) => const WingspanCalculatorScreen(),
     ),

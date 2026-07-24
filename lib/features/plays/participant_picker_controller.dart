@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/friend.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/repositories/friend_repository.dart';
 
 class PickerSearchState {
@@ -28,8 +29,9 @@ class PickerSearchState {
 }
 
 class PickerSearchNotifier extends StateNotifier<PickerSearchState> {
-  PickerSearchNotifier() : super(const PickerSearchState());
+  PickerSearchNotifier(this._repo) : super(const PickerSearchState());
 
+  final FriendRepository _repo;
   Timer? _debounce;
 
   void setQuery(String raw) {
@@ -47,9 +49,7 @@ class PickerSearchNotifier extends StateNotifier<PickerSearchState> {
     final expectedQuery = trimmed;
     _debounce = Timer(const Duration(milliseconds: 300), () async {
       try {
-        final results = await FriendRepository.instance.searchUsers(
-          expectedQuery,
-        );
+        final results = await _repo.searchUsers(expectedQuery);
         if (mounted && state.query.trim() == expectedQuery) {
           state = state.copyWith(searchResults: results, loadingSearch: false);
         }
@@ -71,5 +71,5 @@ class PickerSearchNotifier extends StateNotifier<PickerSearchState> {
 
 final participantPickerProvider =
     StateNotifierProvider.autoDispose<PickerSearchNotifier, PickerSearchState>(
-      (_) => PickerSearchNotifier(),
+      (ref) => PickerSearchNotifier(ref.watch(friendRepositoryProvider)),
     );

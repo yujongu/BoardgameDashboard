@@ -3,7 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../shared/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../presentation/widgets/calculator_widgets.dart';
 
 /// Grand total for one player: a straight sum of all six categories.
@@ -32,16 +33,23 @@ List<int> wingspanWinners(List<int> totals) {
 }
 
 enum WingspanScoreCategory {
-  birds('Bird cards VP'),
-  bonusCards('Bonus cards VP'),
-  roundGoals('End-of-round goals VP'),
-  eggs('Eggs (1 VP each)'),
-  cachedFood('Cached food (1 VP each)'),
-  tuckedCards('Tucked cards (1 VP each)');
+  birds,
+  bonusCards,
+  roundGoals,
+  eggs,
+  cachedFood,
+  tuckedCards,
+}
 
-  const WingspanScoreCategory(this.label);
-
-  final String label;
+extension WingspanScoreCategoryL10n on WingspanScoreCategory {
+  String label(AppStrings s) => switch (this) {
+    WingspanScoreCategory.birds => s.wsBirds,
+    WingspanScoreCategory.bonusCards => s.wsBonusCards,
+    WingspanScoreCategory.roundGoals => s.wsRoundGoals,
+    WingspanScoreCategory.eggs => s.wsEggs,
+    WingspanScoreCategory.cachedFood => s.wsCachedFood,
+    WingspanScoreCategory.tuckedCards => s.wsTuckedCards,
+  };
 }
 
 const _kMinPlayers = 1;
@@ -111,32 +119,33 @@ class _WingspanCalculatorScreenState extends State<WingspanCalculatorScreen> {
     tuckedCards: _valueOf(player, WingspanScoreCategory.tuckedCards),
   );
 
-  String _winnerLabel(List<int> totals) {
+  String _winnerLabel(AppStrings s, List<int> totals) {
     final winners = wingspanWinners(totals);
-    if (winners.length == 1) return 'PLAYER ${winners.first + 1} WINS';
-    return 'TIE: ${winners.map((i) => 'P${i + 1}').join(' · ')}';
+    if (winners.length == 1) return s.calcPlayerWins(winners.first + 1);
+    return s.calcTieMulti(winners.map((i) => 'P${i + 1}').join(' · '));
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final totals = [for (var i = 0; i < _playerCount; i++) _totalOf(i)];
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: kColorAppBarBackground,
+        backgroundColor: context.colors.appBarBackground,
         leadingWidth: 64,
         leading: Padding(
           padding: const EdgeInsets.only(left: 8),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+            icon: Icon(Icons.arrow_back, color: context.colors.primary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
         title: Text(
-          'WINGSPAN',
+          s.wingspanTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -149,9 +158,9 @@ class _WingspanCalculatorScreenState extends State<WingspanCalculatorScreen> {
             child: TextButton(
               onPressed: _reset,
               child: Text(
-                'RESET',
+                s.calcReset,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -162,7 +171,7 @@ class _WingspanCalculatorScreenState extends State<WingspanCalculatorScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -173,7 +182,7 @@ class _WingspanCalculatorScreenState extends State<WingspanCalculatorScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SelectorChipRow(
-                  label: 'PLAYERS',
+                  label: s.calcPlayers,
                   labels: [
                     for (var n = _kMinPlayers; n <= _kMaxPlayers; n++) '$n',
                   ],
@@ -185,10 +194,10 @@ class _WingspanCalculatorScreenState extends State<WingspanCalculatorScreen> {
                 ),
                 const SizedBox(height: 8),
                 SelectorChipRow(
-                  label: 'SHOWING',
+                  label: s.calcShowing,
                   labels: [
                     for (var i = 0; i < _playerCount; i++)
-                      'P${i + 1} · ${totals[i]}',
+                      s.calcPlayerChip(i + 1, totals[i]),
                   ],
                   selectedIndex: _selected,
                   onSelected: (i) => setState(() => _selected = i),
@@ -204,7 +213,7 @@ class _WingspanCalculatorScreenState extends State<WingspanCalculatorScreen> {
                 children: [
                   for (final category in WingspanScoreCategory.values) ...[
                     ScoreInputRow(
-                      label: category.label,
+                      label: category.label(s),
                       controller: _players[_selected][category]!,
                     ),
                     const SizedBox(height: 8),
@@ -215,8 +224,8 @@ class _WingspanCalculatorScreenState extends State<WingspanCalculatorScreen> {
           ),
           CalculatorTotalsBar(
             total: totals[_selected],
-            totalLabel: 'P${_selected + 1} TOTAL',
-            resultLabel: _playerCount > 1 ? _winnerLabel(totals) : null,
+            totalLabel: s.calcPlayerTotal(_selected + 1),
+            resultLabel: _playerCount > 1 ? _winnerLabel(s, totals) : null,
           ),
         ],
       ),

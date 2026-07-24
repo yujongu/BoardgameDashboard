@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../shared/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
+import '../../shared/theme/app_colors.dart';
 
 class ParticipantSearchField extends StatelessWidget {
   final TextEditingController controller;
@@ -15,26 +16,26 @@ class ParticipantSearchField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
-            const Icon(Icons.search, color: kColorOutline, size: 18),
+            Icon(Icons.search, color: context.colors.outline, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
                 controller: controller,
                 autofocus: false,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOnSurface,
+                  color: context.colors.onSurface,
                   fontSize: 14,
                 ),
                 decoration: InputDecoration.collapsed(
-                  hintText: 'Search friends or add guest…',
+                  hintText: AppStrings.of(context).participantSearchHint,
                   hintStyle: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 14,
                   ),
                 ),
@@ -45,9 +46,9 @@ class ParticipantSearchField extends StatelessWidget {
               builder: (_, value, child) => value.text.isNotEmpty
                   ? GestureDetector(
                       onTap: controller.clear,
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
-                        color: kColorOutline,
+                        color: context.colors.outline,
                         size: 16,
                       ),
                     )

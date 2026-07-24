@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/catalog_game.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
 import 'add_play_notifier.dart';
 import 'participant_picker_sheet.dart';
@@ -21,9 +22,11 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
   final _locationController = TextEditingController();
   final _notesController = TextEditingController();
 
-  // Parallel list of name controllers mirroring state.participants.
-  // Invariant: _controllers.length == state.participants.length at all times.
+  // Parallel lists of name/score controllers mirroring state.participants.
+  // Invariant: _controllers.length == _scoreControllers.length ==
+  // state.participants.length at all times.
   final List<TextEditingController> _controllers = [];
+  final List<TextEditingController> _scoreControllers = [];
 
   @override
   void initState() {
@@ -41,11 +44,15 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     for (final c in _controllers) {
       c.dispose();
     }
+    for (final c in _scoreControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
-  // Creates a controller whose listener always resolves its own current index,
-  // so removal from the middle of the list doesn't corrupt indices.
+  // Creates a name + score controller pair whose listeners always resolve
+  // their own current index, so removal from the middle of the list doesn't
+  // corrupt indices.
   void _addController({String initialText = ''}) {
     final ctrl = TextEditingController(text: initialText);
     ctrl.addListener(() {
@@ -57,6 +64,20 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       }
     });
     _controllers.add(ctrl);
+
+    final scoreCtrl = TextEditingController();
+    scoreCtrl.addListener(() {
+      final idx = _scoreControllers.indexOf(scoreCtrl);
+      if (idx >= 0) {
+        ref
+            .read(addPlayProvider.notifier)
+            .updateParticipantScore(
+              idx,
+              double.tryParse(scoreCtrl.text.trim()),
+            );
+      }
+    });
+    _scoreControllers.add(scoreCtrl);
   }
 
   Future<void> _showGamePicker() async {
@@ -86,10 +107,10 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: Theme.of(ctx).colorScheme.copyWith(
-            primary: kColorPrimary,
-            onPrimary: kColorOnPrimary,
-            surface: kColorSurface,
-            onSurface: kColorOnSurface,
+            primary: context.colors.primary,
+            onPrimary: context.colors.onPrimary,
+            surface: context.colors.surface,
+            onSurface: context.colors.onSurface,
           ),
         ),
         child: child!,
@@ -120,38 +141,67 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
   void _removeParticipant(int index) {
     _controllers[index].dispose();
     _controllers.removeAt(index);
+    _scoreControllers[index].dispose();
+    _scoreControllers.removeAt(index);
     ref.read(addPlayProvider.notifier).removeParticipant(index);
   }
 
-  void _save() {
+  Future<void> _save() async {
     final notifier = ref.read(addPlayProvider.notifier);
     for (var i = 0; i < _controllers.length; i++) {
       notifier.updateParticipantName(i, _controllers[i].text);
+      notifier.updateParticipantScore(
+        i,
+        double.tryParse(_scoreControllers[i].text.trim()),
+      );
     }
-    // Fire and forget — the Cloud Function completes server-side regardless.
-    // The plays list updates automatically via its real-time listener.
-    notifier
-        .save(location: _locationController.text, notes: _notesController.text)
-        .ignore();
-    Navigator.of(context).pop(true);
+
+    final ok = await notifier.save(
+      location: _locationController.text,
+      notes: _notesController.text,
+    );
+    if (!mounted) return;
+    if (ok) {
+      Navigator.of(context).pop(true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppStrings.of(context).addPlaySaveFailed,
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
+          ),
+          backgroundColor: context.colors.surfaceHigh,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final state = ref.watch(addPlayProvider);
+    final countText = state.maxPlayers != null
+        ? s.playersCountMax(state.participants.length, state.maxPlayers!)
+        : s.playersCountOnly(state.participants.length);
+    final addButtonText = state.canAddParticipant
+        ? s.addParticipant
+        : s.maxPlayersAdded;
+    final saveButtonText = state.belowMinPlayers
+        ? s.minPlayersNeeded(state.effectiveMinPlayers)
+        : s.savePlay;
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+          icon: Icon(Icons.arrow_back, color: context.colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'LOG A PLAY',
+          s.addPlayTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -160,7 +210,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -171,37 +221,38 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _SectionLabel('GAME'),
+                  _SectionLabel(s.addPlaySectionGame),
                   const SizedBox(height: 8),
                   _GamePicker(
                     gameName: state.selectedGame?.name,
                     onTap: _showGamePicker,
                   ),
                   const SizedBox(height: 24),
-                  _SectionLabel('SESSION'),
+                  _SectionLabel(s.addPlaySectionSession),
                   const SizedBox(height: 8),
                   _DateRow(date: state.playedAt, onTap: _pickDate),
                   const SizedBox(height: 10),
                   _StyledField(
                     controller: _locationController,
-                    hint: 'Location (optional)',
+                    hint: s.addPlayLocationHint,
                     icon: Icons.location_on_outlined,
                   ),
                   const SizedBox(height: 10),
                   _StyledField(
                     controller: _notesController,
-                    hint: 'Notes (optional)',
+                    hint: s.addPlayNotesHint,
                     icon: Icons.notes_outlined,
                     maxLines: 3,
                   ),
                   const SizedBox(height: 24),
-                  _PlayersSectionHeader(countText: state.playerCountText),
+                  _PlayersSectionHeader(countText: countText),
                   const SizedBox(height: 8),
                   ...state.participants.asMap().entries.map(
                     (e) => Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: _PlayerRow(
                         controller: _controllers[e.key],
+                        scoreController: _scoreControllers[e.key],
                         isWinner: e.value.isWinner,
                         canRemove: e.key != 0,
                         readOnly: e.value.userId == state.currentUserId,
@@ -214,7 +265,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
                   ),
                   const SizedBox(height: 4),
                   _AddParticipantButton(
-                    label: state.addButtonText,
+                    label: addButtonText,
                     enabled: state.canAddParticipant,
                     onTap: state.canAddParticipant
                         ? _showParticipantPicker
@@ -228,7 +279,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
           _SaveBar(
             enabled: state.canSave && !state.saving,
             loading: state.saving,
-            buttonText: state.saveButtonText,
+            buttonText: saveButtonText,
             onTap: _save,
           ),
         ],
@@ -252,14 +303,14 @@ class _SectionLabel extends StatelessWidget {
         Text(
           text,
           style: GoogleFonts.spaceGrotesk(
-            color: kColorOutline,
+            color: context.colors.outline,
             fontSize: 11,
             fontWeight: FontWeight.w600,
             letterSpacing: 2,
           ),
         ),
         const SizedBox(height: 6),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
       ],
     );
   }
@@ -279,9 +330,9 @@ class _PlayersSectionHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'PLAYERS',
+              AppStrings.of(context).addPlayPlayers,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 2,
@@ -290,7 +341,7 @@ class _PlayersSectionHeader extends StatelessWidget {
             Text(
               countText,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -298,7 +349,7 @@ class _PlayersSectionHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
       ],
     );
   }
@@ -317,31 +368,35 @@ class _GamePicker extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
-            const Icon(Icons.casino_outlined, color: kColorOutline, size: 18),
+            Icon(
+              Icons.casino_outlined,
+              color: context.colors.outline,
+              size: 18,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                gameName ?? 'Select a game…',
+                gameName ?? AppStrings.of(context).addPlaySelectGame,
                 style: gameName != null
                     ? GoogleFonts.newsreader(
-                        color: kColorOnSurface,
+                        color: context.colors.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       )
                     : GoogleFonts.newsreader(
-                        color: kColorOutline,
+                        color: context.colors.outline,
                         fontSize: 16,
                         fontStyle: FontStyle.italic,
                       ),
               ),
             ),
-            const Icon(Icons.chevron_right, color: kColorOutline, size: 20),
+            Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
           ],
         ),
       ),
@@ -380,27 +435,27 @@ class _DateRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.calendar_today_outlined,
-              color: kColorOutline,
+              color: context.colors.outline,
               size: 16,
             ),
             const SizedBox(width: 12),
             Text(
               _fmt(date),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
+                color: context.colors.onSurface,
                 fontSize: 14,
               ),
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right, color: kColorOutline, size: 20),
+            Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
           ],
         ),
       ),
@@ -426,8 +481,8 @@ class _StyledField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -435,7 +490,7 @@ class _StyledField extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: Icon(icon, color: kColorOutline, size: 16),
+            child: Icon(icon, color: context.colors.outline, size: 16),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -443,13 +498,13 @@ class _StyledField extends StatelessWidget {
               controller: controller,
               maxLines: maxLines,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
+                color: context.colors.onSurface,
                 fontSize: 14,
               ),
               decoration: InputDecoration.collapsed(
                 hintText: hint,
                 hintStyle: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 14,
                 ),
               ),
@@ -463,6 +518,7 @@ class _StyledField extends StatelessWidget {
 
 class _PlayerRow extends StatelessWidget {
   final TextEditingController controller;
+  final TextEditingController scoreController;
   final bool isWinner;
   final bool canRemove;
   final bool readOnly;
@@ -471,6 +527,7 @@ class _PlayerRow extends StatelessWidget {
 
   const _PlayerRow({
     required this.controller,
+    required this.scoreController,
     required this.isWinner,
     required this.onToggleWinner,
     required this.onRemove,
@@ -483,9 +540,11 @@ class _PlayerRow extends StatelessWidget {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
+        color: context.colors.surfaceHigh,
         border: Border.all(
-          color: isWinner ? kColorPrimary.withAlpha(120) : kColorAmberBorder,
+          color: isWinner
+              ? context.colors.primary.withAlpha(120)
+              : context.colors.amberBorder,
         ),
         borderRadius: BorderRadius.circular(4),
       ),
@@ -499,25 +558,28 @@ class _PlayerRow extends StatelessWidget {
               readOnly: readOnly,
               enableInteractiveSelection: !readOnly,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
+                color: context.colors.onSurface,
                 fontSize: 14,
               ),
               decoration: InputDecoration.collapsed(
-                hintText: 'Player name',
+                hintText: AppStrings.of(context).addPlayPlayerNameHint,
                 hintStyle: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 14,
                 ),
               ),
             ),
           ),
+          _ScoreField(controller: scoreController),
           GestureDetector(
             onTap: onToggleWinner,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Icon(
                 isWinner ? Icons.emoji_events : Icons.emoji_events_outlined,
-                color: isWinner ? kColorPrimary : kColorOutline,
+                color: isWinner
+                    ? context.colors.primary
+                    : context.colors.outline,
                 size: 20,
               ),
             ),
@@ -527,12 +589,48 @@ class _PlayerRow extends StatelessWidget {
               onTap: onRemove,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
-                child: Icon(Icons.close, color: kColorOutline, size: 18),
+                child: Icon(
+                  Icons.close,
+                  color: context.colors.outline,
+                  size: 18,
+                ),
               ),
             )
           else
             const SizedBox(width: 30),
         ],
+      ),
+    );
+  }
+}
+
+class _ScoreField extends StatelessWidget {
+  final TextEditingController controller;
+
+  const _ScoreField({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 52,
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(
+          decimal: true,
+          signed: true,
+        ),
+        textAlign: TextAlign.center,
+        style: GoogleFonts.spaceGrotesk(
+          color: context.colors.onSurface,
+          fontSize: 14,
+        ),
+        decoration: InputDecoration.collapsed(
+          hintText: AppStrings.of(context).scoreHint,
+          hintStyle: GoogleFonts.spaceGrotesk(
+            color: context.colors.outline,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }
@@ -558,8 +656,8 @@ class _AddParticipantButton extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border.all(
             color: enabled
-                ? kColorOutlineVariant
-                : kColorOutlineVariant.withAlpha(80),
+                ? context.colors.outlineVariant
+                : context.colors.outlineVariant.withAlpha(80),
           ),
           borderRadius: BorderRadius.circular(4),
         ),
@@ -567,7 +665,9 @@ class _AddParticipantButton extends StatelessWidget {
           child: Text(
             label,
             style: GoogleFonts.spaceGrotesk(
-              color: enabled ? kColorOutline : kColorOutlineVariant,
+              color: enabled
+                  ? context.colors.outline
+                  : context.colors.outlineVariant,
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.5,
@@ -603,23 +703,27 @@ class _SaveBar extends StatelessWidget {
           child: Container(
             height: 52,
             decoration: BoxDecoration(
-              color: enabled ? kColorPrimary : kColorOutlineVariant,
+              color: enabled
+                  ? context.colors.primary
+                  : context.colors.outlineVariant,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Center(
               child: loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: kColorOnPrimary,
+                        color: context.colors.onPrimary,
                       ),
                     )
                   : Text(
                       buttonText,
                       style: GoogleFonts.spaceGrotesk(
-                        color: enabled ? kColorOnPrimary : kColorOutline,
+                        color: enabled
+                            ? context.colors.onPrimary
+                            : context.colors.outline,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2,

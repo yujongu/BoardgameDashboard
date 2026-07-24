@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/play.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/repositories/play_repository.dart';
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -41,14 +42,14 @@ class PlayDetailState {
 // ─── Notifier ─────────────────────────────────────────────────────────────────
 
 class PlayDetailNotifier extends StateNotifier<PlayDetailState> {
-  PlayDetailNotifier(this._initial)
+  PlayDetailNotifier(this._initial, this._repo)
     : super(PlayDetailState.fromSummary(_initial)) {
     _listenToDoc();
     _loadParticipants();
   }
 
   final PlaySummary _initial;
-  final _repo = PlayRepository.instance;
+  final PlayRepository _repo;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _docSub;
 
   void _listenToDoc() {
@@ -131,8 +132,8 @@ class PlayDetailNotifier extends StateNotifier<PlayDetailState> {
       gameName: input.gameName,
       playedAt: input.playedAt,
       participantCount: input.participants.length,
-      location: state.location,
-      notes: state.notes,
+      location: input.location,
+      notes: input.notes,
       createdBy: state.createdBy,
       participants: _sorted(
         input.participants
@@ -189,5 +190,6 @@ class PlayDetailNotifier extends StateNotifier<PlayDetailState> {
 
 final playDetailProvider = StateNotifierProvider.autoDispose
     .family<PlayDetailNotifier, PlayDetailState, PlaySummary>(
-      (ref, initial) => PlayDetailNotifier(initial),
+      (ref, initial) =>
+          PlayDetailNotifier(initial, ref.watch(playRepositoryProvider)),
     );

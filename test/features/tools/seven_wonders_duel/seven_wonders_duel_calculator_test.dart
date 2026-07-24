@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:board_game_dashboard/shared/theme/app_colors.dart';
 
 import 'package:board_game_dashboard/features/tools/seven_wonders_duel/seven_wonders_duel_calculator_screen.dart';
 import 'package:board_game_dashboard/features/tools/seven_wonders_duel/score_row.dart';
+import 'package:board_game_dashboard/l10n/app_localizations.dart';
 
 /// Builds a full category map from individual values (defaults 0).
 Map<SevenWondersCategory, int> _map({
@@ -197,7 +199,12 @@ void main() {
 
   testWidgets('screen builds without throwing', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: SevenWondersDuelCalculatorScreen()),
+      MaterialApp(
+        theme: buildDarkTheme(),
+        localizationsDelegates: AppStrings.localizationsDelegates,
+        supportedLocales: AppStrings.supportedLocales,
+        home: SevenWondersDuelCalculatorScreen(),
+      ),
     );
     expect(find.text('7 WONDERS DUEL'), findsOneWidget);
   });

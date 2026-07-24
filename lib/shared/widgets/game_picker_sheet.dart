@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../models/catalog_game.dart';
 import '../providers/game_catalog_provider.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 
 class GamePickerSheet extends ConsumerStatefulWidget {
   final void Function(CatalogGame game) onSelect;
@@ -36,13 +37,14 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final catalog = ref.watch(gameCatalogProvider);
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.7,
       child: Container(
-        decoration: const BoxDecoration(
-          color: kColorSurface,
+        decoration: BoxDecoration(
+          color: context.colors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         child: Column(
@@ -52,23 +54,23 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: kColorOutlineVariant,
+                color: context.colors.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'SELECT GAME',
+                s.gamePickerTitle,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 2,
                 ),
               ),
             ),
-            Container(height: 1, color: kColorAmberBorder),
+            Container(height: 1, color: context.colors.amberBorder),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Container(
@@ -77,26 +79,26 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
                   vertical: 2,
                 ),
                 decoration: BoxDecoration(
-                  color: kColorSurfaceHigh,
-                  border: Border.all(color: kColorAmberBorder),
+                  color: context.colors.surfaceHigh,
+                  border: Border.all(color: context.colors.amberBorder),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.search, color: kColorOutline, size: 18),
+                    Icon(Icons.search, color: context.colors.outline, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
                         autofocus: false,
                         style: GoogleFonts.spaceGrotesk(
-                          color: kColorOnSurface,
+                          color: context.colors.onSurface,
                           fontSize: 14,
                         ),
                         decoration: InputDecoration.collapsed(
-                          hintText: 'Search games…',
+                          hintText: s.gamePickerSearchHint,
                           hintStyle: GoogleFonts.spaceGrotesk(
-                            color: kColorOutline,
+                            color: context.colors.outline,
                             fontSize: 14,
                           ),
                         ),
@@ -106,12 +108,12 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
                     // fetch is in flight; local results are already visible so
                     // we only need a subtle inline indicator, not a blocker.
                     if (catalog.remoteLoading)
-                      const SizedBox(
+                      SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 1.5,
-                          color: kColorOutline,
+                          color: context.colors.outline,
                         ),
                       ),
                   ],
@@ -126,9 +128,10 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
   }
 
   Widget _buildBody(GameCatalogState catalog) {
+    final s = AppStrings.of(context);
     if (catalog.loading && catalog.games == null) {
-      return const Center(
-        child: CircularProgressIndicator(color: kColorPrimary),
+      return Center(
+        child: CircularProgressIndicator(color: context.colors.primary),
       );
     }
 
@@ -139,13 +142,17 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: kColorOutline, size: 32),
+              Icon(
+                Icons.error_outline,
+                color: context.colors.outline,
+                size: 32,
+              ),
               const SizedBox(height: 12),
               Text(
-                'Could not load games',
+                s.gamePickerLoadFailed,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 12,
                 ),
               ),
@@ -153,9 +160,9 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
               GestureDetector(
                 onTap: () => ref.read(gameCatalogProvider.notifier).reload(),
                 child: Text(
-                  'RETRY',
+                  s.commonRetry,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorPrimary,
+                    color: context.colors.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
@@ -172,9 +179,9 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
     if (games.isEmpty) {
       return Center(
         child: Text(
-          'No games found',
+          s.gamePickerNoGames,
           style: GoogleFonts.newsreader(
-            color: kColorOnSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
             fontSize: 16,
             fontStyle: FontStyle.italic,
           ),
@@ -205,14 +212,14 @@ class _GameTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
           game.name,
           style: GoogleFonts.newsreader(
-            color: kColorOnSurface,
+            color: context.colors.onSurface,
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),

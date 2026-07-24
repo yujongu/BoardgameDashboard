@@ -16,6 +16,7 @@ import { deletePlay }    from "../../src/plays/deletePlay";
 import { listMyPlays }   from "../../src/reads/listMyPlays";
 import { getPlay }       from "../../src/reads/getPlay";
 import { getMyLibrary }  from "../../src/reads/getMyLibrary";
+import { listBoardGames } from "../../src/library/listBoardGames";
 import { sendFriendRequest }        from "../../src/friends/sendFriendRequest";
 import { acceptFriendRequest }      from "../../src/friends/acceptFriendRequest";
 import { rejectFriendRequest }      from "../../src/friends/rejectFriendRequest";
@@ -193,6 +194,19 @@ export const callGetOutgoingFriendRequests = (uid: string, limit?: number) =>
       createdAt: string;
     }>;
   }>;
+
+export const callListBoardGames = (
+  data: { search?: string; limit?: number },
+  uid: string,
+) =>
+  (listBoardGames as unknown as AnyCallable).run(makeReq(data, uid)) as Promise<{
+    games: Array<{ gameId: string; name: string }>;
+  }>;
+
+export const callListBoardGamesNoAuth = (data: {
+  search?: string;
+  limit?: number;
+}) => (listBoardGames as unknown as AnyCallable).run(makeReqNoAuth(data));
 
 // ─── No-auth variants (for validation tests) ──────────────────────────────────
 

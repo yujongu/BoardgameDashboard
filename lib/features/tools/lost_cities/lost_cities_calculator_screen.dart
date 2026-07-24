@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../shared/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/theme/app_colors.dart';
 import 'expedition_column.dart';
 
 class LostCitiesCalculatorScreen extends StatefulWidget {
@@ -13,12 +14,22 @@ class LostCitiesCalculatorScreen extends StatefulWidget {
 
 class _LostCitiesCalculatorScreenState
     extends State<LostCitiesCalculatorScreen> {
-  static const _expeditions = [
-    (title: 'Gold', color: Color(0xFFF2CA50)),
-    (title: 'Blue', color: Color(0xFF4A90E2)),
-    (title: 'Purple', color: Color(0xFF9B59B6)),
-    (title: 'Green', color: Color(0xFF50C878)),
-    (title: 'Red', color: Color(0xFFE32636)),
+  static const _expeditionColors = [
+    Color(0xFFF2CA50),
+    Color(0xFF4A90E2),
+    Color(0xFF9B59B6),
+    Color(0xFF50C878),
+    Color(0xFFE32636),
+  ];
+
+  // Same five suits deepened for the light theme — the bright versions drop to
+  // ~1.7:1 against the paper background as titles, borders and dot indicators.
+  static const _expeditionColorsLight = [
+    Color(0xFF7A5E0A),
+    Color(0xFF1F4E8C),
+    Color(0xFF5B2C72),
+    Color(0xFF1F6B45),
+    Color(0xFF9B1721),
   ];
 
   late final List<int> _scores;
@@ -29,7 +40,7 @@ class _LostCitiesCalculatorScreenState
   @override
   void initState() {
     super.initState();
-    _scores = List.filled(_expeditions.length, 0);
+    _scores = List.filled(_expeditionColors.length, 0);
     _pageController = PageController(viewportFraction: 0.88)
       ..addListener(() {
         final page = _pageController.page?.round() ?? 0;
@@ -60,22 +71,34 @@ class _LostCitiesCalculatorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final expeditionColors = Theme.of(context).brightness == Brightness.dark
+        ? _expeditionColors
+        : _expeditionColorsLight;
+    final titles = [
+      s.lostCitiesGold,
+      s.lostCitiesBlue,
+      s.lostCitiesPurple,
+      s.lostCitiesGreen,
+      s.lostCitiesRed,
+    ];
+
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leadingWidth: 64,
         leading: Padding(
           padding: const EdgeInsets.only(left: 8),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+            icon: Icon(Icons.arrow_back, color: context.colors.primary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
         title: Text(
-          'LOST CITIES',
+          s.lostCitiesTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -88,9 +111,9 @@ class _LostCitiesCalculatorScreenState
             child: TextButton(
               onPressed: _reset,
               child: Text(
-                'RESET',
+                s.calcReset,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -101,7 +124,7 @@ class _LostCitiesCalculatorScreenState
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: Column(
@@ -111,9 +134,9 @@ class _LostCitiesCalculatorScreenState
             padding: const EdgeInsets.only(top: 14, bottom: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_expeditions.length, (i) {
+              children: List.generate(expeditionColors.length, (i) {
                 final active = i == _currentPage;
-                final color = _expeditions[i].color;
+                final color = expeditionColors[i];
                 return GestureDetector(
                   onTap: () => _pageController.animateToPage(
                     i,
@@ -140,13 +163,12 @@ class _LostCitiesCalculatorScreenState
             child: PageView.builder(
               controller: _pageController,
               physics: const _HighThresholdScrollPhysics(),
-              itemCount: _expeditions.length,
+              itemCount: expeditionColors.length,
               itemBuilder: (context, index) {
-                final exp = _expeditions[index];
                 return ExpeditionColumn(
                   key: ValueKey('$index-$_resetToken'),
-                  title: exp.title,
-                  color: exp.color,
+                  title: titles[index],
+                  color: expeditionColors[index],
                   onScoreChanged: (score) => _onScoreChanged(index, score),
                 );
               },
@@ -156,17 +178,19 @@ class _LostCitiesCalculatorScreenState
           // Grand total bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            decoration: const BoxDecoration(
-              color: Color(0xFF0A0905),
-              border: Border(top: BorderSide(color: kColorOutlineVariant)),
+            decoration: BoxDecoration(
+              color: context.colors.appBarBackground,
+              border: Border(
+                top: BorderSide(color: context.colors.outlineVariant),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'GRAND TOTAL',
+                  s.calcGrandTotal,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurfaceVariant,
+                    color: context.colors.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 2,
@@ -176,8 +200,8 @@ class _LostCitiesCalculatorScreenState
                   _grandTotal.toString(),
                   style: GoogleFonts.newsreader(
                     color: _grandTotal >= 0
-                        ? kColorPrimary
-                        : const Color(0xFFFF6B6B),
+                        ? context.colors.primary
+                        : Theme.of(context).colorScheme.error,
                     fontSize: 38,
                     fontWeight: FontWeight.w600,
                   ),

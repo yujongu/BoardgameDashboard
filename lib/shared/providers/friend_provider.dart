@@ -2,13 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/friend.dart';
 import '../models/friend_request.dart';
-import '../repositories/friend_repository.dart';
+import 'repository_providers.dart';
 
 class FriendListNotifier
     extends AutoDisposeStreamNotifier<List<FriendSummary>> {
   @override
   Stream<List<FriendSummary>> build() =>
-      FriendRepository.instance.watchMyFriends();
+      ref.read(friendRepositoryProvider).watchMyFriends();
 }
 
 final friendListProvider =
@@ -22,7 +22,7 @@ class IncomingRequestsNotifier
     extends AutoDisposeAsyncNotifier<List<FriendRequestSummary>> {
   @override
   Future<List<FriendRequestSummary>> build() =>
-      FriendRepository.instance.getIncomingRequests();
+      ref.read(friendRepositoryProvider).getIncomingRequests();
 
   Future<bool> accept(String requestId) async {
     final prev = state;
@@ -32,7 +32,7 @@ class IncomingRequestsNotifier
       );
     }
     try {
-      await FriendRepository.instance.acceptRequest(requestId);
+      await ref.read(friendRepositoryProvider).acceptRequest(requestId);
       ref.invalidate(friendListProvider);
       return true;
     } catch (_) {
@@ -49,7 +49,7 @@ class IncomingRequestsNotifier
       );
     }
     try {
-      await FriendRepository.instance.rejectRequest(requestId);
+      await ref.read(friendRepositoryProvider).rejectRequest(requestId);
       return true;
     } catch (_) {
       state = prev;
@@ -70,7 +70,7 @@ class OutgoingRequestsNotifier
     extends AutoDisposeAsyncNotifier<List<FriendRequestSummary>> {
   @override
   Future<List<FriendRequestSummary>> build() =>
-      FriendRepository.instance.getOutgoingRequests();
+      ref.read(friendRepositoryProvider).getOutgoingRequests();
 
   Future<bool> cancel(String requestId) async {
     final prev = state;
@@ -80,7 +80,7 @@ class OutgoingRequestsNotifier
       );
     }
     try {
-      await FriendRepository.instance.cancelRequest(requestId);
+      await ref.read(friendRepositoryProvider).cancelRequest(requestId);
       return true;
     } catch (_) {
       state = prev;

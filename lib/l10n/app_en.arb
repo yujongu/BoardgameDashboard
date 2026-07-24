@@ -1,0 +1,467 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Gameshelf",
+  "@appTitle": {
+    "description": "The application display name."
+  },
+
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonContinue": "Continue",
+
+  "authErrorTitle": "Could not sign you in",
+  "authSubtitleCreate": "Create your account",
+  "authSubtitleSignIn": "Sign in to continue",
+  "authGoogleFailed": "Google sign-in failed. Please try again.",
+  "authErrorIncorrectCredentials": "Incorrect email or password.",
+  "authErrorEmailInUse": "An account with this email already exists.",
+  "authErrorWeakPassword": "Password must be at least 6 characters.",
+  "authErrorInvalidEmail": "Please enter a valid email address.",
+  "authErrorTooManyRequests": "Too many attempts. Please try again later.",
+  "authErrorGeneric": "Something went wrong. Please try again.",
+  "authEmailLabel": "Email",
+  "authEmailRequired": "Email is required.",
+  "authEmailInvalid": "Enter a valid email.",
+  "authPasswordLabel": "Password",
+  "authPasswordRequired": "Password is required.",
+  "authCreateAccount": "Create Account",
+  "authSignIn": "Sign In",
+  "authHaveAccount": "Already have an account?",
+  "authNoAccount": "Don't have an account?",
+  "authRegister": "Register",
+  "authOr": "or",
+  "authContinueWithGoogle": "Continue with Google",
+  "authForgotPassword": "Forgot password?",
+  "authResetEmailNeeded": "Enter your email above to reset your password.",
+  "authResetSent": "Password reset link sent to {email}.",
+  "@authResetSent": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+
+  "profileSetupSubtitle": "One last step",
+  "profileSetupPrompt": "What should we call you?",
+  "profileNameHint": "Your name",
+  "profileNameRequired": "Please enter your name.",
+  "profileSaveNameFailed": "Failed to save name. Please try again.",
+
+  "profileTitle": "PROFILE",
+  "profileFriends": "Friends",
+  "profileSettings": "Settings",
+  "profileSignOut": "Sign Out",
+  "profileEditNameTitle": "Edit display name",
+  "profileNameUpdated": "Display name updated.",
+  "profileNameUpdateFailed": "Failed to update name. Try again.",
+  "profileNameEmpty": "Name cannot be empty.",
+
+  "settingsTitle": "SETTINGS",
+  "settingsAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsAbout": "About",
+  "settingsVersion": "Version",
+
+  "commonRetry": "RETRY",
+
+  "navHome": "Home",
+  "navLibrary": "Library",
+  "navFriends": "Friends",
+
+  "homeRecentPlays": "Recent Plays",
+  "homeMostPlayed": "Most Played",
+  "homeStatPlays": "PLAYS",
+  "homeStatWins": "WINS",
+  "homeStatWinRate": "WIN RATE",
+  "homeEmptyTitle": "No plays logged yet",
+  "homeEmptySubtitle": "Tap + to log your first session",
+
+  "playsCount": "{count, plural, =1{1 play} other{{count} plays}}",
+  "@playsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "playersCount": "{count, plural, =1{1 player} other{{count} players}}",
+  "@playersCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "commonOk": "OK",
+  "commonCancelCaps": "CANCEL",
+
+  "libraryCollection": "My Collection",
+  "gamesCount": "{count, plural, =1{1 GAME} other{{count} GAMES}}",
+  "@gamesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "libraryWinsShort": "{count}W",
+  "@libraryWinsShort": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "libraryPlaysSuffix": " / {count} plays",
+  "@libraryPlaysSuffix": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "libraryEmptyTitle": "No games in collection",
+  "libraryEmptySubtitle": "Log a play to add games here",
+
+  "gameDetailUnexpectedEmpty": "Unexpected empty result",
+  "playHistoryTitle": "Play History",
+  "sessionsCount": "{count, plural, =1{1 SESSION} other{{count} SESSIONS}}",
+  "@sessionsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "gameDetailEmptyTitle": "No play history found",
+  "gameDetailEmptySubtitle": "Log a play to see it here",
+  "gameDetailTools": "Tools",
+  "gameDetailNoTools": "No tools available yet.",
+
+  "crewSaveFailed": "Could not save campaign record",
+  "crewCampaignRecord": "Campaign Record",
+  "crewLoadFailed": "Could not load campaign record",
+  "crewAddMemberTitle": "Add crew member",
+  "crewNameHint": "Name",
+  "crewSetMissionTitle": "Set current mission",
+  "crewMissionRangeHint": "1–{max}",
+  "@crewMissionRangeHint": {
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+  "crewSectionCrew": "CREW",
+  "crewAdd": "ADD",
+  "crewNoMembers": "No crew members yet",
+  "crewCurrentMission": "CURRENT MISSION",
+  "crewMissionDenominator": " / {max}",
+  "@crewMissionDenominator": {
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+
+  "timeYearsAgo": "{count}y ago",
+  "@timeYearsAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeMonthsAgo": "{count}mo ago",
+  "@timeMonthsAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeDaysAgo": "{count}d ago",
+  "@timeDaysAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeHoursAgo": "{count}h ago",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeMinutesAgo": "{count}m ago",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "timeJustNow": "just now",
+
+  "friendsTitle": "FRIENDS",
+  "friendsRequestsTooltip": "Friend requests",
+  "friendsSearchHint": "Search to add friends…",
+  "friendsNoUsers": "No users found",
+  "friendsStatusFriends": "FRIENDS",
+  "friendsStatusPending": "PENDING",
+  "friendsAdd": "ADD",
+  "friendsIncomingCount": "INCOMING ({count})",
+  "@friendsIncomingCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "friendsPendingCount": "PENDING ({count})",
+  "@friendsPendingCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "friendsAccept": "ACCEPT",
+  "friendsDecline": "DECLINE",
+  "friendsLoadFailed": "Could not load friends.",
+  "friendsEmpty": "No friends yet.\nSearch above to add someone.",
+  "friendsAcceptFailed": "Failed to accept. Try again.",
+  "friendsDeclineFailed": "Failed to decline. Try again.",
+  "friendsAlreadyExists": "Already friends or request already pending.",
+  "friendsSendFailed": "Could not send request. Try again.",
+
+  "friendsRequestsTitle": "REQUESTS",
+  "friendsIncoming": "INCOMING",
+  "friendsSent": "SENT",
+  "friendsSentCount": "SENT ({count})",
+  "@friendsSentCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "friendsCancelFailed": "Failed to cancel. Try again.",
+  "friendsIncomingLoadFailed": "Could not load incoming requests.",
+  "friendsNoIncoming": "No incoming requests.",
+  "friendsSentLoadFailed": "Could not load sent requests.",
+  "friendsNoSent": "No sent requests.",
+
+  "friendUnfriendTitle": "Unfriend {name}?",
+  "@friendUnfriendTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "friendUnfriendBody": "You will no longer appear in each other''s friends list.",
+  "friendUnfriendAction": "Unfriend",
+  "friendUnfriendFailed": "Failed to unfriend. Try again.",
+  "friendProfileLoadFailed": "Could not load profile.",
+  "friendLastPlayed": "Last played {time}",
+  "@friendLastPlayed": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "friendStats": "STATS",
+  "friendMostPlayed": "MOST PLAYED",
+  "friendUnfriendCaps": "UNFRIEND",
+  "friendGameStat": "{plays} plays · {wins} wins",
+  "@friendGameStat": {
+    "placeholders": {
+      "plays": { "type": "int" },
+      "wins": { "type": "int" }
+    }
+  },
+  "friendPlayedTogether": "PLAYED TOGETHER",
+  "friendSharedCount": "{count, plural, =1{1 game together} other{{count} games together}}",
+  "@friendSharedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "friendNoSharedPlays": "No games played together yet",
+  "friendSharedPlaysError": "Could not load shared plays",
+
+  "commonEdit": "Edit",
+  "commonDelete": "Delete",
+  "scoreHint": "—",
+
+  "addPlayTitle": "LOG A PLAY",
+  "addPlaySaveFailed": "Failed to save play. Please try again.",
+  "addPlaySectionGame": "GAME",
+  "addPlaySectionSession": "SESSION",
+  "addPlayLocationHint": "Location (optional)",
+  "addPlayNotesHint": "Notes (optional)",
+  "addPlayPlayers": "PLAYERS",
+  "addPlaySelectGame": "Select a game…",
+  "addPlayPlayerNameHint": "Player name",
+  "savePlay": "Save Play",
+  "minPlayersNeeded": "Minimum {count} players needed",
+  "@minPlayersNeeded": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "addParticipant": "+ Add Participant",
+  "maxPlayersAdded": "Max players added",
+  "playersCountMax": "Players: {count} / {max}",
+  "@playersCountMax": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "playersCountOnly": "Players: {count}",
+  "@playersCountOnly": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "participantSearchHint": "Search friends or add guest…",
+  "participantMaxReached": "Max players reached",
+  "participantGuestAdded": "{name} ADDED",
+  "@participantGuestAdded": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "participantAddTitle": "ADD PARTICIPANTS",
+  "participantSectionUsers": "USERS",
+  "participantNoFriends": "No friends yet",
+  "participantAdded": "Added",
+  "participantLoadFailed": "Failed to load friends",
+  "participantGuestHint": "Type a name to add as guest",
+  "participantAddGuestPrefix": "Add guest ",
+
+  "playHistoryTitleCaps": "PLAY HISTORY",
+  "historyTapToRetry": "TAP TO RETRY",
+  "historyLoadFailed": "Could not load your plays",
+
+  "playDetailSaveFailed": "Failed to save. Please try again.",
+  "playDeleteTitle": "Delete this play?",
+  "playDeleteBody": "This will permanently remove the session and update all stats.",
+  "playDeleteConfirm": "DELETE",
+  "playDetailPlayers": "Players",
+  "playersCountCaps": "{count, plural, =1{1 PLAYER} other{{count} PLAYERS}}",
+  "@playersCountCaps": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "playDetailPlayersLoadFailed": "Could not load players",
+  "playDetailScore": "Score: {score}",
+  "@playDetailScore": {
+    "placeholders": {
+      "score": { "type": "String" }
+    }
+  },
+  "playDetailWinner": "WINNER",
+  "playDetailRank": "#{rank}",
+  "@playDetailRank": {
+    "placeholders": {
+      "rank": { "type": "int" }
+    }
+  },
+
+  "editPlayTitle": "EDIT PLAY",
+  "editPlayAddPlayer": "ADD PLAYER",
+  "editPlaySaveChanges": "SAVE CHANGES",
+
+  "gamePickerTitle": "SELECT GAME",
+  "gamePickerSearchHint": "Search games…",
+  "gamePickerLoadFailed": "Could not load games",
+  "gamePickerNoGames": "No games found",
+
+  "catalogBrowseTitle": "BROWSE GAMES",
+  "catalogBrowseTooltip": "Browse all games",
+  "catalogPlayerRange": "{min}–{max} players",
+  "@catalogPlayerRange": {
+    "placeholders": {
+      "min": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+
+  "toolScoreCalculator": "Score Calculator",
+  "toolLostCitiesDesc": "Calculate Lost Cities scores quickly",
+  "toolTerraformingMarsDesc": "Tally TR, milestones, awards, and card VP",
+  "toolSevenWondersDuelDesc": "Tally 7 Wonders Duel civilian-victory scores",
+  "toolSevenWondersDesc": "Tally science sets, military, coins, and card VP",
+  "toolWingspanDesc": "Sum birds, bonuses, goals, eggs, food, and tucked cards",
+
+  "calcReset": "RESET",
+  "calcTotal": "TOTAL",
+  "calcGrandTotal": "GRAND TOTAL",
+  "calcPlayers": "PLAYERS",
+  "calcShowing": "SHOWING",
+  "calcCategory": "CATEGORY",
+  "calcPlayer1": "PLAYER 1",
+  "calcPlayer2": "PLAYER 2",
+  "calcTie": "TIE",
+  "calcPlayerWins": "PLAYER {player} WINS",
+  "@calcPlayerWins": {
+    "placeholders": {
+      "player": { "type": "int" }
+    }
+  },
+  "calcPlayerWinsTiebreaker": "PLAYER {player} WINS (TIEBREAKER)",
+  "@calcPlayerWinsTiebreaker": {
+    "placeholders": {
+      "player": { "type": "int" }
+    }
+  },
+  "calcTieMulti": "TIE: {players}",
+  "@calcTieMulti": {
+    "placeholders": {
+      "players": { "type": "String" }
+    }
+  },
+  "calcPlayerChip": "P{player} · {total}",
+  "@calcPlayerChip": {
+    "placeholders": {
+      "player": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "calcPlayerTotal": "P{player} TOTAL",
+  "@calcPlayerTotal": {
+    "placeholders": {
+      "player": { "type": "int" }
+    }
+  },
+
+  "lostCitiesTitle": "LOST CITIES",
+  "sevenWondersTitle": "7 WONDERS",
+  "sevenWondersDuelTitle": "7 WONDERS DUEL",
+  "wingspanTitle": "WINGSPAN",
+  "terraformingMarsTitle": "TERRAFORMING MARS",
+
+  "swCivilian": "Civilian (Blue) VP",
+  "swScience": "Science (Green) VP",
+  "swCommercial": "Commercial (Yellow) VP",
+  "swGuilds": "Guilds (Purple) VP",
+  "swCoins": "Coins (÷3 → VP)",
+  "sw7dWonders": "Wonders VP",
+  "sw7dProgress": "Progress tokens VP",
+  "sw7dMilitary": "Military tokens VP",
+  "sw7Military": "Military tokens (net VP)",
+  "sw7Wonders": "Wonder stages VP",
+  "sw7Tablets": "Tablets",
+  "sw7Compasses": "Compasses",
+  "sw7Gears": "Gears",
+  "sevenWondersScienceHeader": "SCIENCE (GREEN) — {vp} VP",
+  "@sevenWondersScienceHeader": {
+    "placeholders": {
+      "vp": { "type": "int" }
+    }
+  },
+
+  "wsBirds": "Bird cards VP",
+  "wsBonusCards": "Bonus cards VP",
+  "wsRoundGoals": "End-of-round goals VP",
+  "wsEggs": "Eggs (1 VP each)",
+  "wsCachedFood": "Cached food (1 VP each)",
+  "wsTuckedCards": "Tucked cards (1 VP each)",
+
+  "tmTerraformRating": "Terraform Rating",
+  "tmVpEach": "1 VP each",
+  "tmMilestones": "Milestones Claimed",
+  "tmMilestonesHint": "5 VP each · max 3",
+  "tmAward": "Award Points",
+  "tmAwardHint": "1st place: 5 VP · 2nd place: 2 VP",
+  "tmGreenery": "Greenery Tiles",
+  "tmCity": "City Adjacency",
+  "tmCityHint": "1 VP per adjacent greenery",
+  "tmCardVp": "Card VP",
+  "tmCardVpHint": "VP icons on played cards",
+
+  "lostCitiesGold": "Gold",
+  "lostCitiesBlue": "Blue",
+  "lostCitiesPurple": "Purple",
+  "lostCitiesGreen": "Green",
+  "lostCitiesRed": "Red",
+  "lostCitiesScorePrefix": "Score: "
+}

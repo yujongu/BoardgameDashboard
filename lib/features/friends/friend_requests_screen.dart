@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 
 class FriendRequestsScreen extends ConsumerStatefulWidget {
   const FriendRequestsScreen({super.key});
@@ -19,21 +20,27 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
     final ok = await ref
         .read(incomingRequestsProvider.notifier)
         .accept(requestId);
-    if (!ok && mounted) _showSnackbar('Failed to accept. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsAcceptFailed);
+    }
   }
 
   Future<void> _reject(String requestId) async {
     final ok = await ref
         .read(incomingRequestsProvider.notifier)
         .reject(requestId);
-    if (!ok && mounted) _showSnackbar('Failed to decline. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsDeclineFailed);
+    }
   }
 
   Future<void> _cancel(String requestId) async {
     final ok = await ref
         .read(outgoingRequestsProvider.notifier)
         .cancel(requestId);
-    if (!ok && mounted) _showSnackbar('Failed to cancel. Try again.');
+    if (!ok && mounted) {
+      _showSnackbar(AppStrings.of(context).friendsCancelFailed);
+    }
   }
 
   void _showSnackbar(String message) {
@@ -41,15 +48,16 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
       SnackBar(
         content: Text(
           message,
-          style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
+          style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
         ),
-        backgroundColor: kColorSurfaceHigh,
+        backgroundColor: context.colors.surfaceHigh,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final incomingAsync = ref.watch(incomingRequestsProvider);
     final outgoingAsync = ref.watch(outgoingRequestsProvider);
 
@@ -57,17 +65,17 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
     final outgoingCount = outgoingAsync.valueOrNull?.length;
 
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0905),
+        backgroundColor: context.colors.appBarBackground,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+          icon: Icon(Icons.arrow_back, color: context.colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'REQUESTS',
+          s.friendsRequestsTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -76,7 +84,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: ListView(
@@ -84,16 +92,14 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
         children: [
           _SectionLabel(
             incomingCount != null && incomingCount > 0
-                ? 'INCOMING ($incomingCount)'
-                : 'INCOMING',
+                ? s.friendsIncomingCount(incomingCount)
+                : s.friendsIncoming,
           ),
           ...incomingAsync.when(
             loading: () => [const _LoadingTile()],
-            error: (_, _) => [
-              const _MessageTile('Could not load incoming requests.'),
-            ],
+            error: (_, _) => [_MessageTile(s.friendsIncomingLoadFailed)],
             data: (requests) => requests.isEmpty
-                ? [const _MessageTile('No incoming requests.')]
+                ? [_MessageTile(s.friendsNoIncoming)]
                 : requests
                       .map(
                         (r) => _IncomingRow(
@@ -107,16 +113,14 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
           const SizedBox(height: 8),
           _SectionLabel(
             outgoingCount != null && outgoingCount > 0
-                ? 'SENT ($outgoingCount)'
-                : 'SENT',
+                ? s.friendsSentCount(outgoingCount)
+                : s.friendsSent,
           ),
           ...outgoingAsync.when(
             loading: () => [const _LoadingTile()],
-            error: (_, _) => [
-              const _MessageTile('Could not load sent requests.'),
-            ],
+            error: (_, _) => [_MessageTile(s.friendsSentLoadFailed)],
             data: (requests) => requests.isEmpty
-                ? [const _MessageTile('No sent requests.')]
+                ? [_MessageTile(s.friendsNoSent)]
                 : requests
                       .map(
                         (r) => _OutgoingRow(
@@ -146,7 +150,7 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         text,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOutline,
+          color: context.colors.outline,
           fontSize: 10,
           fontWeight: FontWeight.w600,
           letterSpacing: 2,
@@ -171,12 +175,13 @@ class _IncomingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -190,15 +195,15 @@ class _IncomingRow extends StatelessWidget {
                 Text(
                   request.name,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
-                  _timeAgo(request.createdAt),
+                  _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 11,
                   ),
                 ),
@@ -210,14 +215,16 @@ class _IncomingRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: kColorPrimary.withAlpha(20),
-                border: Border.all(color: kColorPrimary.withAlpha(100)),
+                color: context.colors.primary.withAlpha(20),
+                border: Border.all(
+                  color: context.colors.primary.withAlpha(100),
+                ),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                'ACCEPT',
+                s.friendsAccept,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorPrimary,
+                  color: context.colors.primary,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
@@ -229,9 +236,9 @@ class _IncomingRow extends StatelessWidget {
           GestureDetector(
             onTap: onDecline,
             child: Text(
-              'DECLINE',
+              s.friendsDecline,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
@@ -254,12 +261,13 @@ class _OutgoingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -273,15 +281,15 @@ class _OutgoingRow extends StatelessWidget {
                 Text(
                   request.name,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOnSurface,
+                    color: context.colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
-                  _timeAgo(request.createdAt),
+                  _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorOutline,
+                    color: context.colors.outline,
                     fontSize: 11,
                   ),
                 ),
@@ -291,9 +299,9 @@ class _OutgoingRow extends StatelessWidget {
           GestureDetector(
             onTap: onCancel,
             child: Text(
-              'CANCEL',
+              s.commonCancelCaps,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
@@ -313,14 +321,14 @@ class _LoadingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.symmetric(vertical: 20),
       child: Center(
         child: SizedBox(
           width: 18,
           height: 18,
           child: CircularProgressIndicator(
-            color: kColorOutline,
+            color: context.colors.outline,
             strokeWidth: 1.5,
           ),
         ),
@@ -340,7 +348,10 @@ class _MessageTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Text(
         text,
-        style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+        style: GoogleFonts.spaceGrotesk(
+          color: context.colors.outline,
+          fontSize: 13,
+        ),
       ),
     );
   }
@@ -360,17 +371,17 @@ class _Avatar extends StatelessWidget {
       return CircleAvatar(
         radius: 16,
         backgroundImage: NetworkImage(photoUrl!),
-        backgroundColor: kColorSurfaceHighest,
+        backgroundColor: context.colors.surfaceHighest,
       );
     }
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return CircleAvatar(
       radius: 16,
-      backgroundColor: kColorSurfaceHighest,
+      backgroundColor: context.colors.surfaceHighest,
       child: Text(
         initial,
         style: GoogleFonts.spaceGrotesk(
-          color: kColorOnSurfaceVariant,
+          color: context.colors.onSurfaceVariant,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -381,12 +392,12 @@ class _Avatar extends StatelessWidget {
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-String _timeAgo(DateTime dt) {
+String _timeAgo(AppStrings s, DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inDays >= 365) return '${diff.inDays ~/ 365}y ago';
-  if (diff.inDays >= 30) return '${diff.inDays ~/ 30}mo ago';
-  if (diff.inDays >= 1) return '${diff.inDays}d ago';
-  if (diff.inHours >= 1) return '${diff.inHours}h ago';
-  if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
-  return 'just now';
+  if (diff.inDays >= 365) return s.timeYearsAgo(diff.inDays ~/ 365);
+  if (diff.inDays >= 30) return s.timeMonthsAgo(diff.inDays ~/ 30);
+  if (diff.inDays >= 1) return s.timeDaysAgo(diff.inDays);
+  if (diff.inHours >= 1) return s.timeHoursAgo(diff.inHours);
+  if (diff.inMinutes >= 1) return s.timeMinutesAgo(diff.inMinutes);
+  return s.timeJustNow;
 }

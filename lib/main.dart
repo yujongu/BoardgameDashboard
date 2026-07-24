@@ -10,15 +10,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
-import 'shared/theme/app_theme.dart';
+import 'l10n/app_localizations.dart';
+import 'shared/theme/app_colors.dart';
+import 'shared/providers/theme_mode_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/profile_setup_screen.dart';
 import 'features/shell/main_shell.dart';
 
-// Set to true ONLY when `firebase emulators:start` is running locally.
-// Auth and Functions emulators must BOTH be running, or BOTH be off.
-// Mixing emulator auth tokens with production Functions causes INTERNAL errors.
-const bool _useEmulators = false;
+// Enable the Firebase Emulator Suite with --dart-define=USE_EMULATORS=true
+// (defaults to false → production, so normal runs are unaffected). Auth and
+// Functions emulators must BOTH be running, or BOTH be off — mixing emulator
+// auth tokens with production Functions causes INTERNAL errors. The integration
+// test suite passes this define so it never touches production.
+const bool _useEmulators = bool.fromEnvironment('USE_EMULATORS');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,14 +59,14 @@ Future<void> main() async {
   runApp(const ProviderScope(child: BoardGameApp()));
 }
 
-class BoardGameApp extends StatefulWidget {
+class BoardGameApp extends ConsumerStatefulWidget {
   const BoardGameApp({super.key});
 
   @override
-  State<BoardGameApp> createState() => _BoardGameAppState();
+  ConsumerState<BoardGameApp> createState() => _BoardGameAppState();
 }
 
-class _BoardGameAppState extends State<BoardGameApp> {
+class _BoardGameAppState extends ConsumerState<BoardGameApp> {
   String? _profileSetupUid;
 
   Widget _buildHome(User? user) {
@@ -87,9 +91,13 @@ class _BoardGameAppState extends State<BoardGameApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gameshelf',
+      onGenerateTitle: (context) => AppStrings.of(context).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(),
+      localizationsDelegates: AppStrings.localizationsDelegates,
+      supportedLocales: AppStrings.supportedLocales,
+      theme: buildLightTheme(),
+      darkTheme: buildDarkTheme(),
+      themeMode: ref.watch(themeModeProvider),
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
@@ -97,7 +105,7 @@ class _BoardGameAppState extends State<BoardGameApp> {
             return const _SplashScreen();
           }
           if (snapshot.hasError) {
-            return const _SplashScreen();
+            return _AuthErrorScreen(error: snapshot.error!);
           }
           return _buildHome(snapshot.data);
         },
@@ -111,8 +119,49 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator(color: kColorPrimary)),
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(color: context.colors.primary),
+      ),
+    );
+  }
+}
+
+class _AuthErrorScreen extends StatelessWidget {
+  final Object error;
+
+  const _AuthErrorScreen({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.cloud_off_outlined,
+                color: context.colors.primary,
+                size: 40,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                AppStrings.of(context).authErrorTitle,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$error',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

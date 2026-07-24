@@ -26,6 +26,8 @@ interface UpdatePlayData {
   /** ISO 8601 string — converted to Firestore Timestamp server-side. */
   playedAt: string;
   participants: ParticipantInput[];
+  location?: string;
+  notes?: string;
 }
 
 interface UpdatePlayResult {
@@ -278,7 +280,7 @@ export const updatePlay = onCall<UpdatePlayData>({ minInstances: 1 }, async (req
   const data = request.data;
   validate(data);
 
-  const { playId, gameId, gameName, participants } = data;
+  const { playId, gameId, gameName, participants, location, notes } = data;
   const playedAt = Timestamp.fromDate(new Date(data.playedAt));
   const playRef = db.collection("plays").doc(playId);
 
@@ -383,6 +385,9 @@ export const updatePlay = onCall<UpdatePlayData>({ minInstances: 1 }, async (req
       playedAt,
       participantCount: participants.length,
       participantIds: newParticipantIds,
+      // Present value overwrites; absent/empty clears the field.
+      location: location ? location : FieldValue.delete(),
+      notes: notes ? notes : FieldValue.delete(),
     });
 
     // 4. Replace participants subcollection: delete all old, create all new.

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
-import '../../shared/repositories/play_repository.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/providers/repository_providers.dart';
+import '../../shared/theme/app_colors.dart';
 import '../plays/play_detail_page.dart';
 import '../tools/presentation/widgets/tool_card.dart';
+import 'campaign_registry.dart';
 import 'crew_record_section.dart';
 import '../tools/registry/game_tools_registry.dart';
 
-class GameDetailPage extends StatefulWidget {
+class GameDetailPage extends ConsumerStatefulWidget {
   final String gameId;
   final String gameName;
 
@@ -20,10 +23,10 @@ class GameDetailPage extends StatefulWidget {
   });
 
   @override
-  State<GameDetailPage> createState() => _GameDetailPageState();
+  ConsumerState<GameDetailPage> createState() => _GameDetailPageState();
 }
 
-class _GameDetailPageState extends State<GameDetailPage> {
+class _GameDetailPageState extends ConsumerState<GameDetailPage> {
   late Future<List<PlaySummary>> _future;
   bool _mutated = false;
 
@@ -34,7 +37,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
   }
 
   Future<List<PlaySummary>> _fetchPlays() {
-    return PlayRepository.instance.fetchPlaysByGame(widget.gameId);
+    return ref.read(playRepositoryProvider).fetchPlaysByGame(widget.gameId);
   }
 
   void _reload() => setState(() => _future = _fetchPlays());
@@ -69,7 +72,9 @@ class _GameDetailPageState extends State<GameDetailPage> {
             return _buildErrorScaffold(snapshot.error!);
           }
           if (!snapshot.hasData) {
-            return _buildErrorScaffold('Unexpected empty result');
+            return _buildErrorScaffold(
+              AppStrings.of(context).gameDetailUnexpectedEmpty,
+            );
           }
           return _buildDataScaffold(snapshot.data!);
         },
@@ -81,10 +86,10 @@ class _GameDetailPageState extends State<GameDetailPage> {
 
   Widget _buildLoadingScaffold() {
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: _simpleAppBar(),
-      body: const Center(
-        child: CircularProgressIndicator(color: kColorPrimary),
+      body: Center(
+        child: CircularProgressIndicator(color: context.colors.primary),
       ),
     );
   }
@@ -93,7 +98,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
 
   Widget _buildErrorScaffold(Object error) {
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: _simpleAppBar(),
       body: Center(
         child: Padding(
@@ -101,13 +106,17 @@ class _GameDetailPageState extends State<GameDetailPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: kColorOutline, size: 48),
+              Icon(
+                Icons.error_outline,
+                color: context.colors.outline,
+                size: 48,
+              ),
               const SizedBox(height: 16),
               Text(
                 error.toString(),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 13,
                 ),
               ),
@@ -115,9 +124,9 @@ class _GameDetailPageState extends State<GameDetailPage> {
               GestureDetector(
                 onTap: _reload,
                 child: Text(
-                  'RETRY',
+                  AppStrings.of(context).commonRetry,
                   style: GoogleFonts.spaceGrotesk(
-                    color: kColorPrimary,
+                    color: context.colors.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
@@ -134,23 +143,24 @@ class _GameDetailPageState extends State<GameDetailPage> {
   // ── Data ─────────────────────────────────────────────────────────────────────
 
   Widget _buildDataScaffold(List<PlaySummary> plays) {
+    final campaign = campaignForGame(widget.gameId);
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       body: CustomScrollView(
         slivers: [
           // App bar
           SliverAppBar(
             pinned: true,
-            backgroundColor: const Color(0xFF0A0905),
+            backgroundColor: context.colors.appBarBackground,
             expandedHeight: kToolbarHeight,
             collapsedHeight: kToolbarHeight,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+              icon: Icon(Icons.arrow_back, color: context.colors.primary),
               onPressed: () => Navigator.of(context).pop(_mutated),
             ),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(1),
-              child: Container(height: 1, color: kColorAmberBorder),
+              child: Container(height: 1, color: context.colors.amberBorder),
             ),
             flexibleSpace: SafeArea(
               child: Padding(
@@ -161,7 +171,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
                     widget.gameName.toUpperCase(),
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.newsreader(
-                      color: kColorPrimary,
+                      color: context.colors.primary,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       fontStyle: FontStyle.italic,
@@ -181,12 +191,15 @@ class _GameDetailPageState extends State<GameDetailPage> {
             ),
           ),
 
-          // Campaign record sheet (The Crew only)
-          if (widget.gameId == kTheCrewPlanetNineGameId)
+          // Campaign record sheet — shown for any game in the campaign registry.
+          if (campaign != null)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-                child: CrewRecordSection(gameId: widget.gameId),
+                child: CrewRecordSection(
+                  gameId: widget.gameId,
+                  missionCount: campaign.missionCount,
+                ),
               ),
             ),
 
@@ -234,16 +247,16 @@ class _GameDetailPageState extends State<GameDetailPage> {
 
   AppBar _simpleAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFF0A0905),
+      backgroundColor: context.colors.appBarBackground,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+        icon: Icon(Icons.arrow_back, color: context.colors.primary),
         onPressed: () => Navigator.of(context).pop(_mutated),
       ),
       title: Text(
         widget.gameName.toUpperCase(),
         overflow: TextOverflow.ellipsis,
         style: GoogleFonts.newsreader(
-          color: kColorPrimary,
+          color: context.colors.primary,
           fontSize: 18,
           fontWeight: FontWeight.w700,
           fontStyle: FontStyle.italic,
@@ -252,7 +265,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: kColorAmberBorder),
+        child: Container(height: 1, color: context.colors.amberBorder),
       ),
     );
   }
@@ -270,8 +283,8 @@ class _StatsBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -279,16 +292,16 @@ class _StatsBox extends StatelessWidget {
           Text(
             '$playCount',
             style: GoogleFonts.spaceGrotesk(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 32,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            'PLAYS',
+            AppStrings.of(context).homeStatPlays,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOutline,
+              color: context.colors.outline,
               fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.4,
@@ -309,6 +322,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Column(
       children: [
         Row(
@@ -317,9 +331,9 @@ class _SectionHeader extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              'Play History',
+              s.playHistoryTitle,
               style: GoogleFonts.newsreader(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
@@ -327,9 +341,9 @@ class _SectionHeader extends StatelessWidget {
             ),
             if (count > 0)
               Text(
-                '$count ${count == 1 ? 'SESSION' : 'SESSIONS'}',
+                s.sessionsCount(count),
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.5,
@@ -338,7 +352,7 @@ class _SectionHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
       ],
     );
   }
@@ -378,8 +392,8 @@ class _PlayRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
@@ -388,13 +402,13 @@ class _PlayRow extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: kColorSurface,
-                border: Border.all(color: kColorOutlineVariant),
+                color: context.colors.surface,
+                border: Border.all(color: context.colors.outlineVariant),
                 borderRadius: BorderRadius.circular(3),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.calendar_today_outlined,
-                color: kColorOutline,
+                color: context.colors.outline,
                 size: 16,
               ),
             ),
@@ -406,17 +420,16 @@ class _PlayRow extends StatelessWidget {
                   Text(
                     _formatDate(play.playedAt),
                     style: GoogleFonts.newsreader(
-                      color: kColorOnSurface,
+                      color: context.colors.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${play.participantCount} '
-                    '${play.participantCount == 1 ? 'player' : 'players'}',
+                    AppStrings.of(context).playersCount(play.participantCount),
                     style: GoogleFonts.spaceGrotesk(
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       fontSize: 11,
                       letterSpacing: 0.3,
                     ),
@@ -424,9 +437,9 @@ class _PlayRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right,
-              color: kColorOutlineVariant,
+              color: context.colors.outlineVariant,
               size: 18,
             ),
           ],
@@ -443,6 +456,7 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(
@@ -450,22 +464,25 @@ class _EmptyView extends StatelessWidget {
         children: [
           Icon(
             Icons.casino_outlined,
-            color: kColorPrimary.withAlpha(80),
+            color: context.colors.primary.withAlpha(80),
             size: 48,
           ),
           const SizedBox(height: 16),
           Text(
-            'No play history found',
+            s.gameDetailEmptyTitle,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
               fontSize: 18,
               fontStyle: FontStyle.italic,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            'Log a play to see it here',
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
+            s.gameDetailEmptySubtitle,
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -484,16 +501,16 @@ class _ToolsSectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tools',
+          AppStrings.of(context).gameDetailTools,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 22,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.3,
           ),
         ),
         const SizedBox(height: 10),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
       ],
     );
   }
@@ -513,8 +530,11 @@ class _ToolsContent extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
         child: Text(
-          'No tools available yet.',
-          style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 13),
+          AppStrings.of(context).gameDetailNoTools,
+          style: GoogleFonts.spaceGrotesk(
+            color: context.colors.outline,
+            fontSize: 13,
+          ),
         ),
       );
     }

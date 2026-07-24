@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/app_colors.dart';
 import '../../shared/widgets/profile_app_bar.dart';
 import '../plays/play_detail_page.dart';
+import '../plays/play_history_page.dart';
 
 class HomeTab extends ConsumerStatefulWidget {
   final String displayName;
@@ -25,8 +27,16 @@ class HomeTab extends ConsumerStatefulWidget {
 class _HomeTabState extends ConsumerState<HomeTab> {
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final playsAsync = ref.watch(recentPlaysProvider);
     final libraryAsync = ref.watch(libraryProvider);
+
+    // True lifetime play count (sum of per-game playCount) — matches the stat
+    // row and stats/{uid}.totalGamesPlayed, unlike the capped recent-plays list.
+    final totalPlays = libraryAsync.valueOrNull?.fold<int>(
+      0,
+      (sum, e) => sum + e.playCount,
+    );
 
     return CustomScrollView(
       slivers: [
@@ -47,14 +57,27 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           ),
         ),
 
+        // Most-played leaderboard (hidden until at least one game is logged)
+        SliverToBoxAdapter(
+          child: libraryAsync.maybeWhen(
+            data: (library) => MostPlayedSection(library: library),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ),
+
         // "Recent Plays" section header
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
             child: _SectionHeader(
-              title: 'Recent Plays',
-              subtitle: playsAsync.whenData((p) => p.length).valueOrNull != null
-                  ? '${playsAsync.value!.length} sessions'
+              title: s.homeRecentPlays,
+              subtitle: totalPlays != null ? s.playsCount(totalPlays) : null,
+              onSeeAll: (totalPlays ?? 0) > 0
+                  ? () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PlayHistoryPage(),
+                      ),
+                    )
                   : null,
             ),
           ),
@@ -62,11 +85,11 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 
         // Plays list, loading, or error
         playsAsync.when(
-          loading: () => const SliverToBoxAdapter(
+          loading: () => SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.only(top: 48),
               child: Center(
-                child: CircularProgressIndicator(color: kColorPrimary),
+                child: CircularProgressIndicator(color: context.colors.primary),
               ),
             ),
           ),
@@ -115,6 +138,7 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final totalPlays = library.fold(0, (sum, e) => sum + e.playCount);
     final totalWins = library.fold(0, (sum, e) => sum + e.winCount);
     final winRate = totalPlays == 0 ? 0 : (totalWins * 100 ~/ totalPlays);
@@ -122,17 +146,17 @@ class _StatsRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         children: [
-          _StatCell(value: '$totalPlays', label: 'PLAYS'),
+          _StatCell(value: '$totalPlays', label: s.homeStatPlays),
           _Divider(),
-          _StatCell(value: '$totalWins', label: 'WINS'),
+          _StatCell(value: '$totalWins', label: s.homeStatWins),
           _Divider(),
-          _StatCell(value: '$winRate%', label: 'WIN RATE'),
+          _StatCell(value: '$winRate%', label: s.homeStatWinRate),
         ],
       ),
     );
@@ -153,7 +177,7 @@ class _StatCell extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 24,
               fontWeight: FontWeight.w700,
             ),
@@ -162,7 +186,7 @@ class _StatCell extends StatelessWidget {
           Text(
             label,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOutline,
+              color: context.colors.outline,
               fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.4,
@@ -177,7 +201,7 @@ class _StatCell extends StatelessWidget {
 class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 36, color: kColorAmberBorder);
+    return Container(width: 1, height: 36, color: context.colors.amberBorder);
   }
 }
 
@@ -189,20 +213,118 @@ class _StatsShimmer extends StatelessWidget {
     return Container(
       height: 72,
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: const Center(
+      child: Center(
         child: SizedBox(
           width: 16,
           height: 16,
           child: CircularProgressIndicator(
             strokeWidth: 1.5,
-            color: kColorPrimary,
+            color: context.colors.primary,
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Most-played leaderboard ──────────────────────────────────────────────────
+
+/// Top games by play count, each with a bar sized relative to the most-played
+/// game. Sourced from the already-watched library data (no extra read). Public
+/// so it can be unit-tested in isolation with sample [LibraryEntry] data.
+class MostPlayedSection extends StatelessWidget {
+  final List<LibraryEntry> library;
+
+  const MostPlayedSection({super.key, required this.library});
+
+  @override
+  Widget build(BuildContext context) {
+    final ranked = library.where((e) => e.playCount > 0).toList()
+      ..sort((a, b) => b.playCount.compareTo(a.playCount));
+    final top = ranked.take(5).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    final maxPlays = top.first.playCount;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        children: [
+          _SectionHeader(title: AppStrings.of(context).homeMostPlayed),
+          const SizedBox(height: 12),
+          for (final e in top)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _LeaderboardRow(entry: e, maxPlays: maxPlays),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeaderboardRow extends StatelessWidget {
+  final LibraryEntry entry;
+  final int maxPlays;
+
+  const _LeaderboardRow({required this.entry, required this.maxPlays});
+
+  @override
+  Widget build(BuildContext context) {
+    final frac = maxPlays == 0 ? 0.0 : entry.playCount / maxPlays;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                entry.gameName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.newsreader(
+                  color: context.colors.onSurface,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Relative play-volume bar (mirrors library_tab's win-rate bar).
+              Container(
+                height: 3,
+                decoration: BoxDecoration(
+                  color: context.colors.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: frac.clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: context.colors.primary,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 14),
+        Text(
+          '${entry.playCount}',
+          style: GoogleFonts.spaceGrotesk(
+            color: context.colors.primary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -212,8 +334,9 @@ class _StatsShimmer extends StatelessWidget {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
+  final VoidCallback? onSeeAll;
 
-  const _SectionHeader({required this.title, this.subtitle});
+  const _SectionHeader({required this.title, this.subtitle, this.onSeeAll});
 
   @override
   Widget build(BuildContext context) {
@@ -227,17 +350,42 @@ class _SectionHeader extends StatelessWidget {
             Text(
               title,
               style: GoogleFonts.newsreader(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
               ),
             ),
-            if (subtitle != null)
+            if (onSeeAll != null)
+              GestureDetector(
+                onTap: onSeeAll,
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: [
+                    if (subtitle != null)
+                      Text(
+                        subtitle!.toUpperCase(),
+                        style: GoogleFonts.spaceGrotesk(
+                          color: context.colors.outline,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.chevron_right,
+                      color: context.colors.primary,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              )
+            else if (subtitle != null)
               Text(
                 subtitle!.toUpperCase(),
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.5,
@@ -246,7 +394,7 @@ class _SectionHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Container(height: 1, color: kColorAmberBorder),
+        Container(height: 1, color: context.colors.amberBorder),
       ],
     );
   }
@@ -286,8 +434,8 @@ class _PlayCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: kColorSurfaceHigh,
-          border: Border.all(color: kColorAmberBorder),
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
@@ -296,13 +444,13 @@ class _PlayCard extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: kColorSurface,
-                border: Border.all(color: kColorOutlineVariant),
+                color: context.colors.surface,
+                border: Border.all(color: context.colors.outlineVariant),
                 borderRadius: BorderRadius.circular(3),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.casino_outlined,
-                color: kColorOutline,
+                color: context.colors.outline,
                 size: 18,
               ),
             ),
@@ -314,16 +462,16 @@ class _PlayCard extends StatelessWidget {
                   Text(
                     play.gameName,
                     style: GoogleFonts.newsreader(
-                      color: kColorOnSurface,
+                      color: context.colors.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${play.participantCount} ${play.participantCount == 1 ? 'player' : 'players'}',
+                    AppStrings.of(context).playersCount(play.participantCount),
                     style: GoogleFonts.spaceGrotesk(
-                      color: kColorOutline,
+                      color: context.colors.outline,
                       fontSize: 11,
                       letterSpacing: 0.3,
                     ),
@@ -334,7 +482,7 @@ class _PlayCard extends StatelessWidget {
             Text(
               _formatDate(local),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
@@ -354,6 +502,7 @@ class _EmptyPlaysView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 60),
       child: Column(
@@ -361,22 +510,25 @@ class _EmptyPlaysView extends StatelessWidget {
         children: [
           Icon(
             Icons.casino_outlined,
-            color: kColorPrimary.withAlpha(80),
+            color: context.colors.primary.withAlpha(80),
             size: 48,
           ),
           const SizedBox(height: 16),
           Text(
-            'No plays logged yet',
+            s.homeEmptyTitle,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
               fontSize: 18,
               fontStyle: FontStyle.italic,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            'Tap + to log your first session',
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
+            s.homeEmptySubtitle,
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -397,20 +549,23 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: kColorOutline, size: 40),
+          Icon(Icons.error_outline, color: context.colors.outline, size: 40),
           const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 12),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 20),
           GestureDetector(
             onTap: onRetry,
             child: Text(
-              'RETRY',
+              AppStrings.of(context).commonRetry,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorPrimary,
+                color: context.colors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,

@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend_profile.dart';
+import '../../shared/models/play.dart';
 import '../../shared/providers/friend_provider.dart';
-import '../../shared/repositories/friend_repository.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../shared/providers/repository_providers.dart';
+import '../../shared/theme/app_colors.dart';
+import '../plays/play_detail_page.dart';
 
 class FriendProfileScreen extends ConsumerStatefulWidget {
   final String friendId;
@@ -28,29 +31,34 @@ class FriendProfileScreen extends ConsumerStatefulWidget {
 
 class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
   late Future<FriendProfile> _profileFuture;
+  late Future<List<PlaySummary>> _sharedPlaysFuture;
   bool _unfriending = false;
 
   @override
   void initState() {
     super.initState();
-    _profileFuture = FriendRepository.instance.getFriendProfileDirect(
-      widget.friendId,
-    );
+    _profileFuture = ref
+        .read(friendRepositoryProvider)
+        .getFriendProfileDirect(widget.friendId);
+    _sharedPlaysFuture = ref
+        .read(playRepositoryProvider)
+        .fetchSharedPlays(widget.friendId);
   }
 
   Future<void> _unfriend() async {
+    final s = AppStrings.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: kColorSurfaceHigh,
+        backgroundColor: context.colors.surfaceHigh,
         title: Text(
-          'Unfriend ${widget.friendName}?',
-          style: GoogleFonts.newsreader(color: kColorOnSurface),
+          s.friendUnfriendTitle(widget.friendName),
+          style: GoogleFonts.newsreader(color: context.colors.onSurface),
         ),
         content: Text(
-          'You will no longer appear in each other\'s friends list.',
+          s.friendUnfriendBody,
           style: GoogleFonts.spaceGrotesk(
-            color: kColorOnSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
             fontSize: 14,
           ),
         ),
@@ -58,14 +66,14 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              'Cancel',
-              style: GoogleFonts.spaceGrotesk(color: kColorOutline),
+              s.commonCancel,
+              style: GoogleFonts.spaceGrotesk(color: context.colors.outline),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              'Unfriend',
+              s.friendUnfriendAction,
               style: GoogleFonts.spaceGrotesk(color: Colors.redAccent),
             ),
           ),
@@ -77,15 +85,15 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
 
     setState(() => _unfriending = true);
     try {
-      await FriendRepository.instance.removeFriend(widget.friendId);
+      await ref.read(friendRepositoryProvider).removeFriend(widget.friendId);
       if (!mounted) return;
       ref.invalidate(friendListProvider);
       Navigator.of(context).pop();
-    } catch (e, s) {
+    } catch (e, st) {
       dev.log(
         'removeFriend failed',
         error: e,
-        stackTrace: s,
+        stackTrace: st,
         name: 'FriendProfileScreen',
       );
       if (!mounted) return;
@@ -93,10 +101,10 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to unfriend. Try again.',
-            style: GoogleFonts.spaceGrotesk(color: kColorOnSurface),
+            AppStrings.of(context).friendUnfriendFailed,
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
           ),
-          backgroundColor: kColorSurfaceHigh,
+          backgroundColor: context.colors.surfaceHigh,
         ),
       );
     }
@@ -104,18 +112,19 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Scaffold(
-      backgroundColor: kColorBackground,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: kColorAppBarBackground,
+        backgroundColor: context.colors.appBarBackground,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kColorPrimary),
+          icon: Icon(Icons.arrow_back, color: context.colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'PROFILE',
+          s.profileTitle,
           style: GoogleFonts.newsreader(
-            color: kColorPrimary,
+            color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
@@ -124,19 +133,19 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kColorAmberBorder),
+          child: Container(height: 1, color: context.colors.amberBorder),
         ),
       ),
       body: FutureBuilder<FriendProfile>(
         future: _profileFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   strokeWidth: 1.5,
                 ),
               ),
@@ -146,9 +155,9 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
           if (snapshot.hasError || !snapshot.hasData) {
             return Center(
               child: Text(
-                'Could not load profile.',
+                s.friendProfileLoadFailed,
                 style: GoogleFonts.spaceGrotesk(
-                  color: kColorOutline,
+                  color: context.colors.outline,
                   fontSize: 14,
                 ),
               ),
@@ -159,6 +168,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
           return _ProfileBody(
             friendId: widget.friendId,
             profile: profile,
+            sharedPlaysFuture: _sharedPlaysFuture,
             unfriending: _unfriending,
             onUnfriend: _unfriend,
           );
@@ -173,18 +183,21 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
 class _ProfileBody extends StatelessWidget {
   final String friendId;
   final FriendProfile profile;
+  final Future<List<PlaySummary>> sharedPlaysFuture;
   final bool unfriending;
   final VoidCallback onUnfriend;
 
   const _ProfileBody({
     required this.friendId,
     required this.profile,
+    required this.sharedPlaysFuture,
     required this.unfriending,
     required this.onUnfriend,
   });
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final winPct = profile.totalGamesPlayed == 0
         ? '—'
         : '${(profile.winRate * 100).round()}%';
@@ -201,7 +214,7 @@ class _ProfileBody extends StatelessWidget {
           child: Text(
             profile.name,
             style: GoogleFonts.newsreader(
-              color: kColorOnSurface,
+              color: context.colors.onSurface,
               fontSize: 24,
               fontWeight: FontWeight.w600,
             ),
@@ -211,9 +224,9 @@ class _ProfileBody extends StatelessWidget {
           const SizedBox(height: 4),
           Center(
             child: Text(
-              'Last played ${_timeAgo(profile.lastPlayedAt!)}',
+              s.friendLastPlayed(_timeAgo(s, profile.lastPlayedAt!)),
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOutline,
+                color: context.colors.outline,
                 fontSize: 12,
               ),
             ),
@@ -222,23 +235,26 @@ class _ProfileBody extends StatelessWidget {
         const SizedBox(height: 28),
 
         // ── Stats row ──────────────────────────────────────────────────────
-        _SectionLabel('STATS'),
+        _SectionLabel(s.friendStats),
         const SizedBox(height: 10),
         Row(
           children: [
             Expanded(
               child: _StatCard(
                 value: '${profile.totalGamesPlayed}',
-                label: 'PLAYS',
+                label: s.homeStatPlays,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _StatCard(value: '${profile.totalWins}', label: 'WINS'),
+              child: _StatCard(
+                value: '${profile.totalWins}',
+                label: s.homeStatWins,
+              ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _StatCard(value: winPct, label: 'WIN RATE'),
+              child: _StatCard(value: winPct, label: s.homeStatWinRate),
             ),
           ],
         ),
@@ -246,10 +262,16 @@ class _ProfileBody extends StatelessWidget {
         // ── Top games ──────────────────────────────────────────────────────
         if (profile.topGames.isNotEmpty) ...[
           const SizedBox(height: 28),
-          _SectionLabel('MOST PLAYED'),
+          _SectionLabel(s.friendMostPlayed),
           const SizedBox(height: 8),
           ...profile.topGames.map((g) => _GameRow(game: g)),
         ],
+
+        // ── Played together ────────────────────────────────────────────────
+        const SizedBox(height: 28),
+        _SectionLabel(s.friendPlayedTogether),
+        const SizedBox(height: 8),
+        _SharedPlays(future: sharedPlaysFuture),
 
         // ── Unfriend ───────────────────────────────────────────────────────
         const SizedBox(height: 40),
@@ -279,7 +301,7 @@ class _ProfileBody extends StatelessWidget {
                       strokeWidth: 1.5,
                     ),
                   )
-                : const Text('UNFRIEND'),
+                : Text(s.friendUnfriendCaps),
           ),
         ),
       ],
@@ -298,7 +320,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: GoogleFonts.spaceGrotesk(
-        color: kColorOutline,
+        color: context.colors.outline,
         fontSize: 10,
         fontWeight: FontWeight.w600,
         letterSpacing: 2,
@@ -317,8 +339,8 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -326,7 +348,7 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.newsreader(
-              color: kColorPrimary,
+              color: context.colors.primary,
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
@@ -335,7 +357,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: GoogleFonts.spaceGrotesk(
-              color: kColorOutline,
+              color: context.colors.outline,
               fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.5,
@@ -357,8 +379,8 @@ class _GameRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: kColorSurfaceHigh,
-        border: Border.all(color: kColorAmberBorder),
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.amberBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -367,17 +389,174 @@ class _GameRow extends StatelessWidget {
             child: Text(
               game.gameName,
               style: GoogleFonts.spaceGrotesk(
-                color: kColorOnSurface,
+                color: context.colors.onSurface,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
           Text(
-            '${game.playCount} plays · ${game.winCount} wins',
-            style: GoogleFonts.spaceGrotesk(color: kColorOutline, fontSize: 11),
+            AppStrings.of(
+              context,
+            ).friendGameStat(game.playCount, game.winCount),
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 11,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SharedPlays extends StatelessWidget {
+  final Future<List<PlaySummary>> future;
+
+  const _SharedPlays({required this.future});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    return FutureBuilder<List<PlaySummary>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  color: context.colors.outline,
+                  strokeWidth: 1.5,
+                ),
+              ),
+            ),
+          );
+        }
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Text(
+            s.friendSharedPlaysError,
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 13,
+            ),
+          );
+        }
+        final plays = snapshot.data!;
+        if (plays.isEmpty) {
+          return Text(
+            s.friendNoSharedPlays,
+            style: GoogleFonts.newsreader(
+              color: context.colors.outline,
+              fontSize: 15,
+              fontStyle: FontStyle.italic,
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                s.friendSharedCount(plays.length),
+                style: GoogleFonts.spaceGrotesk(
+                  color: context.colors.onSurfaceVariant,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ...plays.map((p) => _SharedPlayRow(play: p)),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SharedPlayRow extends StatelessWidget {
+  final PlaySummary play;
+
+  const _SharedPlayRow({required this.play});
+
+  static const _months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  static String _formatDate(DateTime dt) {
+    final local = dt.toLocal();
+    return '${_months[local.month - 1]} ${local.day}, ${local.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => PlayDetailPage(initialData: play)),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: context.colors.surfaceHigh,
+          border: Border.all(color: context.colors.amberBorder),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    play.gameName,
+                    style: GoogleFonts.newsreader(
+                      color: context.colors.onSurface,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatDate(play.playedAt),
+                    style: GoogleFonts.spaceGrotesk(
+                      color: context.colors.outline,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              AppStrings.of(context).playersCount(play.participantCount),
+              style: GoogleFonts.spaceGrotesk(
+                color: context.colors.outline,
+                fontSize: 11,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: context.colors.outlineVariant,
+              size: 18,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -394,17 +573,17 @@ class _Avatar extends StatelessWidget {
       return CircleAvatar(
         radius: 40,
         backgroundImage: NetworkImage(photoUrl!),
-        backgroundColor: kColorSurfaceHighest,
+        backgroundColor: context.colors.surfaceHighest,
       );
     }
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return CircleAvatar(
       radius: 40,
-      backgroundColor: kColorSurfaceHighest,
+      backgroundColor: context.colors.surfaceHighest,
       child: Text(
         initial,
         style: GoogleFonts.newsreader(
-          color: kColorPrimary,
+          color: context.colors.primary,
           fontSize: 32,
           fontWeight: FontWeight.w600,
         ),
@@ -415,12 +594,12 @@ class _Avatar extends StatelessWidget {
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-String _timeAgo(DateTime dt) {
+String _timeAgo(AppStrings s, DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inDays >= 365) return '${diff.inDays ~/ 365}y ago';
-  if (diff.inDays >= 30) return '${diff.inDays ~/ 30}mo ago';
-  if (diff.inDays >= 1) return '${diff.inDays}d ago';
-  if (diff.inHours >= 1) return '${diff.inHours}h ago';
-  if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
-  return 'just now';
+  if (diff.inDays >= 365) return s.timeYearsAgo(diff.inDays ~/ 365);
+  if (diff.inDays >= 30) return s.timeMonthsAgo(diff.inDays ~/ 30);
+  if (diff.inDays >= 1) return s.timeDaysAgo(diff.inDays);
+  if (diff.inHours >= 1) return s.timeHoursAgo(diff.inHours);
+  if (diff.inMinutes >= 1) return s.timeMinutesAgo(diff.inMinutes);
+  return s.timeJustNow;
 }

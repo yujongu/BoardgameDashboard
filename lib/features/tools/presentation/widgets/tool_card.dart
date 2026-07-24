@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../shared/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/theme/app_colors.dart';
 import '../../domain/models/game_tool.dart';
 
 class ToolCard extends StatelessWidget {
@@ -11,8 +12,9 @@ class ToolCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Material(
-      color: kColorSurfaceHigh,
+      color: context.colors.surfaceHigh,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         borderRadius: BorderRadius.circular(6),
@@ -21,7 +23,7 @@ class ToolCard extends StatelessWidget {
         ).push(MaterialPageRoute(builder: tool.destinationBuilder)),
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: kColorAmberBorder),
+            border: Border.all(color: context.colors.amberBorder),
             borderRadius: BorderRadius.circular(6),
           ),
           padding: const EdgeInsets.all(16),
@@ -31,11 +33,11 @@ class ToolCard extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: kColorSurface,
-                  border: Border.all(color: kColorOutlineVariant),
+                  color: context.colors.surface,
+                  border: Border.all(color: context.colors.outlineVariant),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Icon(tool.icon, color: kColorPrimary, size: 20),
+                child: Icon(tool.icon, color: context.colors.primary, size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -43,18 +45,18 @@ class ToolCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      tool.title,
+                      tool.title(s),
                       style: GoogleFonts.newsreader(
-                        color: kColorOnSurface,
+                        color: context.colors.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      tool.description,
+                      tool.description(s),
                       style: GoogleFonts.spaceGrotesk(
-                        color: kColorOutline,
+                        color: context.colors.outline,
                         fontSize: 11,
                         letterSpacing: 0.3,
                       ),
@@ -62,9 +64,9 @@ class ToolCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right,
-                color: kColorOutlineVariant,
+                color: context.colors.outlineVariant,
                 size: 18,
               ),
             ],
