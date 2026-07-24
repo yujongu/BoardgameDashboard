@@ -88,7 +88,7 @@ class _AddFab extends StatelessWidget {
               offset: Offset(0, 4),
             ),
             BoxShadow(
-              color: Color(0x1AF2CA50),
+              color: context.colors.primary.withAlpha(26),
               blurRadius: 12,
               spreadRadius: 2,
             ),
