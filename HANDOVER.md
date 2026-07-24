@@ -3,9 +3,12 @@
 ## Current Milestone
 
 Implementing the **tester's feature-gap backlog** (`docs/backlog.md`).
-Done to date: **H1–H5, H6a, Q1–Q4, P1, P6, M1–M4**, and now **P2 + P5 — light theme + persisted
-theme switch + Settings screen**. Also added **Flutter web support** earlier. Remaining:
-**P3** (Crashlytics/analytics) and **H6b/P4** (avatar upload — `image_picker` + Storage).
+Done to date: **H1–H5, H6a, Q1–Q4, P1, P2, P5, P6, M1–M4** — every backlog item except two infra
+items. Also added **Flutter web support** earlier. Remaining: **P3** (Crashlytics/analytics) and
+**H6b/P4** (avatar upload — `image_picker` + Storage).
+
+`feat/play-score-and-edit-fixes` was merged into `main` on 2026-07-24 (31 commits, fast-forward,
+no conflicts). Future work should branch from `main` again.
 
 ### P2 + P5 completed this session (full light-mode migration)
 
@@ -264,8 +267,21 @@ emulator needs Java, which isn't on PATH here — start it with Android Studio's
   - **Light `primary` is a deep bronze (`0xFF7A5E0A`), not the dark theme's bright gold.** Primary
     doubles as accent-text *and* button-fill; bronze stays legible as text on the cream background
     while white `onPrimary` reads on the bronze fill. If you retune, keep both roles legible.
-  - Lost Cities' expedition accent list (`Color(0xFFF2CA50)` etc. in `lost_cities_calculator_screen`)
-    is a **context-less brand palette, deliberately left fixed** — it does not theme-switch.
+  - **Follow-up sweep (same session)**: several hand-rolled colors outside the 643 `kColor*` sites
+    were missed by the mechanical migration because they were plain hex literals, not tokens.
+    Fixed: `library_tab.dart`'s six-color card-swatch gradient (added a light-mode tint palette,
+    picked by `Theme.of(context).brightness`) and its win-rate bar track; `home_tab.dart`'s
+    matching play-volume bar track (both moved to `context.colors.outlineVariant`); the whole Lost
+    Cities calculator (`expedition_column.dart` panel/number-button fills → `context.colors`,
+    negative-score red → `colorScheme.error`); the Lost Cities suit palette and Terraforming
+    Mars's `_marsRed` accent (both gained a deepened light-mode variant, brightness-selected —
+    the bright originals were ~1.7–3.5:1 on the paper background); and the add-FAB's outer glow
+    in `main_shell.dart` (now `context.colors.primary.withAlpha(26)` instead of a hardcoded gold).
+    Net effect: **no color in the app is hardcoded-fixed anymore** — every brand accent that used
+    to be a single value is now a light/dark pair selected by `Theme.of(context).brightness`.
+  - **Verified theme-clean**: Seven Wonders (classic + Duel) and Wingspan calculators had zero
+    hardcoded colors — they render entirely through the shared `presentation/widgets/
+    calculator_widgets.dart`, which was already theme-aware.
   - Status-bar icon brightness follows the theme via each `ThemeData`'s
     `appBarTheme.systemOverlayStyle` (light/dark). `main.dart` still calls
     `SystemChrome.setSystemUIOverlayStyle(... light)` once at startup — harmless, the appbar theme
