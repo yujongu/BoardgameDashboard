@@ -4,29 +4,45 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../../shared/models/crew_campaign.dart';
+import '../../shared/models/campaign.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
+import 'campaign_registry.dart';
 
-/// Campaign record sheet for The Crew: crew roster plus the mission the whole
-/// crew has reached. Loads and saves the signed-in user's campaign doc.
-/// [missionCount] (the game's logbook length) comes from the campaign registry.
-class CrewRecordSection extends ConsumerStatefulWidget {
+/// Localized singular label for a campaign's stage axis (Mission/Scenario/Month).
+String stageAxisLabel(AppStrings s, StageAxis? axis) {
+  switch (axis) {
+    case StageAxis.scenario:
+      return s.stageAxisScenario;
+    case StageAxis.month:
+      return s.stageAxisMonth;
+    case StageAxis.mission:
+    case null:
+      return s.stageAxisMission;
+  }
+}
+
+/// Game-detail section listing the signed-in user's campaigns (tables) for a
+/// game with a stage board, plus a "new table" action. Each table is shared
+/// with everyone who plays at it; co-op play logging advances the board.
+class CampaignSection extends ConsumerStatefulWidget {
   final String gameId;
-  final int missionCount;
+  final String gameName;
+  final CoopSpec spec;
 
-  const CrewRecordSection({
+  const CampaignSection({
     super.key,
     required this.gameId,
-    required this.missionCount,
+    required this.gameName,
+    required this.spec,
   });
 
   @override
-  ConsumerState<CrewRecordSection> createState() => _CrewRecordSectionState();
+  ConsumerState<CampaignSection> createState() => _CampaignSectionState();
 }
 
-class _CrewRecordSectionState extends ConsumerState<CrewRecordSection> {
-  CrewCampaign? _campaign;
+class _CampaignSectionState extends ConsumerState<CampaignSection> {
+  List<Campaign>? _campaigns;
   Object? _error;
 
   @override
@@ -38,26 +54,46 @@ class _CrewRecordSectionState extends ConsumerState<CrewRecordSection> {
   Future<void> _load() async {
     setState(() => _error = null);
     try {
-      final campaign = await ref
+      final campaigns = await ref
           .read(campaignRepositoryProvider)
-          .fetchCampaign(widget.gameId);
+          .fetchCampaignsForGame(widget.gameId);
       if (!mounted) return;
-      setState(() {
-        _campaign =
-            campaign ?? const CrewCampaign(crewMembers: [], currentMission: 1);
-      });
+      setState(() => _campaigns = campaigns);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e);
     }
   }
 
-  Future<void> _update(CrewCampaign next) async {
-    setState(() => _campaign = next);
+  Future<void> _newTable() async {
     try {
       await ref
           .read(campaignRepositoryProvider)
-          .saveCampaign(widget.gameId, next);
+          .createCampaign(
+            gameId: widget.gameId,
+            gameName: widget.gameName,
+            roster: const [],
+            memberIds: const [],
+          );
+      await _load();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).campaignCreateFailed)),
+      );
+    }
+  }
+
+  Future<void> _save(Campaign next) async {
+    // Optimistic: reflect the edit locally, then persist.
+    setState(() {
+      final list = [...?_campaigns];
+      final i = list.indexWhere((c) => c.id == next.id);
+      if (i >= 0) list[i] = next;
+      _campaigns = list;
+    });
+    try {
+      await ref.read(campaignRepositoryProvider).saveCampaign(next);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,43 +104,81 @@ class _CrewRecordSectionState extends ConsumerState<CrewRecordSection> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          AppStrings.of(context).crewCampaignRecord,
-          style: GoogleFonts.newsreader(
-            color: context.colors.primary,
-            fontSize: 22,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.3,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              s.campaignsTitle,
+              style: GoogleFonts.newsreader(
+                color: context.colors.primary,
+                fontSize: 22,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.3,
+              ),
+            ),
+            GestureDetector(
+              onTap: _newTable,
+              child: Row(
+                children: [
+                  Icon(Icons.add, color: context.colors.primary, size: 14),
+                  const SizedBox(width: 2),
+                  Text(
+                    s.campaignNewTable,
+                    style: GoogleFonts.spaceGrotesk(
+                      color: context.colors.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         Container(height: 1, color: context.colors.amberBorder),
         const SizedBox(height: 12),
         if (_error != null)
           _LoadErrorRow(onRetry: _load)
-        else if (_campaign == null)
-          Padding(
+        else if (_campaigns == null)
+          const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(
-                  color: context.colors.primary,
-                  strokeWidth: 2,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          )
+        else if (_campaigns!.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              s.campaignNoTables,
+              style: GoogleFonts.newsreader(
+                color: context.colors.outline,
+                fontSize: 15,
+                fontStyle: FontStyle.italic,
               ),
             ),
           )
         else
-          CrewRecordCard(
-            campaign: _campaign!,
-            onChanged: _update,
-            missionCount: widget.missionCount,
-          ),
+          for (final campaign in _campaigns!) ...[
+            CampaignCard(
+              campaign: campaign,
+              spec: widget.spec,
+              onChanged: _save,
+            ),
+            const SizedBox(height: 12),
+          ],
       ],
     );
   }
@@ -146,26 +220,39 @@ class _LoadErrorRow extends StatelessWidget {
   }
 }
 
-/// Pure record-sheet card: renders the campaign and reports edits upward.
-class CrewRecordCard extends StatelessWidget {
-  final CrewCampaign campaign;
-  final ValueChanged<CrewCampaign> onChanged;
-  final int missionCount;
+/// One table: roster chips (manual edits) + a linear progress stepper over the
+/// game's stages. The stepper reflects the furthest incomplete stage; setting
+/// it marks earlier stages complete. Play logging advances individual stages.
+class CampaignCard extends StatelessWidget {
+  final Campaign campaign;
+  final CoopSpec spec;
+  final ValueChanged<Campaign> onChanged;
 
-  const CrewRecordCard({
+  const CampaignCard({
     super.key,
     required this.campaign,
+    required this.spec,
     required this.onChanged,
-    required this.missionCount,
   });
 
-  void _setMission(int mission) {
-    onChanged(
-      CrewCampaign(
-        crewMembers: campaign.crewMembers,
-        currentMission: mission.clamp(1, missionCount),
-      ),
-    );
+  int get _current => campaign.nextIncompleteStage(spec.stageCount);
+
+  void _setCurrent(int stage) {
+    final target = stage.clamp(1, spec.stageCount);
+    // Mark stages before [target] complete, [target] onward incomplete,
+    // preserving any recorded session data on each stage.
+    final next = <String, CampaignStage>{...campaign.stages};
+    for (var i = 1; i <= spec.stageCount; i++) {
+      final key = '$i';
+      final existing = next[key];
+      next[key] = CampaignStage(
+        completed: i < target,
+        sessionCount: existing?.sessionCount ?? 0,
+        lastOutcome: existing?.lastOutcome,
+        lastPlayedAt: existing?.lastPlayedAt,
+      );
+    }
+    onChanged(campaign.copyWith(stages: next));
   }
 
   Future<void> _addMember(BuildContext context) async {
@@ -179,37 +266,31 @@ class CrewRecordCard extends StatelessWidget {
     );
     if (name == null) return;
     final trimmed = name.trim();
-    if (trimmed.isEmpty || campaign.crewMembers.contains(trimmed)) return;
-    onChanged(
-      CrewCampaign(
-        crewMembers: [...campaign.crewMembers, trimmed],
-        currentMission: campaign.currentMission,
-      ),
-    );
+    if (trimmed.isEmpty || campaign.roster.contains(trimmed)) return;
+    onChanged(campaign.copyWith(roster: [...campaign.roster, trimmed]));
   }
 
   void _removeMember(String name) {
     onChanged(
-      CrewCampaign(
-        crewMembers: campaign.crewMembers.where((m) => m != name).toList(),
-        currentMission: campaign.currentMission,
+      campaign.copyWith(
+        roster: campaign.roster.where((m) => m != name).toList(),
       ),
     );
   }
 
-  Future<void> _editMission(BuildContext context) async {
+  Future<void> _editStage(BuildContext context) async {
     final s = AppStrings.of(context);
     final entered = await showDialog<String>(
       context: context,
       builder: (_) => _TextInputDialog(
-        title: s.crewSetMissionTitle,
-        hintText: s.crewMissionRangeHint(missionCount),
+        title: stageAxisLabel(s, spec.stageAxis),
+        hintText: s.crewMissionRangeHint(spec.stageCount),
         numeric: true,
       ),
     );
-    final mission = int.tryParse(entered ?? '');
-    if (mission == null) return;
-    _setMission(mission);
+    final stage = int.tryParse(entered ?? '');
+    if (stage == null) return;
+    _setCurrent(stage);
   }
 
   @override
@@ -250,7 +331,7 @@ class CrewRecordCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          if (campaign.crewMembers.isEmpty)
+          if (campaign.roster.isEmpty)
             Text(
               s.crewNoMembers,
               style: GoogleFonts.newsreader(
@@ -264,7 +345,7 @@ class CrewRecordCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final member in campaign.crewMembers)
+                for (final member in campaign.roster)
                   _MemberChip(
                     name: member,
                     onRemove: () => _removeMember(member),
@@ -274,7 +355,11 @@ class CrewRecordCard extends StatelessWidget {
           const SizedBox(height: 16),
           Container(height: 1, color: context.colors.outlineVariant),
           const SizedBox(height: 14),
-          Center(child: _CaptionLabel(s.crewCurrentMission)),
+          Center(
+            child: _CaptionLabel(
+              stageAxisLabel(s, spec.stageAxis).toUpperCase(),
+            ),
+          ),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -283,12 +368,12 @@ class CrewRecordCard extends StatelessWidget {
                 icon: const Icon(Icons.chevron_left),
                 color: context.colors.primary,
                 disabledColor: context.colors.outlineVariant,
-                onPressed: campaign.currentMission > 1
-                    ? () => _setMission(campaign.currentMission - 1)
+                onPressed: _current > 1
+                    ? () => _setCurrent(_current - 1)
                     : null,
               ),
               GestureDetector(
-                onTap: () => _editMission(context),
+                onTap: () => _editStage(context),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Row(
@@ -296,7 +381,7 @@ class CrewRecordCard extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        '${campaign.currentMission}',
+                        '$_current',
                         style: GoogleFonts.newsreader(
                           color: context.colors.primary,
                           fontSize: 38,
@@ -304,7 +389,7 @@ class CrewRecordCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        s.crewMissionDenominator(missionCount),
+                        s.crewMissionDenominator(spec.stageCount),
                         style: GoogleFonts.newsreader(
                           color: context.colors.outline,
                           fontSize: 18,
@@ -318,8 +403,8 @@ class CrewRecordCard extends StatelessWidget {
                 icon: const Icon(Icons.chevron_right),
                 color: context.colors.primary,
                 disabledColor: context.colors.outlineVariant,
-                onPressed: campaign.currentMission < missionCount
-                    ? () => _setMission(campaign.currentMission + 1)
+                onPressed: _current < spec.stageCount
+                    ? () => _setCurrent(_current + 1)
                     : null,
               ),
             ],

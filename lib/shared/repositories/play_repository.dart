@@ -67,6 +67,12 @@ class PlayRepository {
       participantCount: d['participantCount'] as int,
       location: d['location'] as String?,
       notes: d['notes'] as String?,
+      mode: d['mode'] == 'coop' ? PlayMode.coop : PlayMode.competitive,
+      outcome: d['outcome'] as String?,
+      campaignId: d['campaignId'] as String?,
+      stageId: d['stageId'] as String?,
+      difficulty: d['difficulty'] as String?,
+      teamScore: (d['teamScore'] as num?)?.toDouble(),
       participants: participantsSnap.docs
           .map((doc) => ParticipantResult.fromJson(doc.data()))
           .toList(),
@@ -168,6 +174,9 @@ class PlayRepository {
       gameName: d['gameName'] as String,
       playedAt: (d['playedAt'] as Timestamp).toDate(),
       participantCount: d['participantCount'] as int,
+      mode: d['mode'] == 'coop' ? PlayMode.coop : PlayMode.competitive,
+      outcome: d['outcome'] as String?,
+      stageId: d['stageId'] as String?,
     );
   }
 

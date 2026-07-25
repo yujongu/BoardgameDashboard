@@ -19,6 +19,8 @@ interface ParticipantInput {
   score?: number;
 }
 
+type PlayMode = "competitive" | "coop";
+
 interface CreatePlayData {
   gameId: string;
   gameName: string;
@@ -27,6 +29,13 @@ interface CreatePlayData {
   participants: ParticipantInput[];
   location?: string;
   notes?: string;
+  // Cooperative fields — present only when mode === "coop".
+  mode?: PlayMode;
+  outcome?: "win" | "loss";
+  campaignId?: string;
+  stageId?: string;
+  difficulty?: string;
+  teamScore?: number;
 }
 
 interface CreatePlayResult {
@@ -54,12 +63,6 @@ function validate(data: CreatePlayData): void {
   if (!Array.isArray(data.participants) || data.participants.length === 0) {
     throw new HttpsError("invalid-argument", "participants must not be empty.");
   }
-  if (!data.participants.some((p) => p.isWinner)) {
-    throw new HttpsError(
-      "invalid-argument",
-      "At least one participant must have isWinner = true."
-    );
-  }
   for (const p of data.participants) {
     if (!p.name?.trim()) {
       throw new HttpsError(
@@ -68,6 +71,31 @@ function validate(data: CreatePlayData): void {
       );
     }
   }
+
+  if (isCoop(data)) {
+    if (data.outcome !== "win" && data.outcome !== "loss") {
+      throw new HttpsError(
+        "invalid-argument",
+        "Cooperative plays require outcome 'win' or 'loss'."
+      );
+    }
+    // campaignId and stageId travel together: a campaign advance needs both.
+    if ((data.campaignId == null) !== (data.stageId == null)) {
+      throw new HttpsError(
+        "invalid-argument",
+        "campaignId and stageId must be provided together."
+      );
+    }
+  } else if (!data.participants.some((p) => p.isWinner)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "At least one participant must have isWinner = true."
+    );
+  }
+}
+
+function isCoop(data: CreatePlayData): boolean {
+  return data.mode === "coop";
 }
 
 // ─── Callable function ────────────────────────────────────────────────────────
@@ -81,6 +109,7 @@ export const createPlay = onCall<CreatePlayData>({ minInstances: 1 }, async (req
   validate(data);
 
   const { gameId, gameName, participants, location, notes } = data;
+  const coop = isCoop(data);
   const createdBy = request.auth.uid;
   const playedAt = Timestamp.fromDate(new Date(data.playedAt));
 
@@ -92,25 +121,38 @@ export const createPlay = onCall<CreatePlayData>({ minInstances: 1 }, async (req
 
   // Allocate the ref outside the transaction so the ID is stable across retries.
   const playRef = db.collection("plays").doc();
+  const campaignRef =
+    coop && data.campaignId ? db.collection("campaigns").doc(data.campaignId) : null;
 
   await db.runTransaction(async (tx) => {
-    // ── Phase 1: READ — userLibrary only ─────────────────────────────────────
+    // ── Phase 1: READ ─────────────────────────────────────────────────────────
     //
-    // stats/{userId} and stats/{userId}/gameStats/{gameId} are intentionally
-    // absent. FieldValue.increment + set/merge handles create-or-increment
-    // atomically — no prior read is needed.
-    //
-    // users/{userId}/library/{gameId} requires a snapshot to detect the first
-    // play per user and set firstPlayedAt. Firestore merge has no
-    // "set field only if absent" primitive, so existence must be checked here.
+    // Competitive: userLibrary snapshots (first-play detection). Co-op skips
+    // stats/library entirely, so it reads only the campaign doc (if advancing).
 
-    const libRefs = registered.map((p) => userLibraryRef(p.userId, gameId));
-    const libSnaps = libRefs.length > 0 ? await tx.getAll(...libRefs) : [];
+    let libSnapByUserId = new Map<string, FirebaseFirestore.DocumentSnapshot>();
+    if (!coop) {
+      const libRefs = registered.map((p) => userLibraryRef(p.userId, gameId));
+      const libSnaps = libRefs.length > 0 ? await tx.getAll(...libRefs) : [];
+      libSnapByUserId = new Map(registered.map((p, i) => [p.userId, libSnaps[i]]));
+    }
 
-    // Index by userId for O(1) lookup inside the write loop.
-    const libSnapByUserId = new Map(
-      registered.map((p, i) => [p.userId, libSnaps[i]])
-    );
+    let campaignCompleted = false;
+    if (campaignRef) {
+      const campaignSnap = await tx.get(campaignRef);
+      if (!campaignSnap.exists) {
+        throw new HttpsError("not-found", "Campaign not found.");
+      }
+      const memberIds = (campaignSnap.get("memberIds") as string[]) ?? [];
+      if (!memberIds.includes(createdBy)) {
+        throw new HttpsError(
+          "permission-denied",
+          "Only campaign members may log sessions."
+        );
+      }
+      const stages = (campaignSnap.get("stages") as Record<string, { completed?: boolean }>) ?? {};
+      campaignCompleted = stages[data.stageId!]?.completed === true;
+    }
 
     // ── Phase 2: WRITE — no reads past this point ─────────────────────────────
 
@@ -124,22 +166,30 @@ export const createPlay = onCall<CreatePlayData>({ minInstances: 1 }, async (req
       participantIds,
       ...(location && { location }),
       ...(notes && { notes }),
+      ...(coop && {
+        mode: "coop",
+        outcome: data.outcome,
+        ...(data.campaignId && { campaignId: data.campaignId }),
+        ...(data.stageId && { stageId: data.stageId }),
+        ...(data.difficulty && { difficulty: data.difficulty }),
+        ...(data.teamScore !== undefined && { teamScore: data.teamScore }),
+      }),
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    // 2. Participants subcollection + derived stats per registered user.
+    // 2. Participants subcollection.
     for (const p of participants) {
-      // 2a. Participant document.
+      // 2a. Participant document. Co-op plays have no winner; force isWinner false.
       tx.set(playRef.collection("participants").doc(), {
         userId: p.userId,
         name: p.name,
-        isWinner: p.isWinner,
-        ...(p.score !== undefined && { score: p.score }),
+        isWinner: coop ? false : p.isWinner,
+        ...(!coop && p.score !== undefined && { score: p.score }),
         joinedAt: FieldValue.serverTimestamp(),
       });
 
-      // Guests (userId === null) have no stats or library entries to update.
-      if (p.userId === null) continue;
+      // Co-op plays intentionally skip stats/gameStats/library (win stats untouched).
+      if (coop || p.userId === null) continue;
 
       // 2b. Lifetime stats — write-only, FieldValue.increment creates on first call.
       incrementStats(tx, statsRef(p.userId), p.isWinner, playedAt);
@@ -155,6 +205,26 @@ export const createPlay = onCall<CreatePlayData>({ minInstances: 1 }, async (req
         gameName,
         p.isWinner,
         playedAt
+      );
+    }
+
+    // 3. Advance the shared campaign stage (merge preserves other stages).
+    //    `completed` latches true on a win and never downgrades on a later loss.
+    if (campaignRef) {
+      tx.set(
+        campaignRef,
+        {
+          stages: {
+            [data.stageId!]: {
+              completed: campaignCompleted || data.outcome === "win",
+              sessionCount: FieldValue.increment(1),
+              lastOutcome: data.outcome,
+              lastPlayedAt: playedAt,
+            },
+          },
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
       );
     }
   });

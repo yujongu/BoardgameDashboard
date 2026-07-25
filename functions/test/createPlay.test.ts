@@ -5,6 +5,8 @@ import {
   getGameStats,
   getLibrary,
   getParticipants,
+  getCampaign,
+  seedCampaign,
 } from "./setup";
 import {
   callCreatePlay,
@@ -362,5 +364,138 @@ describe("createPlay", () => {
         "u1"
       )
     ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+});
+
+// ─── Cooperative plays ──────────────────────────────────────────────────────────
+
+describe("createPlay (cooperative)", () => {
+  afterEach(clearDb);
+
+  const CREW: Pick<CreatePlayInput, "gameId" | "gameName"> = {
+    gameId: "the-crew-the-quest-for-planet-nine-2019",
+    gameName: "The Crew",
+  };
+
+  function coopPlay(
+    overrides: Partial<CreatePlayInput> = {}
+  ): CreatePlayInput {
+    return {
+      ...CREW,
+      playedAt: PLAYED_AT,
+      participants: [
+        { userId: "u1", name: "Alice", isWinner: false },
+        { userId: "u2", name: "Bob", isWinner: false },
+      ],
+      mode: "coop",
+      outcome: "win",
+      ...overrides,
+    };
+  }
+
+  async function seedCrewCampaign(id = "camp1"): Promise<string> {
+    await seedCampaign(id, {
+      gameId: CREW.gameId,
+      gameName: CREW.gameName,
+      memberIds: ["u1", "u2"],
+      roster: ["Alice", "Bob"],
+      stages: {},
+    });
+    return id;
+  }
+
+  it("persists a co-op play with mode + outcome and no winner", async () => {
+    const { playId } = await callCreatePlay(coopPlay(), "u1");
+
+    const snap = await db.collection("plays").doc(playId).get();
+    expect(snap.data()).toMatchObject({ mode: "coop", outcome: "win" });
+
+    const parts = await getParticipants(playId);
+    expect(parts.every((p) => p.isWinner === false)).toBe(true);
+  });
+
+  it("does NOT touch stats, gameStats, or library for co-op plays", async () => {
+    await callCreatePlay(coopPlay(), "u1");
+
+    expect(await getStats("u1")).toBeNull();
+    expect(await getGameStats("u1", CREW.gameId)).toBeNull();
+    expect(await getLibrary("u1", CREW.gameId)).toBeNull();
+  });
+
+  it("advances the campaign stage on a win (completed latches true)", async () => {
+    const id = await seedCrewCampaign();
+    await callCreatePlay(coopPlay({ campaignId: id, stageId: "3" }), "u1");
+
+    const camp = await getCampaign(id);
+    const stages = camp!.stages as Record<string, Record<string, unknown>>;
+    expect(stages["3"]).toMatchObject({
+      completed: true,
+      sessionCount: 1,
+      lastOutcome: "win",
+    });
+  });
+
+  it("records a loss without completing the stage, keeps session count", async () => {
+    const id = await seedCrewCampaign();
+    await callCreatePlay(
+      coopPlay({ campaignId: id, stageId: "5", outcome: "loss" }),
+      "u1"
+    );
+
+    const camp = await getCampaign(id);
+    const stages = camp!.stages as Record<string, Record<string, unknown>>;
+    expect(stages["5"]).toMatchObject({
+      completed: false,
+      sessionCount: 1,
+      lastOutcome: "loss",
+    });
+  });
+
+  it("does not downgrade a completed stage after a later loss", async () => {
+    const id = await seedCrewCampaign();
+    await callCreatePlay(coopPlay({ campaignId: id, stageId: "2" }), "u1");
+    await callCreatePlay(
+      coopPlay({ campaignId: id, stageId: "2", outcome: "loss" }),
+      "u1"
+    );
+
+    const camp = await getCampaign(id);
+    const stages = camp!.stages as Record<string, Record<string, unknown>>;
+    expect(stages["2"]).toMatchObject({ completed: true, sessionCount: 2 });
+  });
+
+  it("advances the shared doc so a second member sees the progress", async () => {
+    const id = await seedCrewCampaign();
+    // u2 logs the session; the same shared doc is read back.
+    await callCreatePlay(coopPlay({ campaignId: id, stageId: "1" }), "u2");
+
+    const camp = await getCampaign(id);
+    const stages = camp!.stages as Record<string, Record<string, unknown>>;
+    expect(stages["1"].completed).toBe(true);
+  });
+
+  it("rejects a co-op play with no outcome", async () => {
+    await expect(
+      callCreatePlay(coopPlay({ outcome: undefined }), "u1")
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("rejects campaignId without stageId", async () => {
+    await expect(
+      callCreatePlay(coopPlay({ campaignId: "camp1" }), "u1")
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("rejects a non-member advancing the campaign", async () => {
+    const id = await seedCrewCampaign();
+    await expect(
+      callCreatePlay(coopPlay({ campaignId: id, stageId: "1" }), "intruder")
+    ).rejects.toMatchObject({ code: "permission-denied" });
+  });
+
+  it("rejects advancing a campaign that does not exist", async () => {
+    await expect(
+      callCreatePlay(coopPlay({ campaignId: "nope", stageId: "1" }), "u1")
+    ).rejects.toMatchObject({ code: "not-found" });
   });
 });

@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/theme/app_colors.dart';
+import '../library/campaign_record_section.dart';
+import '../library/campaign_registry.dart';
 import 'edit_play_page.dart';
 import 'play_detail_controller.dart';
 
@@ -44,6 +46,15 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
         ),
       );
     }
+  }
+
+  String _coopLine(AppStrings s) {
+    final d = widget.initialData;
+    final result = d.outcome == 'win' ? s.coopTeamWon : s.coopTeamLost;
+    final n = d.stageId == null ? null : int.tryParse(d.stageId!);
+    if (n == null) return result;
+    final axis = stageAxisLabel(s, coopSpecForGame(d.gameId)?.stageAxis);
+    return '$result · ${s.stageLabelNumbered(axis, n)}';
   }
 
   Future<void> _onDelete() async {
@@ -131,19 +142,22 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                 onPressed: () => Navigator.of(context).pop(_mutated),
               ),
               actions: [
-                IconButton(
-                  icon: Icon(
-                    Icons.edit_outlined,
-                    color: state.participants != null
-                        ? context.colors.primary
-                        : context.colors.outline,
-                    size: 20,
+                // Co-op plays are not editable in v1 (updatePlay is
+                // winner-centric); hide the edit affordance for them.
+                if (!widget.initialData.isCoop)
+                  IconButton(
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      color: state.participants != null
+                          ? context.colors.primary
+                          : context.colors.outline,
+                      size: 20,
+                    ),
+                    tooltip: s.commonEdit,
+                    onPressed: state.participants != null
+                        ? () => _onEdit(state)
+                        : null,
                   ),
-                  tooltip: s.commonEdit,
-                  onPressed: state.participants != null
-                      ? () => _onEdit(state)
-                      : null,
-                ),
                 IconButton(
                   icon: const Icon(
                     Icons.delete_outline,
@@ -180,9 +194,25 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
               ),
             ),
 
+            if (widget.initialData.isCoop)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                  child: _CoopResultBanner(
+                    win: widget.initialData.outcome == 'win',
+                    line: _coopLine(s),
+                  ),
+                ),
+              ),
+
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  widget.initialData.isCoop ? 12 : 24,
+                  20,
+                  0,
+                ),
                 child: _SessionInfo(
                   playedAt: state.playedAt,
                   location: state.location,
@@ -233,6 +263,46 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
           child: _ParticipantCard(participant: state.participants![i]),
         ),
         childCount: state.participants!.length,
+      ),
+    );
+  }
+}
+
+// ─── Co-op result banner ──────────────────────────────────────────────────────
+
+class _CoopResultBanner extends StatelessWidget {
+  final bool win;
+  final String line;
+
+  const _CoopResultBanner({required this.win, required this.line});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = win ? context.colors.primary : context.colors.outline;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: win
+            ? context.colors.primary.withAlpha(18)
+            : context.colors.surfaceHigh,
+        border: Border.all(color: color.withAlpha(140)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        children: [
+          Icon(win ? Icons.flag : Icons.flag_outlined, color: color, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              line,
+              style: GoogleFonts.newsreader(
+                color: win ? context.colors.primary : context.colors.onSurface,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

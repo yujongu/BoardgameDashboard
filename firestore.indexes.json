@@ -43,6 +43,14 @@
         { "fieldPath": "gameId", "order": "ASCENDING" },
         { "fieldPath": "playedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "campaigns",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "memberIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "gameId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

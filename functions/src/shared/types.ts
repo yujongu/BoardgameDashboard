@@ -98,6 +98,14 @@ export interface PlayDocument {
   location?: string;
   /** Optional session notes. */
   notes?: string;
+  /** "coop" for cooperative plays; absent/"competitive" otherwise. */
+  mode?: "competitive" | "coop";
+  /** Team result for cooperative plays. */
+  outcome?: "win" | "loss";
+  /** Campaign advanced by a cooperative play, if any. */
+  campaignId?: string;
+  /** Stage recorded by a cooperative play, if any. */
+  stageId?: string;
   /** Server-set creation timestamp. */
   createdAt: Timestamp;
 }
