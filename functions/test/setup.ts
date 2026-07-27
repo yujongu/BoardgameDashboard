@@ -62,6 +62,19 @@ export async function getPlayDoc(playId: string) {
   return snap.exists ? (snap.data() as Record<string, unknown>) : null;
 }
 
+export async function getCampaign(campaignId: string) {
+  const snap = await db.collection("campaigns").doc(campaignId).get();
+  return snap.exists ? (snap.data() as Record<string, unknown>) : null;
+}
+
+/** Seeds a campaign doc directly (bypasses rules via Admin SDK) for tests. */
+export async function seedCampaign(
+  campaignId: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  await db.collection("campaigns").doc(campaignId).set(data);
+}
+
 export async function getParticipants(playId: string) {
   const snap = await db
     .collection("plays")

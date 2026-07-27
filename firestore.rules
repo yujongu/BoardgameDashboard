@@ -28,6 +28,20 @@ service cloud.firestore {
       }
     }
 
+    // shared cooperative campaigns (table-scoped) — any member can read and make
+    // manual edits (roster/stage tweaks); the creator must include themselves as
+    // a member. Stage advances from co-op play logging are written by the
+    // createPlay Cloud Function via the Admin SDK, which bypasses these rules.
+    match /campaigns/{campaignId} {
+      allow read: if request.auth != null
+                  && request.auth.uid in resource.data.memberIds;
+      allow create: if request.auth != null
+                    && request.auth.uid in request.resource.data.memberIds
+                    && request.auth.uid == request.resource.data.createdBy;
+      allow update, delete: if request.auth != null
+                            && request.auth.uid in resource.data.memberIds;
+    }
+
     // user search index — any authenticated user can read (used for participant search);
     // owner can write their own doc (name/photoUrl updates from client)
     match /userSearch/{userId} {

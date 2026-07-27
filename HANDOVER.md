@@ -1,3 +1,96 @@
+# Handover — 2026-07-24 (session 2: cooperative play logging)
+
+## Current Milestone
+
+**Cooperative / campaign game support (Option 4 — unification).** Games like The Crew,
+Gloomhaven, and Pandemic have no winner: a team completes stages or wins/loses together. Logging a
+co-op session now (a) records a play AND (b) advances a **shared, table-scoped campaign board**
+atomically. Plan file: `~/.claude/plans/streamed-waddling-rain.md`. **v1 is phased to 3 games**:
+The Crew ×2 (linear missions), Gloomhaven (scenario board), Pandemic (one-shot, no board).
+
+Status: **fully implemented and verified end-to-end on the iOS simulator; NOT yet committed.**
+`flutter analyze` clean; **93 Flutter tests** + **132 Functions tests** pass; a new
+`integration_test/coop_test.dart` drives the full co-op flow on an iPhone sim against the
+emulator suite (register → log a WON Crew mission on a new table → verify the campaign board
+advanced to Mission 2 with a "Team won · Mission 1" history row) — **passing**.
+
+### Two bugs the iOS run surfaced and fixed (both committed to the working tree)
+1. **`functions/src/shared/db.ts` used the wrong emulator project.** It hardcoded
+   `projectId: "demo-boardgame-test"` whenever `FIRESTORE_EMULATOR_HOST` was set. The
+   Firestore emulator partitions data **per project id**, so the real app (`gameshelf-283dc`)
+   wrote campaigns the Function could never read → co-op saves failed with "Campaign not
+   found." Fixed to `process.env.GCLOUD_PROJECT || "demo-boardgame-test"` (jest pre-initializes,
+   so it's unaffected; the Functions emulator injects the real project). This was a **latent
+   pre-existing bug** affecting ALL app→Function emulator writes, not just co-op.
+2. **`firebase.json` had no `auth` emulator entry**, so `--only auth` was silently ignored
+   ("Not starting the auth emulator") and sign-in failed. Added `"auth":{"port":9099}`.
+
+### How to re-run the iOS integration test
+```
+cd functions && npm run build
+firebase emulators:start --only auth,functions,firestore --project gameshelf-283dc   # background
+(cd functions && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=gameshelf-283dc \
+   node seed-board-games.js board-games-seed.json)                                    # seed catalog
+xcrun simctl boot <iphone-udid>
+flutter test integration_test/coop_test.dart -d <iphone-udid> --dart-define=USE_EMULATORS=true
+```
+
+## Context & Decisions (this session)
+
+- **Locked product decisions:** (1) co-op plays do **not** touch win stats — the `createPlay`
+  co-op branch skips all `stats`/`gameStats`/`library` writes; (2) campaigns are **table-scoped**
+  in a **new top-level `campaigns/{campaignId}`** collection (not `users/{uid}/campaigns/{gameId}`)
+  — one shared doc per table, so "everyone at the table advances" needs no fan-out; (3) phased v1.
+- **Registry** `lib/features/library/campaign_registry.dart`: `CampaignSpec{missionCount}` → generic
+  `CoopSpec{hasCampaign, stageAxis(enum), stageCount}`. `coopSpecForGame` (any co-op game) +
+  `campaignForGame` (only games with a board).
+- **Model** `lib/shared/models/campaign.dart` (new, Firebase-free): `Campaign` + `CampaignStage`
+  (stages keyed by id "1".."N"; `nextIncompleteStage` derives the linear "current"). Co-op fields
+  added to `play.dart` (`PlayMode` enum, `outcome`, `campaignId`, `stageId`, `difficulty`,
+  `teamScore`) on `CreatePlayInput`/`PlaySummary`/`PlayDetail`.
+- **Cloud Function** `functions/src/plays/createPlay.ts`: `mode` discriminator. Co-op skips the
+  winner check + all aggregate writes; if `campaignId` present, reads the campaign (verifies caller
+  ∈ `memberIds`), and in the same transaction advances `stages[stageId]` (`completed` **latches**
+  true on a win, `sessionCount++`). `listMyPlays` + `PlayDocument` type now return co-op fields.
+- **Repository** `campaign_repository.dart` retargeted to `campaigns/{campaignId}`:
+  `createCampaign`, `fetchCampaignsForGame` (array-contains uid + gameId), `saveCampaign`.
+- **Rules/index:** new `campaigns` block (member read; creator-includes-self create; member
+  update/delete — server advances bypass via Admin SDK) + composite index (memberIds + gameId).
+- **UI:** `crew_record_section.dart`/`crew_campaign.dart` **deleted**, replaced by
+  `campaign_record_section.dart` (`CampaignSection` lists a game's tables + "new table";
+  `CampaignCard` = generalized Crew card). `game_detail_page.dart` shows it for any board game +
+  renders co-op history rows ("Team won · Mission N"). `add_play_screen.dart`/notifier gain a co-op
+  branch (WON/LOST + table picker + stage stepper, winner UI hidden). `play_detail_page.dart` shows
+  a co-op result banner and **hides edit** for co-op plays.
+
+## The 'Gravel'
+
+- **On-device verification: DONE** on the iPhone 17 simulator via `integration_test/coop_test.dart`
+  (see above). Note: co-op games do NOT appear in the **Library** tab (co-op skips library
+  writes), so the campaign board is reached via **Library → Browse all games** (catalog browse).
+  Worth confirming this is the intended discovery path — or reconsider excluding co-op from
+  library `playCount` (see assumption below).
+- **Nothing committed.** All changes are working-tree only, on `main`. Branch before committing.
+  Includes the `db.ts` + `firebase.json` fixes above.
+- **Rules/index not deployed** (`firebase deploy --only firestore:rules,firestore:indexes`).
+- **Co-op edit is intentionally disabled** — `updatePlay` is still winner-centric; editing a co-op
+  play would fail, so the edit button is hidden for them. Deferred.
+- **Assumption baked in:** co-op plays are excluded from library `playCount` too (not just wins).
+  They still appear in game-detail history via `fetchPlaysByGame`. Revisit if the user wants co-op
+  plays counted in the "plays" totals.
+- Legacy Crew data migration is a **script, not yet run**: `functions/migrate-crew-campaigns.js`
+  (idempotent via a `migratedFrom` marker). Run once before/after deploy.
+- Gloomhaven uses a **flat 95-scenario count** (no branching tree) for v1.
+
+## Next Immediate Step
+
+Start emulators (`firebase emulators:start`), run the app with
+`flutter run --dart-define=USE_EMULATORS=true`, and walk the co-op flow: open The Crew → create a
+table → log a WON session on a mission → confirm the board advances and the history row reads
+"Team won · Mission N". Then branch + commit, deploy rules/indexes, and run the migration script.
+
+---
+
 # Handover — 2026-07-24
 
 ## Current Milestone

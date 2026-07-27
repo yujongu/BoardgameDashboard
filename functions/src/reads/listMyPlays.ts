@@ -17,6 +17,9 @@ interface PlaySummary {
   gameName: string;
   playedAt: string;
   participantCount: number;
+  mode?: "competitive" | "coop";
+  outcome?: "win" | "loss";
+  stageId?: string;
 }
 
 interface ListMyPlaysResult {
@@ -111,6 +114,11 @@ export const listMyPlays = onCall<ListMyPlaysData>(async (request) => {
         gameName: play.gameName,
         playedAt: safeTimestampToISO(play.playedAt, "playedAt", doc.id),
         participantCount: play.participantCount,
+        ...(play.mode === "coop" && {
+          mode: "coop" as const,
+          outcome: play.outcome,
+          ...(play.stageId && { stageId: play.stageId }),
+        }),
       };
     });
 

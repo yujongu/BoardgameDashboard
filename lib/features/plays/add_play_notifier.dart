@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../shared/models/campaign.dart';
 import '../../shared/models/catalog_game.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/repositories/play_repository.dart';
+import '../library/campaign_registry.dart';
 
 class ParticipantData {
   final String name;
@@ -41,6 +43,12 @@ class AddPlayState {
   final String? saveError;
   final String? currentUserId;
 
+  // Cooperative state (null/unset for competitive games).
+  final CoopSpec? coopSpec;
+  final String? outcome; // 'win' | 'loss'
+  final Campaign? campaign;
+  final int? stage;
+
   const AddPlayState({
     this.selectedGame,
     this.participants = const [],
@@ -48,6 +56,10 @@ class AddPlayState {
     this.saving = false,
     this.saveError,
     this.currentUserId,
+    this.coopSpec,
+    this.outcome,
+    this.campaign,
+    this.stage,
   });
 
   int get _effectiveMin => selectedGame?.minPlayers ?? 1;
@@ -55,10 +67,18 @@ class AddPlayState {
 
   bool get canAddParticipant => participants.length < _effectiveMax;
 
+  bool get isCoop => coopSpec != null;
+  bool get hasCampaign => coopSpec?.hasCampaign ?? false;
+
   bool get canSave {
     if (selectedGame == null) return false;
     if (participants.length < _effectiveMin) return false;
     if (!participants.any((p) => p.name.trim().isNotEmpty)) return false;
+    if (isCoop) {
+      if (outcome == null) return false;
+      if (hasCampaign && (campaign == null || stage == null)) return false;
+      return true;
+    }
     if (!participants.any((p) => p.isWinner && p.name.trim().isNotEmpty)) {
       return false;
     }
@@ -82,6 +102,14 @@ class AddPlayState {
     bool? saving,
     String? saveError,
     bool clearSaveError = false,
+    CoopSpec? coopSpec,
+    bool clearCoopSpec = false,
+    String? outcome,
+    bool clearOutcome = false,
+    Campaign? campaign,
+    bool clearCampaign = false,
+    int? stage,
+    bool clearStage = false,
   }) => AddPlayState(
     selectedGame: selectedGame ?? this.selectedGame,
     participants: participants ?? this.participants,
@@ -89,6 +117,10 @@ class AddPlayState {
     saving: saving ?? this.saving,
     saveError: clearSaveError ? null : saveError ?? this.saveError,
     currentUserId: currentUserId,
+    coopSpec: clearCoopSpec ? null : coopSpec ?? this.coopSpec,
+    outcome: clearOutcome ? null : outcome ?? this.outcome,
+    campaign: clearCampaign ? null : campaign ?? this.campaign,
+    stage: clearStage ? null : stage ?? this.stage,
   );
 }
 
@@ -116,8 +148,26 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
   final PlayRepository _repo;
 
   void onGameSelected(CatalogGame game) {
-    state = state.copyWith(selectedGame: game);
+    final spec = coopSpecForGame(game.gameId);
+    state = state.copyWith(
+      selectedGame: game,
+      coopSpec: spec,
+      clearCoopSpec: spec == null,
+      clearOutcome: true,
+      clearCampaign: true,
+      clearStage: true,
+    );
   }
+
+  void setOutcome(String outcome) => state = state.copyWith(outcome: outcome);
+
+  /// Selects a table and defaults the stage to its next incomplete one.
+  void setCampaign(Campaign campaign) {
+    final stage = campaign.nextIncompleteStage(state.coopSpec?.stageCount ?? 1);
+    state = state.copyWith(campaign: campaign, stage: stage);
+  }
+
+  void setStage(int stage) => state = state.copyWith(stage: stage);
 
   void addParticipant() {
     if (!state.canAddParticipant) return;
@@ -189,6 +239,7 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
 
     state = state.copyWith(saving: true, clearSaveError: true);
     try {
+      final coop = state.isCoop;
       await _repo.createPlay(
         CreatePlayInput(
           gameId: state.selectedGame!.gameId,
@@ -199,6 +250,10 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
               ? location!.trim()
               : null,
           notes: (notes?.trim().isNotEmpty ?? false) ? notes!.trim() : null,
+          mode: coop ? PlayMode.coop : PlayMode.competitive,
+          outcome: coop ? state.outcome : null,
+          campaignId: coop ? state.campaign?.id : null,
+          stageId: coop ? state.stage?.toString() : null,
         ),
       );
       return true;

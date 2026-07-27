@@ -72,6 +72,12 @@ export interface CreatePlayInput {
   participants: ParticipantInput[];
   location?: string;
   notes?: string;
+  mode?: "competitive" | "coop";
+  outcome?: "win" | "loss";
+  campaignId?: string;
+  stageId?: string;
+  difficulty?: string;
+  teamScore?: number;
 }
 
 export interface UpdatePlayInput extends CreatePlayInput {

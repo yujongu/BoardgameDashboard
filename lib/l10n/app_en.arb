@@ -463,5 +463,37 @@
   "lostCitiesPurple": "Purple",
   "lostCitiesGreen": "Green",
   "lostCitiesRed": "Red",
-  "lostCitiesScorePrefix": "Score: "
+  "lostCitiesScorePrefix": "Score: ",
+
+  "campaignsTitle": "Campaigns",
+  "campaignNewTable": "NEW TABLE",
+  "campaignNoTables": "No campaigns yet",
+  "campaignProgressCaps": "PROGRESS",
+  "campaignUntitledTable": "Untitled table",
+  "campaignStageProgress": "{done} / {total}",
+  "@campaignStageProgress": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "campaignCreateFailed": "Could not create table",
+  "addPlayResult": "RESULT",
+  "addPlayWon": "WON",
+  "addPlayLost": "LOST",
+  "addPlayTableCaps": "TABLE",
+  "addPlaySelectTable": "Select a table",
+  "addPlayStageCaps": "STAGE",
+  "stageAxisMission": "Mission",
+  "stageAxisScenario": "Scenario",
+  "stageAxisMonth": "Month",
+  "stageLabelNumbered": "{axis} {n}",
+  "@stageLabelNumbered": {
+    "placeholders": {
+      "axis": { "type": "String" },
+      "n": { "type": "int" }
+    }
+  },
+  "coopTeamWon": "Team won",
+  "coopTeamLost": "Team lost"
 }

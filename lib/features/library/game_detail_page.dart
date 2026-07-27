@@ -9,7 +9,7 @@ import '../../shared/theme/app_colors.dart';
 import '../plays/play_detail_page.dart';
 import '../tools/presentation/widgets/tool_card.dart';
 import 'campaign_registry.dart';
-import 'crew_record_section.dart';
+import 'campaign_record_section.dart';
 import '../tools/registry/game_tools_registry.dart';
 
 class GameDetailPage extends ConsumerStatefulWidget {
@@ -143,7 +143,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
   // ── Data ─────────────────────────────────────────────────────────────────────
 
   Widget _buildDataScaffold(List<PlaySummary> plays) {
-    final campaign = campaignForGame(widget.gameId);
+    final campaignSpec = campaignForGame(widget.gameId);
     return Scaffold(
       backgroundColor: context.colors.background,
       body: CustomScrollView(
@@ -191,14 +191,15 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
             ),
           ),
 
-          // Campaign record sheet — shown for any game in the campaign registry.
-          if (campaign != null)
+          // Campaigns — shown for any cooperative game with a stage board.
+          if (campaignSpec != null)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-                child: CrewRecordSection(
+                child: CampaignSection(
                   gameId: widget.gameId,
-                  missionCount: campaign.missionCount,
+                  gameName: widget.gameName,
+                  spec: campaignSpec,
                 ),
               ),
             ),
@@ -366,6 +367,18 @@ class _PlayRow extends StatelessWidget {
 
   const _PlayRow({required this.play, required this.onTap});
 
+  String _subtitle(BuildContext context) {
+    final s = AppStrings.of(context);
+    if (!play.isCoop) return s.playersCount(play.participantCount);
+
+    final result = play.outcome == 'win' ? s.coopTeamWon : s.coopTeamLost;
+    final stageId = play.stageId;
+    final n = stageId == null ? null : int.tryParse(stageId);
+    if (n == null) return result;
+    final axis = stageAxisLabel(s, coopSpecForGame(play.gameId)?.stageAxis);
+    return '$result · ${s.stageLabelNumbered(axis, n)}';
+  }
+
   static String _formatDate(DateTime dt) {
     const months = [
       'Jan',
@@ -427,7 +440,7 @@ class _PlayRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    AppStrings.of(context).playersCount(play.participantCount),
+                    _subtitle(context),
                     style: GoogleFonts.spaceGrotesk(
                       color: context.colors.outline,
                       fontSize: 11,

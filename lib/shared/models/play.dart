@@ -19,6 +19,11 @@ class ParticipantInput {
   };
 }
 
+/// Play mode discriminator. Competitive plays record a per-player winner;
+/// cooperative plays record one shared team [outcome] and optionally advance a
+/// campaign stage.
+enum PlayMode { competitive, coop }
+
 class CreatePlayInput {
   const CreatePlayInput({
     required this.gameId,
@@ -27,6 +32,12 @@ class CreatePlayInput {
     required this.participants,
     this.location,
     this.notes,
+    this.mode = PlayMode.competitive,
+    this.outcome,
+    this.campaignId,
+    this.stageId,
+    this.difficulty,
+    this.teamScore,
   });
 
   final String gameId;
@@ -36,6 +47,14 @@ class CreatePlayInput {
   final String? location;
   final String? notes;
 
+  // Cooperative fields (ignored when [mode] is competitive).
+  final PlayMode mode;
+  final String? outcome; // 'win' | 'loss'
+  final String? campaignId;
+  final String? stageId;
+  final String? difficulty;
+  final double? teamScore;
+
   Map<String, dynamic> toJson() => {
     'gameId': gameId,
     'gameName': gameName,
@@ -43,6 +62,12 @@ class CreatePlayInput {
     'participants': participants.map((p) => p.toJson()).toList(),
     if (location != null) 'location': location,
     if (notes != null) 'notes': notes,
+    'mode': mode.name,
+    if (outcome != null) 'outcome': outcome,
+    if (campaignId != null) 'campaignId': campaignId,
+    if (stageId != null) 'stageId': stageId,
+    if (difficulty != null) 'difficulty': difficulty,
+    if (teamScore != null) 'teamScore': teamScore,
   };
 }
 
@@ -83,6 +108,9 @@ class PlaySummary {
     required this.gameName,
     required this.playedAt,
     required this.participantCount,
+    this.mode = PlayMode.competitive,
+    this.outcome,
+    this.stageId,
   });
 
   final String playId;
@@ -90,6 +118,13 @@ class PlaySummary {
   final String gameName;
   final DateTime playedAt;
   final int participantCount;
+
+  // Cooperative summary fields — null/competitive for competitive plays.
+  final PlayMode mode;
+  final String? outcome; // 'win' | 'loss'
+  final String? stageId;
+
+  bool get isCoop => mode == PlayMode.coop;
 
   @override
   bool operator ==(Object other) =>
@@ -104,8 +139,14 @@ class PlaySummary {
     gameName: json['gameName'] as String,
     playedAt: DateTime.parse(json['playedAt'] as String),
     participantCount: json['participantCount'] as int,
+    mode: _parseMode(json['mode']),
+    outcome: json['outcome'] as String?,
+    stageId: json['stageId'] as String?,
   );
 }
+
+PlayMode _parseMode(Object? raw) =>
+    raw == 'coop' ? PlayMode.coop : PlayMode.competitive;
 
 class ListMyPlaysResult {
   const ListMyPlaysResult({required this.plays, required this.nextCursor});
@@ -150,6 +191,12 @@ class PlayDetail {
     required this.participants,
     this.location,
     this.notes,
+    this.mode = PlayMode.competitive,
+    this.outcome,
+    this.campaignId,
+    this.stageId,
+    this.difficulty,
+    this.teamScore,
   });
 
   final String playId;
@@ -161,6 +208,16 @@ class PlayDetail {
   final List<ParticipantResult> participants;
   final String? location;
   final String? notes;
+
+  // Cooperative fields — null/competitive for competitive plays.
+  final PlayMode mode;
+  final String? outcome; // 'win' | 'loss'
+  final String? campaignId;
+  final String? stageId;
+  final String? difficulty;
+  final double? teamScore;
+
+  bool get isCoop => mode == PlayMode.coop;
 
   factory PlayDetail.fromJson(Map<String, dynamic> json) => PlayDetail(
     playId: json['playId'] as String,
@@ -177,6 +234,12 @@ class PlayDetail {
         .toList(),
     location: json['location'] as String?,
     notes: json['notes'] as String?,
+    mode: _parseMode(json['mode']),
+    outcome: json['outcome'] as String?,
+    campaignId: json['campaignId'] as String?,
+    stageId: json['stageId'] as String?,
+    difficulty: json['difficulty'] as String?,
+    teamScore: (json['teamScore'] as num?)?.toDouble(),
   );
 }
 
