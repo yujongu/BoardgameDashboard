@@ -150,15 +150,40 @@ properly rather than chasing the lockfile.
   exactly the new positive cases and nothing else.
 - Suites after both: `flutter analyze` clean, **295 Dart tests**, **150 functions tests**.
 
+## D4 + D5 — also FIXED this session
+
+- **D4 (duplicate participant), server**: `assertNoDuplicateParticipants` in `shared/auth.ts`
+  rejects a repeated registered `userId` from `createPlay`/`updatePlay` with
+  `invalid-argument`. Guests are **deliberately exempt** — `userId` is null, they have no
+  derived data, and Part 3 of the test plan expects two same-named guests to be allowed.
+- **D4, client — this was the real root cause**: `ParticipantListSection` read
+  `addPlayProvider` for both its "Added" marks *and* its at-max notice, even when the sheet
+  was opened from Edit Play. A shared widget with a hidden dependency on one of its two
+  callers' state. Both it and `ParticipantPickerBottomSheet` now take `addedUserIds` and
+  `atMax` as **required** parameters; the provider import is gone. Add Play wraps the sheet in
+  a `Consumer` and Edit in a `StatefulBuilder` so both keep updating live as players are added
+  — without that, a *newly* added player would go unmarked and could be added twice again.
+- **D5 (max players)**: `canSave` now rejects `participants.length > _effectiveMax`, with a
+  new `aboveMaxPlayers` flag driving the save-bar label ("Remove N to fit M players", new
+  `maxPlayersExceeded` l10n key — run `flutter gen-l10n` after touching the arb).
+  Participants are **not** pruned on game switch: an existing test pins that behaviour, and
+  silently deleting entered players is worse than blocking the save.
+- **Known residual on D5**: `EditPlayPage` holds only `gameId`/`gameName`, not min/max, so it
+  cannot evaluate the cap and passes `atMax: false`. Editing a play can still exceed the
+  maximum. Fixing it means resolving the catalog game in the edit page — recorded in
+  `docs/defects.md` D5 rather than left silent.
+- Both guards verified to bite: neutering each fails exactly its new cases.
+- **Verified in the simulator**: the Edit picker now shows `Bob · Added` (was plain `Bob`) and
+  tapping him adds no row; switching a 6-player play to 7 Wonders Duel shows
+  "Remove 4 to fit 2 players" and the save bar is inert. Live emulator: `updatePlay` with a
+  duplicate returns `400 INVALID_ARGUMENT` and leaves `participantCount` at 2; a play with two
+  guests named "Sam" still returns 200.
+- Suites after both: `flutter analyze` clean, **300 Dart tests**, **153 functions tests**.
+
 ## Next Immediate Step
 
-D1, D3 and D6 are done. Remaining, in rough value order:
+D1, D3, D4, D5 and D6 are done. Remaining, in rough value order:
 
-- **D4 / 1.5** — dedupe `participants` by `userId` server-side in `updatePlay`/`createPlay`,
-  and seed the Edit picker's "already added" set from the play being edited. The server half
-  also caps the blast radius of any future authorization slip.
-- **D5 / 1.6** — add the max-players check to `AddPlayState.canSave` and prune (or block) on
-  game switch. Currently a 6-player 7 Wonders Duel play saves happily.
 - **D8 / 1.1** — needs a **product decision** first: should co-op count toward plays, and
   toward win-rate's denominator? Don't code before that is settled.
 - **D13 / 1.3** — also a product decision: does a campaign stage "latch" once beaten? If yes,

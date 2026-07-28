@@ -6,8 +6,8 @@ Results of executing **Part 1** of `docs/manual-test-plan.md` against two iOS si
 
 Companion doc: `docs/backlog.md` (feature gaps). This file is runtime defects only.
 
-Scoreboard: **14 confirmed** (3 fixed — D1, D3, D6), 1 not a defect (1.12), 1 not runnable
-here (1.16).
+Scoreboard: **14 confirmed** (5 fixed — D1, D3, D4, D5, D6), 1 not a defect (1.12), 1 not
+runnable here (1.16).
 Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong UI · **S4** polish.
 
 ---
@@ -111,7 +111,16 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 - **Files:** `functions/src/plays/deletePlay.ts:56` (destructure `mode` alongside `gameId`),
   rollback loop at lines 106-112.
 
-### D4 (plan 1.5). Edit Play can add a participant who is already in the play — **S2**
+### D4 (plan 1.5). Edit Play can add a participant who is already in the play — **S2** — ✅ FIXED 2026-07-28
+
+> **Fixed, both layers.** Server: `assertNoDuplicateParticipants` rejects a repeated
+> registered `userId` in `createPlay`/`updatePlay` with `invalid-argument` (guests are exempt
+> — two guests may share a name). Client: `ParticipantPickerBottomSheet` and
+> `ParticipantListSection` now take `addedUserIds`/`atMax` as required parameters instead of
+> reading `addPlayProvider`, which was the actual root cause — a shared sheet with a hidden
+> dependency on one of its two callers' state. Edit passes its own `_players`, wrapped in a
+> `StatefulBuilder` so newly added players are marked live.
+
 
 - **What's wrong:** the picker's "Added" marks come from the Add-Play provider, so when opened
   from **Edit** nobody is marked as already present. Adding the same friend twice is silently
@@ -130,7 +139,18 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 - **Files:** `lib/features/plays/edit_play_page.dart`, the participant picker sheet,
   `functions/src/plays/updatePlay.ts`, `functions/src/plays/createPlay.ts:180-207`.
 
-### D5 (plan 1.6). A play can exceed the game's maximum player count — **S2**
+### D5 (plan 1.6). A play can exceed the game's maximum player count — **S2** — ✅ FIXED (Add Play)
+
+> **Fixed for Add Play.** `canSave` now rejects `participants.length > _effectiveMax`, and a
+> new `aboveMaxPlayers` flag drives a save-bar label ("Remove N to fit M players").
+> Participants are deliberately **not** pruned on game switch — an existing test pins that
+> behaviour, and silently deleting players the user entered is worse than blocking the save.
+>
+> **Residual, tracked here:** Edit Play carries only `gameId`/`gameName`, not the game's
+> min/max, so it cannot evaluate the cap; it passes `atMax: false` to the picker. Editing an
+> existing play can therefore still exceed the maximum. Fixing it means resolving the catalog
+> game in `EditPlayPage` — deliberately out of scope for this pass.
+
 
 - **What's wrong:** `AddPlayState.canSave` checks `_effectiveMin` but never `_effectiveMax`,
   and switching games does not prune the existing participant list. `canAddParticipant` does

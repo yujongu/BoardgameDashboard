@@ -143,13 +143,26 @@ class _EditPlayPageState extends State<EditPlayPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ParticipantPickerBottomSheet(
-        onAdd: (name, userId) {
-          final entry = _PlayerEntry(userId: userId);
-          entry.nameController.text = name;
-          entry.nameController.addListener(() => setState(() {}));
-          setState(() => _players.add(entry));
-        },
+      // StatefulBuilder so the sheet re-renders as players are added while it
+      // is open; the parent's setState alone does not rebuild a route's sheet.
+      builder: (_) => StatefulBuilder(
+        builder: (context, setSheetState) => ParticipantPickerBottomSheet(
+          onAdd: (name, userId) {
+            final entry = _PlayerEntry(userId: userId);
+            entry.nameController.text = name;
+            entry.nameController.addListener(() => setState(() {}));
+            setState(() => _players.add(entry));
+            setSheetState(() {});
+          },
+          // Marks players already in the play so they cannot be added twice.
+          addedUserIds: _players
+              .where((p) => p.userId != null)
+              .map((p) => p.userId!)
+              .toSet(),
+          // Edit does not carry the game's player limits (only gameId/gameName),
+          // so it cannot evaluate the cap here. Tracked in docs/defects.md D5.
+          atMax: false,
+        ),
       ),
     );
   }

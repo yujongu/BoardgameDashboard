@@ -1,6 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../shared/db";
+import { assertNoDuplicateParticipants } from "../shared/auth";
 import {
   gameStatsRef,
   incrementGameStats,
@@ -71,6 +72,7 @@ function validate(data: CreatePlayData): void {
       );
     }
   }
+  assertNoDuplicateParticipants(data.participants);
 
   if (isCoop(data)) {
     if (data.outcome !== "win" && data.outcome !== "loss") {

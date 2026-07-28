@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_colors.dart';
-import 'add_play_notifier.dart';
 import 'participant_list_section.dart';
 import 'participant_picker_controller.dart';
 import 'participant_search_section.dart';
@@ -14,7 +13,18 @@ import 'participant_search_section.dart';
 class ParticipantPickerBottomSheet extends ConsumerStatefulWidget {
   final void Function(String name, String? userId) onAdd;
 
-  const ParticipantPickerBottomSheet({super.key, required this.onAdd});
+  /// User ids already in the play, passed down to mark them "Added".
+  final Set<String> addedUserIds;
+
+  /// True when the play is already at the game's maximum player count.
+  final bool atMax;
+
+  const ParticipantPickerBottomSheet({
+    super.key,
+    required this.onAdd,
+    required this.addedUserIds,
+    required this.atMax,
+  });
 
   @override
   ConsumerState<ParticipantPickerBottomSheet> createState() =>
@@ -58,7 +68,7 @@ class _ParticipantPickerBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    final atMax = !ref.watch(addPlayProvider).canAddParticipant;
+    final atMax = widget.atMax;
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -86,7 +96,13 @@ class _ParticipantPickerBottomSheetState
                   ),
                 ),
               ),
-            Expanded(child: ParticipantListSection(onAdd: _onAdd)),
+            Expanded(
+              child: ParticipantListSection(
+                onAdd: _onAdd,
+                addedUserIds: widget.addedUserIds,
+                atMax: atMax,
+              ),
+            ),
           ],
         ),
       ),

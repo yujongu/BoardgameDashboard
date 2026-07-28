@@ -14,20 +14,30 @@ import 'participant_picker_controller.dart';
 class ParticipantListSection extends ConsumerWidget {
   final void Function(String name, String? userId) onAdd;
 
-  const ParticipantListSection({super.key, required this.onAdd});
+  /// User ids already in the play being edited, marked "Added" and not tappable.
+  ///
+  /// Supplied by the caller rather than read from [addPlayProvider]: this sheet
+  /// is shared by Add Play and Edit Play, and reading the Add-Play state from
+  /// Edit marked nobody as added, letting the same friend be added twice.
+  final Set<String> addedUserIds;
+
+  /// True when the play is already at the game's maximum player count.
+  final bool atMax;
+
+  const ParticipantListSection({
+    super.key,
+    required this.onAdd,
+    required this.addedUserIds,
+    required this.atMax,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AppStrings.of(context);
     final pickerState = ref.watch(participantPickerProvider);
-    final addPlayState = ref.watch(addPlayProvider);
     final friendsAsync = ref.watch(friendListProvider);
 
-    final selectedIds = addPlayState.participants
-        .where((p) => p.userId != null)
-        .map((p) => p.userId!)
-        .toSet();
-    final atMax = !addPlayState.canAddParticipant;
+    final selectedIds = addedUserIds;
 
     // skipLoadingOnRefresh is true by default — when retry() uses
     // copyWithPrevious, previous data stays visible instead of flashing a

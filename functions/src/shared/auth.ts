@@ -35,3 +35,31 @@ export function assertParticipant(play: PlayDocument, uid: string): void {
     );
   }
 }
+
+/**
+ * Throws `invalid-argument` when a registered user appears more than once in
+ * [participants].
+ *
+ * A duplicated userId is counted once per row by every write path — the play's
+ * participantCount, its participantIds array, and that user's stats, gameStats
+ * and library — so a single play inflates their totals by the number of rows.
+ * deletePlay aggregates per unique userId when rolling back, so the inflation
+ * is not even symmetrical: it survives deletion.
+ *
+ * Guests carry userId === null and are deliberately exempt — two guests may
+ * share a name (or have none), and they have no derived data to double-count.
+ */
+export function assertNoDuplicateParticipants(
+  participants: readonly { userId: string | null }[]
+): void {
+  const ids = participants
+    .map((p) => p.userId)
+    .filter((id): id is string => id !== null);
+
+  if (new Set(ids).size !== ids.length) {
+    throw new HttpsError(
+      "invalid-argument",
+      "A player may only appear once in a play."
+    );
+  }
+}

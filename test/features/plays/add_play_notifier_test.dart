@@ -201,6 +201,75 @@ void main() {
       expect(notifier.state.canSave, isTrue);
     });
 
+    // ── maximum player count (defects.md D5) ─────────────────────────────────
+    //
+    // canSave checked the minimum but never the maximum, and onGameSelected
+    // deliberately keeps participants (see the trim test above). Switching to a
+    // game with a smaller cap therefore allowed, and saved, a play with more
+    // players than the game permits — a 6-player 7 Wonders Duel reached
+    // Firestore with participantCount 6.
+
+    test('canSave is false when the play exceeds the game maximum', () {
+      notifier.onGameSelected(game3to6);
+      addNamed('Alice');
+      addNamed('Bob');
+      addNamed('Carol');
+      notifier.toggleWinner(0);
+      expect(notifier.state.canSave, isTrue);
+
+      // Same three players, now in a strictly 2-player game.
+      notifier.onGameSelected(game2to2);
+
+      expect(notifier.state.canSave, isFalse);
+    });
+
+    test('aboveMaxPlayers reports the overflow after a game switch', () {
+      notifier.onGameSelected(game3to6);
+      addNamed('Alice');
+      addNamed('Bob');
+      addNamed('Carol');
+      expect(notifier.state.aboveMaxPlayers, isFalse);
+
+      notifier.onGameSelected(game2to2);
+
+      expect(notifier.state.aboveMaxPlayers, isTrue);
+      expect(notifier.state.maxPlayers, 2);
+      expect(notifier.state.participants.length, 3);
+    });
+
+    test('aboveMaxPlayers is false at exactly the maximum', () {
+      notifier.onGameSelected(game2to2);
+      addNamed('Alice');
+      addNamed('Bob');
+
+      expect(notifier.state.aboveMaxPlayers, isFalse);
+      expect(notifier.state.canSave, isFalse); // no winner yet
+      notifier.toggleWinner(0);
+      expect(notifier.state.canSave, isTrue);
+    });
+
+    test('removing the overflow re-enables saving', () {
+      notifier.onGameSelected(game3to6);
+      addNamed('Alice');
+      addNamed('Bob');
+      addNamed('Carol');
+      notifier.toggleWinner(0);
+      notifier.onGameSelected(game2to2);
+      expect(notifier.state.canSave, isFalse);
+
+      notifier.removeParticipant(2);
+
+      expect(notifier.state.aboveMaxPlayers, isFalse);
+      expect(notifier.state.canSave, isTrue);
+    });
+
+    test('no game selected imposes no maximum', () {
+      addNamed('Alice');
+      addNamed('Bob');
+
+      expect(notifier.state.aboveMaxPlayers, isFalse);
+    });
+
     // ── playerCountText ──────────────────────────────────────────────────────
 
     test('participant count and maxPlayers reflect a game with maxPlayers', () {

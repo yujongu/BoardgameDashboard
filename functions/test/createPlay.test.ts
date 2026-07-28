@@ -327,6 +327,45 @@ describe("createPlay", () => {
     ).rejects.toMatchObject({ code: "invalid-argument" });
   });
 
+  // Regression for defects.md D4: a duplicated userId was counted once per row
+  // by participantCount, participantIds, stats, gameStats and library, so one
+  // play inflated that user's totals.
+  it("throws invalid-argument when a registered user appears twice", async () => {
+    await expect(
+      callCreatePlay(
+        {
+          ...CHESS,
+          playedAt: PLAYED_AT,
+          participants: [
+            { userId: "u1", name: "Alice", isWinner: true },
+            { userId: "u2", name: "Bob", isWinner: false },
+            { userId: "u2", name: "Bob", isWinner: false },
+          ],
+        },
+        "u1"
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("allows two guests to share a name", async () => {
+    // Guests carry userId null, have no derived data, and may legitimately
+    // repeat — the duplicate check must not catch them.
+    const { playId } = await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: true },
+          { userId: null, name: "Sam", isWinner: false },
+          { userId: null, name: "Sam", isWinner: false },
+        ],
+      },
+      "u1"
+    );
+
+    expect(await getParticipants(playId)).toHaveLength(3);
+  });
+
   it("throws invalid-argument when no winner is set", async () => {
     await expect(
       callCreatePlay(

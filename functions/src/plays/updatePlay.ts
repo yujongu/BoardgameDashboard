@@ -8,7 +8,7 @@ import {
 } from "firebase-admin/firestore";
 import { db } from "../shared/db";
 import { gameStatsRef, statsRef, userLibraryRef } from "../shared/helpers";
-import { assertParticipant } from "../shared/auth";
+import { assertParticipant, assertNoDuplicateParticipants } from "../shared/auth";
 import { ParticipantDocument, PlayDocument, UserLibraryDocument } from "../shared/types";
 
 // ─── Input / output types ─────────────────────────────────────────────────────
@@ -269,6 +269,7 @@ function validate(data: UpdatePlayData): void {
       );
     }
   }
+  assertNoDuplicateParticipants(data.participants);
 }
 
 // ─── Callable function ────────────────────────────────────────────────────────

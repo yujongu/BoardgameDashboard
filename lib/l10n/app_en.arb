@@ -296,6 +296,13 @@
       "count": { "type": "int" }
     }
   },
+  "maxPlayersExceeded": "Remove {count} to fit {max} players",
+  "@maxPlayersExceeded": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
   "addParticipant": "+ Add Participant",
   "maxPlayersAdded": "Max players added",
   "playersCountMax": "Players: {count} / {max}",

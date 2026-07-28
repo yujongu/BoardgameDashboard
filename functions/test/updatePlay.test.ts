@@ -433,6 +433,47 @@ describe("updatePlay", () => {
 
   // ── Validation ─────────────────────────────────────────────────────────────
 
+  // Regression for defects.md D4. This is the path the UI actually hit: the
+  // Edit picker read the Add-Play state, so nobody showed as "Added" and the
+  // same friend could be tapped a second time. Saving then gave that user
+  // playCount 2 from a single play, and participantIds held their uid twice.
+  it("throws invalid-argument when a registered user appears twice", async () => {
+    const { playId } = await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [
+          { userId: "u1", name: "Alice", isWinner: true },
+          { userId: "u2", name: "Bob", isWinner: false },
+        ],
+      },
+      "u1"
+    );
+
+    await expect(
+      callUpdatePlay(
+        {
+          ...CHESS,
+          playId,
+          playedAt: PLAYED_AT,
+          participants: [
+            { userId: "u1", name: "Alice", isWinner: true },
+            { userId: "u2", name: "Bob", isWinner: false },
+            { userId: "u2", name: "Bob", isWinner: false },
+          ],
+        },
+        "u1"
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+
+    // The rejected edit must leave the original play untouched.
+    expect(await getLibrary("u2", CHESS.gameId)).toMatchObject({
+      playCount: 1,
+    });
+    const doc = await getPlayDoc(playId);
+    expect(doc?.participantCount).toBe(2);
+  });
+
   it("throws not-found when playId does not exist", async () => {
     await expect(
       callUpdatePlay(

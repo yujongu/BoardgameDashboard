@@ -139,8 +139,21 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          ParticipantPickerBottomSheet(onAdd: _addParticipantFromPicker),
+      // Consumer so the sheet re-renders as participants are added while it is
+      // open — the "Added" marks and the at-max notice must stay current.
+      builder: (_) => Consumer(
+        builder: (context, ref, _) {
+          final state = ref.watch(addPlayProvider);
+          return ParticipantPickerBottomSheet(
+            onAdd: _addParticipantFromPicker,
+            addedUserIds: state.participants
+                .where((p) => p.userId != null)
+                .map((p) => p.userId!)
+                .toSet(),
+            atMax: !state.canAddParticipant,
+          );
+        },
+      ),
     );
   }
 
@@ -293,6 +306,11 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
         : s.maxPlayersAdded;
     final saveButtonText = state.belowMinPlayers
         ? s.minPlayersNeeded(state.effectiveMinPlayers)
+        : state.aboveMaxPlayers
+        ? s.maxPlayersExceeded(
+            state.participants.length - state.maxPlayers!,
+            state.maxPlayers!,
+          )
         : s.savePlay;
     return Scaffold(
       backgroundColor: context.colors.background,
