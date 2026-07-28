@@ -343,16 +343,21 @@ describe("deletePlay (cooperative)", () => {
     expect(await getParticipants(playId)).toHaveLength(0);
   });
 
-  it("does not create derived data by rolling back a play that wrote none", async () => {
-    // No competitive history at all, so every derived doc must stay absent
-    // rather than being created at a negative count.
+  it("rolls back the co-op counter and creates no other derived data", async () => {
     const { playId } = await callCreatePlay(coopPlay(), "u1");
+    expect(await getStats("u1")).toMatchObject({ totalCoopPlays: 1 });
+
     await callDeletePlay(playId, "u1");
 
-    expect(await getStats("u1")).toBeNull();
+    // The co-op counter is symmetric — it is the one figure co-op wrote.
+    expect(await getStats("u1")).toMatchObject({ totalCoopPlays: 0 });
+    expect(await getStats("u2")).toMatchObject({ totalCoopPlays: 0 });
+
+    // Everything else must stay absent rather than be created at a negative
+    // count by a rollback for writes that never happened.
     expect(await getGameStats("u1", CREW.gameId)).toBeNull();
     expect(await getLibrary("u1", CREW.gameId)).toBeNull();
-    expect(await getStats("u2")).toBeNull();
+    expect((await getStats("u1"))?.totalGamesPlayed).toBeUndefined();
   });
 
   it("leaves competitive totals untouched when a co-op play is deleted", async () => {

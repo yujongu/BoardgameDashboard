@@ -453,12 +453,28 @@ describe("createPlay (cooperative)", () => {
     expect(parts.every((p) => p.isWinner === false)).toBe(true);
   });
 
-  it("does NOT touch stats, gameStats, or library for co-op plays", async () => {
+  it("records only the co-op counter — no gameStats, library, or win data", async () => {
     await callCreatePlay(coopPlay(), "u1");
 
-    expect(await getStats("u1")).toBeNull();
+    // gameStats and library stay untouched: co-op contributes no per-game
+    // history and must not create a library entry for the game.
     expect(await getGameStats("u1", CREW.gameId)).toBeNull();
     expect(await getLibrary("u1", CREW.gameId)).toBeNull();
+
+    // stats holds the co-op counter only. totalGamesPlayed and totalWins are
+    // left absent so `totalGamesPlayed === sum(library.playCount)` still holds
+    // and a co-op session never moves the win rate.
+    const stats = await getStats("u1");
+    expect(stats).toMatchObject({ totalCoopPlays: 1 });
+    expect(stats?.totalGamesPlayed).toBeUndefined();
+    expect(stats?.totalWins).toBeUndefined();
+  });
+
+  it("counts a co-op session for every registered participant", async () => {
+    await callCreatePlay(coopPlay(), "u1");
+
+    expect(await getStats("u1")).toMatchObject({ totalCoopPlays: 1 });
+    expect(await getStats("u2")).toMatchObject({ totalCoopPlays: 1 });
   });
 
   it("advances the campaign stage on a win (completed latches true)", async () => {

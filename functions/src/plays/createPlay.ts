@@ -4,6 +4,7 @@ import { db } from "../shared/db";
 import { assertNoDuplicateParticipants } from "../shared/auth";
 import {
   gameStatsRef,
+  incrementCoopPlays,
   incrementGameStats,
   incrementStats,
   statsRef,
@@ -190,8 +191,16 @@ export const createPlay = onCall<CreatePlayData>({ minInstances: 1 }, async (req
         joinedAt: FieldValue.serverTimestamp(),
       });
 
-      // Co-op plays intentionally skip stats/gameStats/library (win stats untouched).
-      if (coop || p.userId === null) continue;
+      // Guests have no account to attribute anything to.
+      if (p.userId === null) continue;
+
+      // Co-op plays intentionally skip gameStats/library and every win figure.
+      // Only the dedicated co-op counter is recorded, so Home can show a play
+      // total that matches the session list without polluting the win rate.
+      if (coop) {
+        incrementCoopPlays(tx, statsRef(p.userId), playedAt);
+        continue;
+      }
 
       // 2b. Lifetime stats — write-only, FieldValue.increment creates on first call.
       incrementStats(tx, statsRef(p.userId), p.isWinner, playedAt);

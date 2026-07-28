@@ -141,6 +141,22 @@ class PlayRepository {
         );
   }
 
+  /// Lifetime cooperative session count for the caller.
+  ///
+  /// Co-op plays write no library entry, so they are invisible to
+  /// [watchLibrary]; this counter is the only lifetime record that they
+  /// happened. Emits 0 when the stats document or the field is absent —
+  /// documents written before the field existed simply read as 0.
+  Stream<int> watchCoopPlayCount() {
+    final uid = _uid;
+    if (uid == null) return const Stream.empty();
+    return _db
+        .collection('stats')
+        .doc(uid)
+        .snapshots()
+        .map((snap) => (snap.data()?['totalCoopPlays'] as num?)?.toInt() ?? 0);
+  }
+
   Stream<List<LibraryEntry>> watchLibrary() {
     final uid = _uid;
     if (uid == null) return const Stream.empty();

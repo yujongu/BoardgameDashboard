@@ -17,3 +17,9 @@ final recentPlaysProvider = StreamProvider.autoDispose<List<PlaySummary>>((
 final libraryProvider = StreamProvider.autoDispose<List<LibraryEntry>>((ref) {
   return ref.watch(playRepositoryProvider).watchLibrary();
 });
+
+/// Lifetime co-op session count. Separate from [libraryProvider] because co-op
+/// plays never write a library entry — see PlayRepository.watchCoopPlayCount.
+final coopPlayCountProvider = StreamProvider.autoDispose<int>((ref) {
+  return ref.watch(playRepositoryProvider).watchCoopPlayCount();
+});

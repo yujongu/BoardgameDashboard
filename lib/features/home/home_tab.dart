@@ -30,13 +30,19 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     final s = AppStrings.of(context);
     final playsAsync = ref.watch(recentPlaysProvider);
     final libraryAsync = ref.watch(libraryProvider);
+    // Co-op writes no library entry, so it needs its own lifetime counter.
+    final coopPlays = ref.watch(coopPlayCountProvider).valueOrNull ?? 0;
 
-    // True lifetime play count (sum of per-game playCount) — matches the stat
-    // row and stats/{uid}.totalGamesPlayed, unlike the capped recent-plays list.
-    final totalPlays = libraryAsync.valueOrNull?.fold<int>(
+    // True lifetime session count: competitive (sum of per-game playCount) plus
+    // co-op. Counting co-op keeps this in step with the session list below —
+    // they used to disagree, showing "2 PLAYS" above four cards.
+    final competitivePlays = libraryAsync.valueOrNull?.fold<int>(
       0,
       (sum, e) => sum + e.playCount,
     );
+    final totalPlays = competitivePlays == null
+        ? null
+        : competitivePlays + coopPlays;
 
     return CustomScrollView(
       slivers: [
@@ -52,7 +58,8 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             child: libraryAsync.when(
               loading: () => const _StatsShimmer(),
               error: (_, _) => const SizedBox.shrink(),
-              data: (library) => _StatsRow(library: library),
+              data: (library) =>
+                  StatsRow(library: library, coopPlays: coopPlays),
             ),
           ),
         ),
@@ -131,17 +138,25 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 
 // ─── Stats row ────────────────────────────────────────────────────────────────
 
-class _StatsRow extends StatelessWidget {
+class StatsRow extends StatelessWidget {
   final List<LibraryEntry> library;
 
-  const _StatsRow({required this.library});
+  /// Lifetime co-op sessions — counted in PLAYS but never in the win rate.
+  final int coopPlays;
+
+  const StatsRow({super.key, required this.library, required this.coopPlays});
 
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    final totalPlays = library.fold(0, (sum, e) => sum + e.playCount);
+    final competitivePlays = library.fold(0, (sum, e) => sum + e.playCount);
+    final totalPlays = competitivePlays + coopPlays;
     final totalWins = library.fold(0, (sum, e) => sum + e.winCount);
-    final winRate = totalPlays == 0 ? 0 : (totalWins * 100 ~/ totalPlays);
+    // Win rate stays competitive-only: a co-op session has no individual winner,
+    // so counting it would drag the rate down for a game nobody "lost".
+    final winRate = competitivePlays == 0
+        ? 0
+        : (totalWins * 100 ~/ competitivePlays);
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),

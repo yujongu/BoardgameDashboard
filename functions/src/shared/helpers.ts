@@ -100,6 +100,48 @@ export function decrementStats(
   });
 }
 
+/**
+ * Increments the lifetime cooperative session counter for a user.
+ * Creates the stats document on first call (FieldValue.increment + merge).
+ * No snapshot required.
+ *
+ * Co-op deliberately writes nothing else — no library, gameStats, or win data —
+ * so this counter is the only lifetime record that a co-op session happened.
+ */
+export function incrementCoopPlays(
+  tx: Transaction,
+  ref: DocumentReference,
+  playedAt: Timestamp
+): void {
+  tx.set(
+    ref,
+    {
+      totalCoopPlays: FieldValue.increment(1),
+      lastPlayedAt: playedAt,
+    },
+    { merge: true }
+  );
+}
+
+/**
+ * Decrements the lifetime cooperative session counter by `count`.
+ * `snap` must be fetched in Phase 1. Clamped at 0, and a no-op when the
+ * document (or the field, on stats written before it existed) is absent.
+ */
+export function decrementCoopPlays(
+  tx: Transaction,
+  ref: DocumentReference,
+  snap: DocumentSnapshot,
+  count: number
+): void {
+  if (!snap.exists) return;
+
+  const data = snap.data() as StatsDocument;
+  tx.update(ref, {
+    totalCoopPlays: Math.max(0, (data.totalCoopPlays ?? 0) - count),
+  });
+}
+
 // ─── Game Stats helpers ───────────────────────────────────────────────────────
 
 /**

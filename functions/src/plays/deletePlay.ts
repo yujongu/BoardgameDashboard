@@ -1,6 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { db } from "../shared/db";
 import {
+  decrementCoopPlays,
   decrementGameStats,
   decrementStats,
   decrementUserLibrary,
@@ -61,10 +62,10 @@ export const deletePlay = onCall<DeletePlayData>(async (request) => {
 
     const { gameId } = play;
 
-    // Co-op plays deliberately skip stats/gameStats/library on write (see
-    // createPlay), so there is nothing to roll back. Decrementing here would
-    // subtract counts the play never added — dropping totalGamesPlayed below
-    // the library sum, and deleting a library entry outright once it hits 0.
+    // Co-op writes only stats.totalCoopPlays — no gameStats, library, or win
+    // figures (see createPlay). Rolling those back would subtract counts the
+    // play never added: totalGamesPlayed would fall below the library sum, and
+    // a library entry would be deleted outright once decremented to 0.
     const coop = play.mode === "coop";
 
     // Step 2: participants subcollection (query read — all docs in one RPC).
@@ -80,8 +81,7 @@ export const deletePlay = onCall<DeletePlayData>(async (request) => {
 
     for (const doc of participantsSnap.docs) {
       const { userId, isWinner } = doc.data() as ParticipantDocument;
-      // Mirrors createPlay: co-op wrote no derived data, guests have none.
-      if (coop || userId === null) continue;
+      if (userId === null) continue; // guests have no derived data
 
       const agg = aggregates.get(userId) ?? { count: 0, wins: 0 };
       agg.count += 1;
@@ -98,9 +98,10 @@ export const deletePlay = onCall<DeletePlayData>(async (request) => {
 
     // Step 4: build derived refs for unique userIds — fixed order:
     //         [stats × N] [gameStats × N] [library × N]
+    // Co-op only ever touched the stats document, so it reads only that.
     const sRefs  = uniqueUsers.map((u) => statsRef(u.userId));
-    const gsRefs = uniqueUsers.map((u) => gameStatsRef(u.userId, gameId));
-    const ulRefs = uniqueUsers.map((u) => userLibraryRef(u.userId, gameId));
+    const gsRefs = coop ? [] : uniqueUsers.map((u) => gameStatsRef(u.userId, gameId));
+    const ulRefs = coop ? [] : uniqueUsers.map((u) => userLibraryRef(u.userId, gameId));
 
     // Step 5: fetch all derived documents in ONE tx.getAll() call.
     const allDerivedRefs = [...sRefs, ...gsRefs, ...ulRefs];
@@ -110,14 +111,19 @@ export const deletePlay = onCall<DeletePlayData>(async (request) => {
     // Slice back into groups — order mirrors allDerivedRefs construction.
     const n          = uniqueUsers.length;
     const statsSnaps = allDerivedSnaps.slice(0, n);
-    const gsSnaps    = allDerivedSnaps.slice(n, 2 * n);
-    const ulSnaps    = allDerivedSnaps.slice(2 * n);
+    const gsSnaps    = coop ? [] : allDerivedSnaps.slice(n, 2 * n);
+    const ulSnaps    = coop ? [] : allDerivedSnaps.slice(2 * n);
 
     // ── Phase 2: WRITE — no reads past this point ─────────────────────────────
 
     // 1. Roll back derived data using aggregated counts per unique userId.
     for (let i = 0; i < uniqueUsers.length; i++) {
       const { count, wins } = uniqueUsers[i];
+
+      if (coop) {
+        decrementCoopPlays(tx, sRefs[i], statsSnaps[i], count);
+        continue;
+      }
 
       decrementStats(tx, sRefs[i], statsSnaps[i], count, wins);
       decrementGameStats(tx, gsRefs[i], gsSnaps[i], count, wins);
