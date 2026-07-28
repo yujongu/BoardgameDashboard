@@ -132,15 +132,42 @@ or a `.flutter-version` file is not worth the ceremony for a single-developer re
 only if a second machine or CI starts building this project, at which point pin the SDK
 properly rather than chasing the lockfile.
 
+## D3 + D6 — also FIXED this session
+
+- **D6 (Lost Cities, `expedition_column.dart:17`)**: the bonus condition is now
+  `selectedNumbers.length + handshakeCount >= 8`. Wagers are cards by the rulebook, so any
+  expedition reaching 8 cards *with* a wager was silently losing exactly 20 points (the bonus
+  is added after the multiplier, so the loss is flat). Three regression cases cover the
+  boundary at 0–3 wagers plus the 7-card negative case. **Verified in the simulator**: the
+  same taps that scored 21 now score 41.
+- **D3 (`deletePlay.ts`)**: reads `mode` and skips the derived-data rollback for co-op,
+  mirroring `createPlay`'s `if (coop || p.userId === null) continue;`. Implemented by leaving
+  the aggregate map empty, so no derived refs are built, `tx.getAll` is skipped, and the
+  rollback loop no-ops — the play doc and participant docs are still deleted. Four regression
+  cases in a new `deletePlay (cooperative)` block. **Verified on the emulator**:
+  `totalGamesPlayed` and `library.playCount` unchanged across a co-op create *and* delete.
+- Both fixes were confirmed to be genuinely pinned by their tests — reverting each fails
+  exactly the new positive cases and nothing else.
+- Suites after both: `flutter analyze` clean, **295 Dart tests**, **150 functions tests**.
+
 ## Next Immediate Step
 
-D1 is done. Remaining cheap correctness wins, in order: **1.9** (one-line fix + the existing
-`test/features/tools/lost_cities/lost_cities_calculator_test.dart` gets new boundary cases),
-**1.2** (gate the rollback on `mode !== "coop"`), **1.5** (dedupe `participants` by `userId`
-server-side — this also hardens 1.13's blast radius), **1.6** (add the max check to
-`AddPlayState.canSave` and prune on game switch).
+D1, D3 and D6 are done. Remaining, in rough value order:
 
-Parts 2–8 of the plan have not been run.
+- **D4 / 1.5** — dedupe `participants` by `userId` server-side in `updatePlay`/`createPlay`,
+  and seed the Edit picker's "already added" set from the play being edited. The server half
+  also caps the blast radius of any future authorization slip.
+- **D5 / 1.6** — add the max-players check to `AddPlayState.canSave` and prune (or block) on
+  game switch. Currently a 6-player 7 Wonders Duel play saves happily.
+- **D8 / 1.1** — needs a **product decision** first: should co-op count toward plays, and
+  toward win-rate's denominator? Don't code before that is settled.
+- **D13 / 1.3** — also a product decision: does a campaign stage "latch" once beaten? If yes,
+  document it and add an undo affordance; if no, rewind `sessionCount`/`completed` on delete.
+- **D9 / 1.7**, **D10 / 1.11**, **D11 / 1.10**, **D7 / 1.15**, **D2 / 1.8** — client-side,
+  each small and independent.
+- **Accessibility**: icon-only controls (FAB, winner trophy, remove ×) expose no labels.
+
+Parts 2–8 of the manual test plan have still not been run.
 
 ---
 

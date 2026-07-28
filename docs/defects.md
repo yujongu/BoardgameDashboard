@@ -6,7 +6,8 @@ Results of executing **Part 1** of `docs/manual-test-plan.md` against two iOS si
 
 Companion doc: `docs/backlog.md` (feature gaps). This file is runtime defects only.
 
-Scoreboard: **14 confirmed** (1 fixed — D1), 1 not a defect (1.12), 1 not runnable here (1.16).
+Scoreboard: **14 confirmed** (3 fixed — D1, D3, D6), 1 not a defect (1.12), 1 not runnable
+here (1.16).
 Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong UI · **S4** polish.
 
 ---
@@ -81,7 +82,14 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 
 ## S2 — Wrong persisted data
 
-### D3 (plan 1.2). Deleting a co-op play rolls back stats it never wrote — **S2**
+### D3 (plan 1.2). Deleting a co-op play rolls back stats it never wrote — **S2** — ✅ FIXED 2026-07-28
+
+> **Fixed.** `deletePlay` now reads `mode` and skips the derived-data rollback for co-op,
+> mirroring `createPlay`'s own `if (coop || p.userId === null) continue;`. Four regression
+> cases in `functions/test/deletePlay.test.ts` (`deletePlay (cooperative)`). Re-verified on
+> the emulator: `totalGamesPlayed` and `library.playCount` are unchanged across a co-op
+> create **and** delete.
+
 
 - **What's wrong:** `createPlay` deliberately skips stats/gameStats/library for co-op
   (`if (coop || p.userId === null) continue;`), but `deletePlay` never reads `mode` and rolls
@@ -137,7 +145,13 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 - **Files:** `lib/features/plays/add_play_notifier.dart:73-86` (`canSave`), game-switch handler
   in the same notifier.
 
-### D6 (plan 1.9). Lost Cities: wager cards don't count toward the 8-card bonus — **S2**
+### D6 (plan 1.9). Lost Cities: wager cards don't count toward the 8-card bonus — **S2** — ✅ FIXED 2026-07-28
+
+> **Fixed.** Condition is now `selectedNumbers.length + handshakeCount >= 8`. Three
+> regression cases added covering the 8-card boundary at 0–3 wagers and the 7-card
+> negative case. Re-verified in the simulator: the same taps that scored **21** now
+> score **41**.
+
 
 - **What's wrong:** `calculateExpeditionScore` tests `selectedNumbers.length >= 8`, but by the
   rulebook handshakes/wagers **are** cards and count toward the 8-card +20 bonus.
