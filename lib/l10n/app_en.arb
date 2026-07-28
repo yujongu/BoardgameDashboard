@@ -296,6 +296,7 @@
       "count": { "type": "int" }
     }
   },
+  "playDeleteFailed": "Couldn't delete the play. Check your connection and try again.",
   "maxPlayersExceeded": "Remove {count} to fit {max} players",
   "@maxPlayersExceeded": {
     "placeholders": {

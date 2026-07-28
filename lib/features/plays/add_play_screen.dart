@@ -123,7 +123,23 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       ),
     );
     if (picked != null) {
-      ref.read(addPlayProvider.notifier).setPlayedAt(picked);
+      // showDatePicker returns midnight. Keep the existing time-of-day so a play
+      // logged today does not sort below one logged minutes earlier, which is
+      // what happened when only the untouched path stored DateTime.now().
+      final current = ref.read(addPlayProvider).playedAt;
+      ref
+          .read(addPlayProvider.notifier)
+          .setPlayedAt(
+            DateTime(
+              picked.year,
+              picked.month,
+              picked.day,
+              current.hour,
+              current.minute,
+              current.second,
+              current.millisecond,
+            ),
+          );
     }
   }
 
@@ -175,6 +191,9 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     final pick = await showModalBottomSheet<_TablePick>(
       context: context,
       backgroundColor: Colors.transparent,
+      // Without this the sheet is capped at half the screen and its non-scrolling
+      // Column overflows once there are more than ~6 tables.
+      isScrollControlled: true,
       builder: (_) =>
           _TablePickerSheet(campaigns: campaigns, spec: state.coopSpec!),
     );
@@ -1413,47 +1432,54 @@ class _TablePickerSheet extends StatelessWidget {
           border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final c in campaigns)
-              ListTile(
-                leading: Icon(
-                  Icons.groups_outlined,
-                  color: context.colors.outline,
-                ),
-                title: Text(
-                  c.roster.isEmpty
-                      ? s.campaignUntitledTable
-                      : c.roster.join(', '),
-                  style: GoogleFonts.newsreader(
-                    color: context.colors.onSurface,
-                    fontSize: 16,
-                  ),
-                ),
-                subtitle: Text(
-                  s.campaignStageProgress(c.completedCount, spec.stageCount),
-                  style: GoogleFonts.spaceGrotesk(
+        // Capped and scrollable: the list grows with the number of tables, and
+        // the "new table" row must stay reachable however many there are.
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final c in campaigns)
+                ListTile(
+                  leading: Icon(
+                    Icons.groups_outlined,
                     color: context.colors.outline,
-                    fontSize: 12,
+                  ),
+                  title: Text(
+                    c.roster.isEmpty
+                        ? s.campaignUntitledTable
+                        : c.roster.join(', '),
+                    style: GoogleFonts.newsreader(
+                      color: context.colors.onSurface,
+                      fontSize: 16,
+                    ),
+                  ),
+                  subtitle: Text(
+                    s.campaignStageProgress(c.completedCount, spec.stageCount),
+                    style: GoogleFonts.spaceGrotesk(
+                      color: context.colors.outline,
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(context).pop(_PickExisting(c)),
+                ),
+              ListTile(
+                leading: Icon(Icons.add, color: context.colors.primary),
+                title: Text(
+                  s.campaignNewTable,
+                  style: GoogleFonts.spaceGrotesk(
+                    color: context.colors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
                   ),
                 ),
-                onTap: () => Navigator.of(context).pop(_PickExisting(c)),
+                onTap: () => Navigator.of(context).pop(const _PickNew()),
               ),
-            ListTile(
-              leading: Icon(Icons.add, color: context.colors.primary),
-              title: Text(
-                s.campaignNewTable,
-                style: GoogleFonts.spaceGrotesk(
-                  color: context.colors.primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              onTap: () => Navigator.of(context).pop(const _PickNew()),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
