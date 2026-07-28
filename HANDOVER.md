@@ -59,13 +59,28 @@ RESULT path).
 - `AppStrings.addPlayStageCaps` ("STAGE") and `AddPlayNotifier.setStage` are now
   unused by the UI; both left in place (pre-existing string / harmless public API).
 
+## Post-merge ops (done this session)
+
+- Merged to `main` (fast-forward `356173f → 87775ff`, bringing both this work and the
+  28-calculators commit `6eeacc0`) and pushed; the `feat/crew-mission-tries` branch was
+  deleted (local + remote).
+- **Deployed Firestore rules + indexes to prod `gameshelf-283dc`**
+  (`firebase deploy --only firestore:rules,firestore:indexes`): rules compiled/released,
+  and the `campaigns` composite index (`memberIds` CONTAINS + `gameId`) is live — so
+  `fetchCampaignsForGame` (the table picker) works in production now.
+- **Ran `functions/migrate-crew-campaigns.js` against prod** (via gcloud ADC): **0 legacy
+  Crew sheets found** — no `users/{uid}/campaigns` data existed, so it was a clean no-op.
+  The script is idempotent; re-run if legacy data ever appears.
+
+This closes the two long-standing "not deployed / not run" items from the 2026-07-24
+co-op session (see its Gravel, now annotated).
+
 ## Next Immediate Step
 
-On-device visual pass: `firebase emulators:start` then
-`flutter run --dart-define=USE_EMULATORS=true`, log The Crew → pick a table → verify
-the MISSION RECORD list, pinned CURRENT MISSION, PASSED/FAILED, and the edit-mission
-dialog render/behave in light + dark. Then branch off `main` and commit — first file
-to touch is `lib/features/plays/add_play_screen.dart`.
+On-device visual pass (still outstanding — no simulator on this box):
+`firebase emulators:start` then `flutter run --dart-define=USE_EMULATORS=true`, log
+The Crew → pick a table → verify the MISSION RECORD list, pinned CURRENT MISSION,
+PASSED/FAILED, and the edit-mission dialog render/behave in light + dark.
 
 ---
 
@@ -211,14 +226,16 @@ flutter test integration_test/coop_test.dart -d <iphone-udid> --dart-define=USE_
   library `playCount` (see assumption below).
 - **Nothing committed.** All changes are working-tree only, on `main`. Branch before committing.
   Includes the `db.ts` + `firebase.json` fixes above.
-- **Rules/index not deployed** (`firebase deploy --only firestore:rules,firestore:indexes`).
+- **Rules/index — DEPLOYED** (2026-07-28, see the top session's "Post-merge ops"). Was
+  previously undeployed (`firebase deploy --only firestore:rules,firestore:indexes`).
 - **Co-op edit is intentionally disabled** — `updatePlay` is still winner-centric; editing a co-op
   play would fail, so the edit button is hidden for them. Deferred.
 - **Assumption baked in:** co-op plays are excluded from library `playCount` too (not just wins).
   They still appear in game-detail history via `fetchPlaysByGame`. Revisit if the user wants co-op
   plays counted in the "plays" totals.
-- Legacy Crew data migration is a **script, not yet run**: `functions/migrate-crew-campaigns.js`
-  (idempotent via a `migratedFrom` marker). Run once before/after deploy.
+- Legacy Crew data migration — **RUN** (2026-07-28): `functions/migrate-crew-campaigns.js`
+  found **0 legacy sheets** in prod (clean no-op). Idempotent via a `migratedFrom` marker;
+  re-run safely if legacy data ever appears.
 - Gloomhaven uses a **flat 95-scenario count** (no branching tree) for v1.
 
 ## Next Immediate Step
