@@ -254,23 +254,61 @@ Suites: `flutter analyze` clean, **309 Dart tests**, **156 functions tests**.
 
 All 14 confirmed Part 1 defects are fixed, merged, and **deployed**. **Start here:**
 
-### 1. Smoke-test production against a real account — not yet done
+### 1. ☐ SMOKE TEST PRODUCTION — outstanding, do this first
 
-The deploy introduced **new denials on live traffic**, and this has not been exercised by a
-real user yet. It could not be done from the test rig: the simulator build is pinned to the
-emulators via `--dart-define=USE_EMULATORS=true`, and the probe accounts exist only in the
-Auth emulator.
+**Why it's still open:** the deploy added *new denials* to live traffic and no real account has
+exercised them. It could not be done from the test rig — that build is pinned to the emulators
+via `--dart-define=USE_EMULATORS=true`, and the probe accounts exist only in the Auth emulator.
+Everything verified so far was emulator-side or a deployment-inventory check, **never
+production behaviour**.
 
-Check, signed in as yourself on a production build:
+**Only half the fixes are live.** `firebase deploy --only functions` shipped the *server* half.
+Every client fix is still sitting in `main`, unreleased, until a new app build ships:
 
-- Open a play you are part of → loads, and Edit works.
-- Log a new play → saves, and Home updates.
-- Delete a play → the row disappears *and* the counts move (D2 means a failure now shows a
-  snackbar rather than silently pretending to succeed).
+| Live now (deployed functions) | Needs an app build |
+|---|---|
+| D1 authorization, D3 co-op rollback, D4 duplicate rejection (server), D8 `totalCoopPlays` writes, D11 friend-name join | D2 delete errors, D4 "Added" marks, D5 max players, D6 Lost Cities, D7 date ordering, D8 Home PLAYS display, D9 history refresh, D10 table picker, D13 board undo |
 
-The one behaviour change a real user could hit is `getPlay` returning `permission-denied` for
-a play they are not in. No client flow does that — `getPlay` is only reached from your own
-play lists — but it is the thing to watch in Crashlytics for a day or so.
+So run **Part A on the app you already have installed** (it exercises the deployed backend), and
+Part B only after `flutter build ios --release` / `flutter build apk --release` — note **no**
+`USE_EMULATORS` define, or you will be testing the emulator again.
+
+#### Part A — deployed backend, works with the current app build
+
+- [ ] Open a play you are part of → loads with participants (not "Could not load players").
+- [ ] Edit that play, change the notes → saves.
+- [ ] Log a new competitive play with a friend → saves; Home PLAYS and WINS both move.
+- [ ] Delete a play → it disappears and the counts drop. **Note the PLAYS number first** so you
+      can confirm it actually moved.
+- [ ] Log a **co-op** play (Pandemic or The Crew) → saves. Its PLAYS contribution will not show
+      until Part B, but `stats/{uid}.totalCoopPlays` should be 1 in the Firestore console.
+- [ ] Delete that co-op play → in the console, `totalGamesPlayed` and every `library.playCount`
+      must be **unchanged** (this is D3; it used to corrupt them), and `totalCoopPlays` back to 0.
+- [ ] Rename yourself in Profile → Edit, then have a friend reopen their Friends tab → they see
+      the **new** name (D11).
+
+#### Part B — client fixes, after shipping a new app build
+
+- [ ] Lost Cities calculator: 2 handshakes + cards 2–7 → scores **41**, not 21 (D6).
+- [ ] Add Play → 6 players, switch the game to 7 Wonders Duel → save bar reads
+      "Remove 4 to fit 2 players" and is inert (D5).
+- [ ] Edit a play → "+ Add player" → an existing participant shows **Added** and is not
+      tappable (D4).
+- [ ] Home → See all → open a play → delete → back → the row is **gone** (D9).
+- [ ] A game with 8+ tables → Add Play → Table → the list scrolls and "New table" is reachable
+      (D10).
+- [ ] Game Detail → a campaign table past mission 1 → "Correct Mission N" opens the editor (D13).
+- [ ] Airplane mode → delete a play → an error snackbar appears, and the play survives (D2).
+
+#### If something fails
+
+Server: `git revert e568be4^..<bad commit>` then redeploy, or roll back a single function in the
+Cloud Console. Client: nothing is released yet, so just fix forward on `main`.
+
+**Watch Crashlytics for a day.** The one change a real user could hit is `getPlay` returning
+`permission-denied` for a play they are not in. No client flow does that — `getPlay` is only
+reached from your own play lists — but that is the signal if the authorization policy is too
+tight somewhere I did not anticipate.
 
 ### 2. Then, in rough value order
 
