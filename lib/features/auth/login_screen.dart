@@ -1,20 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../shared/services/analytics_service.dart';
 import '../../shared/theme/app_colors.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -63,6 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
           db.collection('users').doc(user.uid).set(doc),
           db.collection('userSearch').doc(user.uid).set(doc),
         ]);
+        await ref.read(analyticsServiceProvider).logSignUp('google');
+      } else {
+        await ref.read(analyticsServiceProvider).logLogin('google');
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _errorMessage = _friendlyError(e.code));
@@ -87,11 +92,13 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        await ref.read(analyticsServiceProvider).logSignUp('password');
       } else {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        await ref.read(analyticsServiceProvider).logLogin('password');
       }
     } on FirebaseAuthException catch (e) {
       setState(() {

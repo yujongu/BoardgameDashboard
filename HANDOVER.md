@@ -1,3 +1,73 @@
+# Handover — 2026-07-28 (session: P3 — Crashlytics + Analytics)
+
+## Current Milestone
+
+**Backlog P3: crash reporting + analytics.** Firebase Crashlytics for crash visibility
+and Firebase Analytics for the three core funnels (`login`/`sign_up`, `add_play`,
+`add_friend`). Plan file: `~/.claude/plans/for-the-crew-game-velvety-chipmunk.md`
+(reused/overwritten — the name is stale). Plan was reviewed by a second agent before
+implementation.
+
+Status: **implemented; `flutter analyze` clean; `flutter test` 292 pass; `flutter build
+apk --debug` succeeds.** NOT committed to main (on branch `feat/crashlytics-analytics`).
+Device/Mac-only verification still outstanding (see Gravel).
+
+## Context & Decisions (this session)
+
+- **FlutterFire was already wired**, so this was incremental — no new Firebase project
+  setup. `firebase_crashlytics ^4.3.10` + `firebase_analytics ^11.6.0` resolved cleanly
+  against `firebase_core ^3.15.2` (via `flutter pub add`, not hand-pinned).
+- **Crashlytics (`lib/main.dart`)**: platform-guarded to Android/iOS/macOS
+  (`!kIsWeb && defaultTargetPlatform in {android,iOS,macOS}`); `FlutterError.onError`
+  (chains the previous handler so the debug red-screen/console dump survives) +
+  `PlatformDispatcher.instance.onError`; collection disabled when `kDebugMode ||
+  _useEmulators`; `setUserIdentifier(uid)` via an `authStateChanges().listen`.
+  `runZonedGuarded` deliberately omitted (redundant with `PlatformDispatcher.onError`).
+- **Android native**: added `com.google.firebase.crashlytics` 3.0.2 to
+  `android/settings.gradle.kts` + `android/app/build.gradle.kts`, and bumped
+  `com.google.gms.google-services` 4.3.15 → 4.4.2 (recommended pairing). No minSdk/NDK
+  change (minSdk already ≥23 via firebase_auth; Dart Crashlytics needs no NDK). Verified by
+  a successful `flutter build apk --debug`. `android/gradle.properties` was auto-upgraded by
+  that build (benign, kept).
+- **Analytics (`lib/shared/services/analytics_service.dart`, new)**: thin wrapper with
+  `enabled`/`disabled` factories; collection disabled in debug/emulator; the provider
+  builds `FirebaseAnalytics.instance` **lazily inside the platform guard** so unsupported
+  platforms and tests never touch it. Funnels wired at existing success points:
+  `login_screen.dart` (converted to `ConsumerStatefulWidget`; logLogin/logSignUp for
+  google + password), `add_play_screen.dart` `_save()` (logAddPlay with coop/competitive
+  mode), `friends_screen.dart` `_sendRequest` (logAddFriend).
+- **Screen-view auto-tracking deferred**: the app pushes unnamed `MaterialPageRoute`s, so
+  `FirebaseAnalyticsObserver` would log null screen names — not worth it until routes are
+  named.
+
+## The 'Gravel' (non-obvious)
+
+- **Test protection is NOT the platform guards** — in `flutter test`,
+  `defaultTargetPlatform == TargetPlatform.android`, so guards evaluate *true*. Tests are
+  safe only because (a) `main()` never runs and (b) `analyticsServiceProvider` is
+  overridden with `const AnalyticsService.disabled()` (shared `test/helpers/analytics.dart`)
+  wherever a screen could read it. `login_screen_test.dart` **had** to change: it pumped
+  `const LoginScreen()` with no `ProviderScope`, which throws once LoginScreen is a Consumer.
+- `PlatformDispatcher` resolved without an explicit `dart:ui` import (re-exported via
+  widgets). If a future refactor drops that transitive path, add `import 'dart:ui'`.
+- **Not verifiable on this Windows box** (still open): iOS `pod install` + build and the
+  optional dSYM upload phase (Mac); a real device crash confirmed in the Crashlytics
+  console; Analytics **DebugView** confirming the four events fire. The Android APK build
+  is the only native verification done here.
+- `macos/Flutter/GeneratedPluginRegistrant.swift` and `pubspec.lock` also carry pre-existing
+  session-start edits; the macos registrant was left out of the P3 commit (generated file,
+  regenerated on pub get).
+
+## Next Immediate Step
+
+Merge `feat/crashlytics-analytics` (the earlier Crew branch pattern), then do the device
+pass: run on a real Android device, force a crash with collection enabled
+(e.g. a temporary `FirebaseCrashlytics.instance.crash()` button), confirm it in the
+Firebase console → Crashlytics for `gameshelf-283dc`, and confirm the analytics events in
+Analytics DebugView.
+
+---
+
 # Handover — 2026-07-28 (session: The Crew mission "tries" logging)
 
 ## Current Milestone

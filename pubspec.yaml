@@ -45,6 +45,8 @@ dependencies:
   flutter_riverpod: ^2.6.1
   google_sign_in: ^6.2.2
   shared_preferences: ^2.3.2
+  firebase_crashlytics: ^4.3.10
+  firebase_analytics: ^11.6.0
 
 dev_dependencies:
   flutter_test:

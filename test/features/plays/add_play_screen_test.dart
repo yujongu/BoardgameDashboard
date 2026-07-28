@@ -9,6 +9,8 @@ import 'package:board_game_dashboard/l10n/app_localizations.dart';
 import 'package:board_game_dashboard/shared/models/campaign.dart';
 import 'package:board_game_dashboard/shared/models/catalog_game.dart';
 
+import '../../helpers/analytics.dart';
+
 MaterialApp _app({Widget home = const AddPlayScreen()}) => MaterialApp(
   theme: buildDarkTheme(),
   localizationsDelegates: AppStrings.localizationsDelegates,
@@ -20,7 +22,9 @@ void main() {
   testWidgets('AddPlayScreen renders the session location and notes fields', (
     tester,
   ) async {
-    await tester.pumpWidget(ProviderScope(child: _app()));
+    await tester.pumpWidget(
+      ProviderScope(overrides: [analyticsOverride], child: _app()),
+    );
     await tester.pump();
 
     expect(find.text('LOG A PLAY'), findsOneWidget);
@@ -35,6 +39,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          analyticsOverride,
           addPlayProvider.overrideWith(
             (ref) =>
                 AddPlayNotifier(currentUserName: 'Me', currentUserId: 'u1'),
@@ -58,6 +63,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          analyticsOverride,
           addPlayProvider.overrideWith((ref) {
             notifier = AddPlayNotifier(
               currentUserName: 'Me',
@@ -101,6 +107,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          analyticsOverride,
           addPlayProvider.overrideWith((ref) {
             notifier = AddPlayNotifier(
               currentUserName: 'Me',

@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/campaign.dart';
 import '../../shared/models/catalog_game.dart';
 import '../../shared/providers/repository_providers.dart';
+import '../../shared/services/analytics_service.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
 import '../library/campaign_record_section.dart';
@@ -259,6 +260,13 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     );
     if (!mounted) return;
     if (ok) {
+      final st = ref.read(addPlayProvider);
+      ref
+          .read(analyticsServiceProvider)
+          .logAddPlay(
+            gameId: st.selectedGame!.gameId,
+            mode: st.isCoop ? 'coop' : 'competitive',
+          );
       Navigator.of(context).pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

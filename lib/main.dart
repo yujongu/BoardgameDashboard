@@ -3,6 +3,7 @@ import 'dart:developer' as dev;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +34,32 @@ Future<void> main() async {
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
+
+  // Crashlytics — Android/iOS/macOS only (not web/Windows/Linux). Collection is
+  // disabled in debug/emulator runs so local crashes never reach production.
+  final crashlyticsOn =
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+  if (crashlyticsOn) {
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+      !kDebugMode && !_useEmulators,
+    );
+    final defaultOnError = FlutterError.onError;
+    FlutterError.onError = (details) {
+      if (kDebugMode) defaultOnError?.call(details); // keep the console dump
+      FirebaseCrashlytics.instance.recordFlutterError(details);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    // Tag crashes with the current user (no PII).
+    FirebaseAuth.instance.authStateChanges().listen(
+      (user) => FirebaseCrashlytics.instance.setUserIdentifier(user?.uid ?? ''),
+    );
+  }
 
   if (kDebugMode && _useEmulators) {
     final host = defaultTargetPlatform == TargetPlatform.android

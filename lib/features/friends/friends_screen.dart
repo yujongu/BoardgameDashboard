@@ -9,6 +9,7 @@ import '../../shared/models/friend.dart';
 import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/providers/repository_providers.dart';
+import '../../shared/services/analytics_service.dart';
 import '../../shared/theme/app_colors.dart';
 import 'friend_profile_screen.dart';
 import 'friend_requests_screen.dart';
@@ -87,6 +88,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     setState(() => _pendingSends.add(userId));
     try {
       await ref.read(friendRepositoryProvider).sendFriendRequest(userId);
+      ref.read(analyticsServiceProvider).logAddFriend();
       if (!mounted) return;
       setState(() {
         _pendingSends.remove(userId);

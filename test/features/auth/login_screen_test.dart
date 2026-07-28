@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:board_game_dashboard/shared/theme/app_colors.dart';
 
 import 'package:board_game_dashboard/features/auth/login_screen.dart';
 import 'package:board_game_dashboard/l10n/app_localizations.dart';
 
-Widget _wrap() => MaterialApp(
-  theme: buildDarkTheme(),
-  localizationsDelegates: AppStrings.localizationsDelegates,
-  supportedLocales: AppStrings.supportedLocales,
-  home: const LoginScreen(),
+import '../../helpers/analytics.dart';
+
+Widget _wrap() => ProviderScope(
+  overrides: [analyticsOverride],
+  child: MaterialApp(
+    theme: buildDarkTheme(),
+    localizationsDelegates: AppStrings.localizationsDelegates,
+    supportedLocales: AppStrings.supportedLocales,
+    home: const LoginScreen(),
+  ),
 );
 
 void main() {
