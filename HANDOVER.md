@@ -1,3 +1,74 @@
+# Handover — 2026-07-28 (session: The Crew mission "tries" logging)
+
+## Current Milestone
+
+**Rework the co-op *campaign* log-a-play flow (The Crew) to surface per-mission
+tries and log one attempt at a time against the current mission.** Plan file:
+`~/.claude/plans/for-the-crew-game-velvety-chipmunk.md` (approved).
+
+Status: **implemented; `flutter analyze` clean; `flutter test` 291 pass; NOT
+committed.** No iOS/Android simulator on this Windows box (only Windows desktop +
+Chrome/Edge web), and the new UI sits behind auth + table selection, so the
+on-device pixel check was **not** performed. The new widgets are exercised by
+widget tests that render them with the production theme and assert their contents
+(table-picker-only state, mission record list, PASSED/FAILED, the non-campaign
+RESULT path).
+
+## Context & Decisions (this session)
+
+- **User's confirmed model** (via AskUserQuestion): a "try" = one logged attempt
+  (win/loss); **one mission per log**; this **replaces** the old Won/Lost + free
+  stage-picker arrangement for campaign games; past missions are **editable**.
+- **Key reuse, not rebuild**: the backend already implements the progression —
+  `functions/src/plays/createPlay.ts` increments `sessionCount` per attempt and
+  latches `completed` on a win. So `sessionCount` **is** the tries count; **no
+  cloud-function or `firestore.rules` change was needed.** Added
+  `Campaign.triesFor(stage)` (`lib/shared/models/campaign.dart`) as a read accessor.
+- **Log-a-play UI** (`lib/features/plays/add_play_screen.dart`): `_CoopControls`
+  now branches. One-shot co-ops (Pandemic) keep the RESULT WON/LOST row (factored
+  into a small `_OutcomeRow`). Campaign games show: TABLE picker → `_MissionRecordList`
+  (current mission first, then completed history, each row tappable to edit) →
+  `_CurrentMissionAttempt` (pinned current mission + PASSED/FAILED). The free
+  `_StageStepper` was **deleted**. Stage is auto-pinned via the existing
+  `AddPlayNotifier.setCampaign` → `nextIncompleteStage`.
+- **Editing** (`_editMission` + `_EditMissionDialog`) rebuilds the `stages` map and
+  persists via the existing `campaignRepository.saveCampaign` (which already carries
+  `sessionCount` through `CampaignStage.toJson`), then re-pins the current mission by
+  calling `setCampaign` on the updated campaign.
+- **l10n**: added `crewMissionRecordCaps`, `crewTriesCount` (ICU plural),
+  `crewPassed`, `crewFailed`, `crewEditMissionTitle`, `crewTriesLabel`,
+  `crewMissionPassed` to `lib/l10n/app_en.arb`; regenerated with `flutter gen-l10n`.
+- **Scope trim**: the plan's optional §5 (mirror the tries list on the Game Detail
+  `CampaignCard`) was **reverted** — up to ~96 rows on the always-visible card
+  overflowed and broke `campaign_card_test.dart`, and it wasn't part of the request.
+  The card is unchanged from `main`.
+- **Docs**: `docs/manual-test-plan.md` Part 4 rewritten for the new flow, and repro
+  1.12 annotated (the free stepper is gone from Add Play; it only remains on the
+  Game Detail board card).
+
+## The 'Gravel' (non-obvious)
+
+- `flutter/material.dart` does **not** re-export `FilteringTextInputFormatter`; the
+  explicit `import 'package:flutter/services.dart';` in `add_play_screen.dart` is
+  required. The analyzer's transient "unnecessary import" warning was a false
+  positive from an intermediate state before the dialog code existed.
+- `Switch.activeColor` is deprecated in this SDK → use `activeThumbColor`.
+- `_MissionRecordList` renders `for (n = current; n >= 1; n--)` — fine inside Add
+  Play's `SingleChildScrollView`, but do **not** drop it into a height-bounded parent
+  (that's exactly what broke the Game Detail card).
+- `AppStrings.addPlayStageCaps` ("STAGE") and `AddPlayNotifier.setStage` are now
+  unused by the UI; both left in place (pre-existing string / harmless public API).
+
+## Next Immediate Step
+
+On-device visual pass: `firebase emulators:start` then
+`flutter run --dart-define=USE_EMULATORS=true`, log The Crew → pick a table → verify
+the MISSION RECORD list, pinned CURRENT MISSION, PASSED/FAILED, and the edit-mission
+dialog render/behave in light + dark. Then branch off `main` and commit — first file
+to touch is `lib/features/plays/add_play_screen.dart`.
+
+---
+
 # Handover — 2026-07-28 (session: 28 score calculators)
 
 ## Current Milestone

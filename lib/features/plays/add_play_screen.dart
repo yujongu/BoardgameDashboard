@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -202,6 +203,46 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     }
   }
 
+  // Edits a mission's recorded tries / passed status directly on the selected
+  // table, persisting the change and re-pinning the current mission.
+  Future<void> _editMission(int stage) async {
+    final state = ref.read(addPlayProvider);
+    final campaign = state.campaign;
+    if (campaign == null) return;
+    final axis = stageAxisLabel(
+      AppStrings.of(context),
+      state.coopSpec?.stageAxis,
+    );
+    final result = await showDialog<_MissionEdit>(
+      context: context,
+      builder: (_) => _EditMissionDialog(
+        axis: axis,
+        stage: stage,
+        initialTries: campaign.triesFor(stage),
+        initialPassed: campaign.isStageCompleted(stage),
+      ),
+    );
+    if (result == null) return;
+    final next = <String, CampaignStage>{...campaign.stages};
+    final existing = next['$stage'];
+    next['$stage'] = CampaignStage(
+      completed: result.passed,
+      sessionCount: result.tries,
+      lastOutcome: existing?.lastOutcome,
+      lastPlayedAt: existing?.lastPlayedAt,
+    );
+    final updated = campaign.copyWith(stages: next);
+    ref.read(addPlayProvider.notifier).setCampaign(updated);
+    try {
+      await ref.read(campaignRepositoryProvider).saveCampaign(updated);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).crewSaveFailed)),
+      );
+    }
+  }
+
   Future<void> _save() async {
     final notifier = ref.read(addPlayProvider.notifier);
     for (var i = 0; i < _controllers.length; i++) {
@@ -307,8 +348,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
                       onOutcome: (o) =>
                           ref.read(addPlayProvider.notifier).setOutcome(o),
                       onPickTable: _pickTable,
-                      onStage: (v) =>
-                          ref.read(addPlayProvider.notifier).setStage(v),
+                      onEditMission: _editMission,
                     ),
                   ],
                   const SizedBox(height: 24),
@@ -825,72 +865,79 @@ class _PickNew extends _TablePick {
   const _PickNew();
 }
 
-/// The co-op session controls: team result plus (for campaign games) the table
-/// and stage the session advances.
+/// The co-op session controls. One-shot co-ops (no stage board) record just a
+/// team win/loss. Campaign games (The Crew) instead pick a table, surface its
+/// per-mission tries record, and log one pass/fail attempt against the current
+/// (next-incomplete) mission.
 class _CoopControls extends StatelessWidget {
   final AddPlayState state;
   final ValueChanged<String> onOutcome;
   final VoidCallback onPickTable;
-  final ValueChanged<int> onStage;
+  final ValueChanged<int> onEditMission;
 
   const _CoopControls({
     required this.state,
     required this.onOutcome,
     required this.onPickTable,
-    required this.onStage,
+    required this.onEditMission,
   });
 
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
+    if (!state.hasCampaign) {
+      // One-shot cooperative game: team result only.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SectionLabel(s.addPlayResult),
+          const SizedBox(height: 8),
+          _OutcomeRow(
+            wonLabel: s.addPlayWon,
+            lostLabel: s.addPlayLost,
+            outcome: state.outcome,
+            onOutcome: onOutcome,
+          ),
+        ],
+      );
+    }
+
     final spec = state.coopSpec!;
+    final axis = stageAxisLabel(s, spec.stageAxis);
     final campaign = state.campaign;
+    final current = campaign?.nextIncompleteStage(spec.stageCount);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionLabel(s.addPlayResult),
+        _SectionLabel(s.addPlayTableCaps),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _OutcomeButton(
-                label: s.addPlayWon,
-                selected: state.outcome == 'win',
-                onTap: () => onOutcome('win'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _OutcomeButton(
-                label: s.addPlayLost,
-                selected: state.outcome == 'loss',
-                onTap: () => onOutcome('loss'),
-              ),
-            ),
-          ],
+        _TablePickerRow(
+          label: campaign == null
+              ? s.addPlaySelectTable
+              : _rosterSummary(s, campaign),
+          selected: campaign != null,
+          onTap: onPickTable,
         ),
-        if (state.hasCampaign) ...[
+        if (campaign != null && current != null) ...[
           const SizedBox(height: 20),
-          _SectionLabel(s.addPlayTableCaps),
+          _SectionLabel(s.crewMissionRecordCaps),
           const SizedBox(height: 8),
-          _TablePickerRow(
-            label: campaign == null
-                ? s.addPlaySelectTable
-                : _rosterSummary(s, campaign),
-            selected: campaign != null,
-            onTap: onPickTable,
+          _MissionRecordList(
+            campaign: campaign,
+            axis: axis,
+            current: current,
+            onEdit: onEditMission,
           ),
-          if (campaign != null && state.stage != null) ...[
-            const SizedBox(height: 20),
-            _SectionLabel(s.addPlayStageCaps),
-            const SizedBox(height: 8),
-            _StageStepper(
-              axis: stageAxisLabel(s, spec.stageAxis),
-              stage: state.stage!,
-              total: spec.stageCount,
-              onChanged: onStage,
-            ),
-          ],
+          const SizedBox(height: 20),
+          _SectionLabel(s.crewCurrentMission),
+          const SizedBox(height: 8),
+          _CurrentMissionAttempt(
+            missionLabel: s.stageLabelNumbered(axis, current),
+            passedLabel: s.crewPassed,
+            failedLabel: s.crewFailed,
+            outcome: state.outcome,
+            onOutcome: onOutcome,
+          ),
         ],
       ],
     );
@@ -900,6 +947,325 @@ class _CoopControls extends StatelessWidget {
       campaign.roster.isEmpty
       ? s.campaignUntitledTable
       : campaign.roster.join(', ');
+}
+
+/// A pair of win/loss (or pass/fail) buttons wired to [onOutcome].
+class _OutcomeRow extends StatelessWidget {
+  final String wonLabel;
+  final String lostLabel;
+  final String? outcome;
+  final ValueChanged<String> onOutcome;
+
+  const _OutcomeRow({
+    required this.wonLabel,
+    required this.lostLabel,
+    required this.outcome,
+    required this.onOutcome,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _OutcomeButton(
+            label: wonLabel,
+            selected: outcome == 'win',
+            onTap: () => onOutcome('win'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _OutcomeButton(
+            label: lostLabel,
+            selected: outcome == 'loss',
+            onTap: () => onOutcome('loss'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The current mission being attempted (pinned, read-only) plus its pass/fail
+/// buttons for the single attempt this play logs.
+class _CurrentMissionAttempt extends StatelessWidget {
+  final String missionLabel;
+  final String passedLabel;
+  final String failedLabel;
+  final String? outcome;
+  final ValueChanged<String> onOutcome;
+
+  const _CurrentMissionAttempt({
+    required this.missionLabel,
+    required this.passedLabel,
+    required this.failedLabel,
+    required this.outcome,
+    required this.onOutcome,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceHigh,
+        border: Border.all(color: context.colors.primary.withAlpha(120)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        children: [
+          Text(
+            missionLabel,
+            style: GoogleFonts.newsreader(
+              color: context.colors.onSurface,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _OutcomeRow(
+            wonLabel: passedLabel,
+            lostLabel: failedLabel,
+            outcome: outcome,
+            onOutcome: onOutcome,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The table's per-mission tries record, current mission first then history.
+/// Each row is tappable to correct its recorded tries / passed status.
+class _MissionRecordList extends StatelessWidget {
+  final Campaign campaign;
+  final String axis;
+  final int current;
+  final ValueChanged<int> onEdit;
+
+  const _MissionRecordList({
+    required this.campaign,
+    required this.axis,
+    required this.current,
+    required this.onEdit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    return Column(
+      children: [
+        for (var n = current; n >= 1; n--)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _MissionRecordRow(
+              label: s.stageLabelNumbered(axis, n),
+              triesLabel: s.crewTriesCount(campaign.triesFor(n)),
+              completed: campaign.isStageCompleted(n),
+              isCurrent: n == current,
+              onTap: () => onEdit(n),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _MissionRecordRow extends StatelessWidget {
+  final String label;
+  final String triesLabel;
+  final bool completed;
+  final bool isCurrent;
+  final VoidCallback onTap;
+
+  const _MissionRecordRow({
+    required this.label,
+    required this.triesLabel,
+    required this.completed,
+    required this.isCurrent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: context.colors.surfaceHigh,
+          border: Border.all(
+            color: isCurrent
+                ? context.colors.primary.withAlpha(120)
+                : context.colors.amberBorder,
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              completed ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: completed
+                  ? context.colors.primary
+                  : context.colors.outline,
+              size: 18,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.newsreader(
+                  color: context.colors.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Text(
+              triesLabel,
+              style: GoogleFonts.spaceGrotesk(
+                color: context.colors.outline,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.edit_outlined, color: context.colors.outline, size: 14),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Result of the edit-mission dialog: the corrected tries count and passed flag.
+class _MissionEdit {
+  final int tries;
+  final bool passed;
+  const _MissionEdit(this.tries, this.passed);
+}
+
+class _EditMissionDialog extends StatefulWidget {
+  final String axis;
+  final int stage;
+  final int initialTries;
+  final bool initialPassed;
+
+  const _EditMissionDialog({
+    required this.axis,
+    required this.stage,
+    required this.initialTries,
+    required this.initialPassed,
+  });
+
+  @override
+  State<_EditMissionDialog> createState() => _EditMissionDialogState();
+}
+
+class _EditMissionDialogState extends State<_EditMissionDialog> {
+  late final TextEditingController _tries = TextEditingController(
+    text: '${widget.initialTries}',
+  );
+  late bool _passed = widget.initialPassed;
+
+  @override
+  void dispose() {
+    _tries.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final n = int.tryParse(_tries.text.trim()) ?? widget.initialTries;
+    Navigator.of(context).pop(_MissionEdit(n < 0 ? 0 : n, _passed));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    return AlertDialog(
+      backgroundColor: context.colors.surfaceHigh,
+      title: Text(
+        '${s.crewEditMissionTitle} · ${s.stageLabelNumbered(widget.axis, widget.stage)}',
+        style: GoogleFonts.newsreader(
+          color: context.colors.onSurface,
+          fontSize: 18,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _tries,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.onSurface,
+              fontSize: 15,
+            ),
+            decoration: InputDecoration(
+              labelText: s.crewTriesLabel,
+              labelStyle: GoogleFonts.spaceGrotesk(
+                color: context.colors.outline,
+                fontSize: 13,
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: context.colors.outlineVariant),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: context.colors.primary),
+              ),
+            ),
+            onSubmitted: (_) => _submit(),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                s.crewMissionPassed,
+                style: GoogleFonts.spaceGrotesk(
+                  color: context.colors.onSurface,
+                  fontSize: 14,
+                ),
+              ),
+              Switch(
+                value: _passed,
+                activeThumbColor: context.colors.primary,
+                onChanged: (v) => setState(() => _passed = v),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            s.commonCancelCaps,
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.outline,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: _submit,
+          child: Text(
+            s.commonOk,
+            style: GoogleFonts.spaceGrotesk(
+              color: context.colors.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _OutcomeButton extends StatelessWidget {
@@ -996,60 +1362,6 @@ class _TablePickerRow extends StatelessWidget {
             Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _StageStepper extends StatelessWidget {
-  final String axis;
-  final int stage;
-  final int total;
-  final ValueChanged<int> onChanged;
-
-  const _StageStepper({
-    required this.axis,
-    required this.stage,
-    required this.total,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceHigh,
-        border: Border.all(color: context.colors.amberBorder),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            color: context.colors.primary,
-            disabledColor: context.colors.outlineVariant,
-            onPressed: stage > 1 ? () => onChanged(stage - 1) : null,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              '$axis $stage / $total',
-              style: GoogleFonts.newsreader(
-                color: context.colors.onSurface,
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            color: context.colors.primary,
-            disabledColor: context.colors.outlineVariant,
-            onPressed: stage < total ? () => onChanged(stage + 1) : null,
-          ),
-        ],
       ),
     );
   }

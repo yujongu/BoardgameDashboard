@@ -152,6 +152,18 @@
       "max": { "type": "int" }
     }
   },
+  "crewMissionRecordCaps": "MISSION RECORD",
+  "crewTriesCount": "{count, plural, =0{No tries yet} =1{1 try} other{{count} tries}}",
+  "@crewTriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "crewPassed": "PASSED",
+  "crewFailed": "FAILED",
+  "crewEditMissionTitle": "Edit mission",
+  "crewTriesLabel": "Tries",
+  "crewMissionPassed": "Passed",
 
   "timeYearsAgo": "{count}y ago",
   "@timeYearsAgo": {

@@ -121,9 +121,11 @@ The detail page pops *before* the Cloud Function resolves and `.ignore()`s the r
       with no way to reach the lower entries or the "New table" row.
 
 ### 1.12 Stage stepper is impractical for Gloomhaven
-- [ ] Add Play → Gloomhaven → pick a table → stage stepper starts at 1 of 95 with
-      only ± buttons (the Game Detail card lets you *type* a number; this doesn't).
-      Reaching scenario 60 takes 59 taps.
+Note: the free ± stepper was **removed from Add Play** — logging now pins to the current
+(next-incomplete) stage. This entry now only applies to the **Game Detail board card**.
+- [ ] Game Detail → Gloomhaven table → the board card stepper starts at 1 of 95 with
+      ± buttons; you can also *tap the number to type* one. Confirm reaching scenario 60
+      isn't 59 taps (typing works).
 
 ### 1.13 Any signed-in user can edit/delete any play (code-level)
 `deletePlay` and `updatePlay` verify authentication but never verify that the caller
@@ -208,15 +210,25 @@ Add Play stores `now` unless you touch the date picker, which sets midnight loca
 
 ## Part 4 — Logging a play (co-op / campaigns)
 
-- [ ] Pick The Crew → winner trophies and score fields disappear; WON/LOST appears.
-- [ ] Save without choosing WON/LOST → disabled.
-- [ ] Save without picking a table → disabled (campaign games only).
-- [ ] Pandemic (no board) → no table/stage controls; WON/LOST alone is enough.
-- [ ] Pick a table → stage defaults to the first incomplete mission.
-- [ ] Log WON on mission N → board advances; history row reads "Team won · Mission N".
-- [ ] Log LOST on the same mission → board does **not** advance; `sessionCount`
-      increments; row reads "Team lost".
-- [ ] Log WON on an already-completed mission → completion stays (latches).
+- [ ] Pick The Crew → winner trophies and score fields disappear; the **TABLE**
+      picker leads (no WON/LOST yet — that only appears once a table is chosen).
+- [ ] Pandemic (no board) → no table/mission controls; the plain RESULT WON/LOST
+      alone is enough (one-shot co-op path is unchanged).
+- [ ] Pick a table → a **MISSION RECORD** list appears (current mission first, then
+      completed history each showing its tries) plus a pinned **CURRENT MISSION** =
+      first incomplete mission with **PASSED / FAILED** buttons. There is **no free
+      stage stepper** here anymore.
+- [ ] Save without choosing PASSED/FAILED → disabled. Save without picking a table →
+      disabled.
+- [ ] Log PASSED on the current mission → board advances; history row reads
+      "Team won · Mission N". Reopen the table → that mission shows as completed with
+      its tries and the current mission is now N+1.
+- [ ] Log FAILED on the current mission → board does **not** advance; the mission's
+      tries (`sessionCount`) increments by 1; row reads "Team lost".
+- [ ] Log PASSED on an already-completed mission → completion stays (latches).
+- [ ] Tap a mission row in the record → edit dialog: change **Tries** and toggle
+      **Passed**. Confirm the record updates, the change persists (reopen the table),
+      and un-passing an earlier mission re-pins it as the current mission.
 - [ ] Two members log the same mission at the same time from two devices → no lost
       update, `sessionCount` = 2.
 - [ ] Member A edits the roster on the board while B has the page open → B's page

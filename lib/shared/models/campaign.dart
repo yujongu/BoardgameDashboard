@@ -88,6 +88,10 @@ class Campaign {
 
   bool isStageCompleted(int stage) => stages['$stage']?.completed ?? false;
 
+  /// Number of logged attempts ("tries") recorded against [stage]. Reads the
+  /// per-stage `sessionCount`, which the server increments once per attempt.
+  int triesFor(int stage) => stages['$stage']?.sessionCount ?? 0;
+
   /// Lowest incomplete stage on a linear board of [stageCount] stages,
   /// clamped to [1, stageCount]. Used to default the stage picker and to
   /// render The Crew's "current mission".
