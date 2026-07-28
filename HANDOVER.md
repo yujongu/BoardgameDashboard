@@ -11,8 +11,15 @@ against the emulator suite.
 
 Full write-up with repro steps, evidence and fix pointers: **`docs/defects.md`** (D1–D13).
 
-Branch `fix/play-authorization`, not merged. Suites at the end of the session:
+Merged to `main` via `--no-ff` (`0c9ed28`) and **pushed to `origin/main`**, so the 11 commits
+stay individually reviewable and revertible. Suites at the end of the session:
 `flutter analyze` clean, **309 Dart tests**, **156 functions tests** (from 292 / 132).
+
+> ⚠️ **THE CLOUD FUNCTIONS ARE NOT DEPLOYED.** Everything server-side in this session — the
+> D1 authorization fix, the D4 duplicate guard, `totalCoopPlays`, the D11 friend-name join —
+> exists only in `main` and in the local emulator. **Production still has the D1 hole: any
+> signed-in user can read, edit, or delete any play by id.** Deploying is the first thing the
+> next session should do. See "Next Immediate Step".
 
 | # | Item | Verdict |
 |---|------|---------|
@@ -45,6 +52,17 @@ Branch `fix/play-authorization`, not merged. Suites at the end of the session:
   adopted for CI, pin Python ≤3.12 instead.
 - **Driving strategy**: `idb ui describe-all` returns the accessibility tree, so taps target
   elements by label rather than pixel coordinates. Far more robust than screenshot math.
+- **Rebuilding the rig next session.** `idb_companion` survives (installed via brew), but the
+  Python venv and the driver scripts lived in the session scratchpad and are **gone**. To redo
+  simulator work: `python3 -m venv <dir> && <dir>/bin/pip install fb-idb`, add the
+  event-loop shim above, then drive with `describe-all` → find label → `ui tap x y`. Useful
+  details learned the hard way: match button labels **exactly** (a substring match on
+  "Sign In" hits "Sign in to continue"); a `Switch` shows up as a `CheckBox` in the tree and
+  the tap must land inside its frame; and `xcrun simctl keychain <udid> reset` is the only way
+  to clear a persisted Firebase Auth session.
+- **Seeding test accounts**: `admin.auth().createUser({uid: ...})` against the Auth emulator
+  gives stable uids across restarts, which matters because the app caches the session. Write
+  **both** `name` and `displayName` on `users/{uid}` (see the gotcha below).
 - **Data-layer defects (1.2, 1.3, 1.4, 1.5, 1.13, 1.14) were proven by calling the emulated
   callables directly** (node + `fetch` with an Auth-emulator ID token) and reading Firestore,
   rather than through the UI. That gives exact before/after numbers instead of inference.
@@ -52,6 +70,12 @@ Branch `fix/play-authorization`, not merged. Suites at the end of the session:
   stayed up — a closer analogue to "delete fails" than full airplane mode.
 
 ## The 'Gravel' (non-obvious findings)
+
+> This section is the **as-found evidence record**, written during testing and left unedited.
+> Its recommendations ("fix this first", "should be X") describe what was true *before* the
+> fixes — every item below except 1.4, 1.14 and 1.16 has since been fixed; see the FIXED
+> sections that follow. Kept verbatim because the observed numbers are the proof, and the next
+> person may want to reproduce them.
 
 - **1.13 is the one to fix first.** `deletePlay`/`updatePlay` check `request.auth` but never
   that the caller is a participant or the creator. Verified: account C (not in the play,
@@ -110,10 +134,10 @@ Policy chosen by the owner: **any registered participant** may read, edit, or de
   `fetchSharedPlays` queries `participantIds arrayContains uid`, so nothing legitimate relied
   on the old behaviour.
 
-## Build-artifact changes in this working tree (decided: keep all, revert nothing)
+## Build-artifact changes (decided: keep all, revert nothing — now committed)
 
 Three files changed as a by-product of running `flutter build ios`. They were reviewed
-individually rather than reverted wholesale:
+individually rather than reverted wholesale, and are in `7cddb76`:
 
 - **`ios/Podfile.lock` + `macos/Flutter/GeneratedPluginRegistrant.swift` — keep; these are the
   missing iOS/macOS half of P3.** `pubspec.yaml` has `firebase_crashlytics` / `firebase_analytics`
@@ -222,10 +246,42 @@ Suites: `flutter analyze` clean, **309 Dart tests**, **156 functions tests**.
 
 ## Next Immediate Step
 
-All 14 confirmed Part 1 defects are fixed. What's left:
+All 14 confirmed Part 1 defects are fixed and merged. **Start here:**
+
+### 1. Deploy the Cloud Functions — do this before anything else
+
+```bash
+cd functions && npm run build && npm test   # expect 156 passing
+npm run deploy                              # firebase deploy --only functions
+```
+
+Until this runs, production still has the **D1 authorization hole**: `deletePlay`,
+`updatePlay` and `getPlay` accept any authenticated caller with a play id. `firestore.rules`
+needs **no** change — it was already correct; the gap was that callables run with Admin SDK
+credentials that bypass rules, so each one must re-apply the check itself.
+
+Deploying also ships D4's duplicate-participant guard, `totalCoopPlays` (D8) and D11's
+friend-name join. Nothing else needs deploying — no rules or index changes in this session.
+
+**Smoke-test after deploying**, because these are new denials on live traffic: open a play you
+are part of (should load and be editable), and confirm a normal add-play still saves. The one
+behaviour change a real user could notice is that `getPlay` now returns `permission-denied`
+for a play you are not in — no client flow does that, but it is the thing to watch.
+
+### 2. Then, in rough value order
 
 - **Backfill `totalCoopPlays`** if pre-existing co-op plays matter — a script over `plays`
-  where `mode == "coop"`, incrementing per participant. Until then those PLAYS counts are low.
+  where `mode == "coop"`, incrementing `stats/{uid}.totalCoopPlays` for each entry in
+  `participantIds`. Until then those users' Home PLAYS figures read low. Model it on the
+  existing `functions/backfill-user-search.js`.
+- **1.4 / D12 (campaign membership)** — the highest-value unfixed defect: two people cannot
+  share one campaign board. `createPlay` never adds participants to `memberIds`, and the two
+  creation paths disagree (`campaign_record_section.dart:76` passes `memberIds: const []`;
+  `add_play_screen.dart:184` derives them from participants). Needs a product call on whether
+  logging a session should imply joining the table.
+- **1.14 / D-none (non-friend participants)** — also a product call: should the participant
+  picker's global user search be friends-only? Today anyone can be added to a play and have
+  their stats moved without consent.
 - **D5 residual** — `EditPlayPage` can still exceed the player maximum; it holds only
   `gameId`/`gameName`, so fixing it means resolving the catalog game there.
 - **Friend-request cards** carry the same stale-name snapshot D11 fixed for the friends list.
