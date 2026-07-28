@@ -15,11 +15,17 @@ Merged to `main` via `--no-ff` (`0c9ed28`) and **pushed to `origin/main`**, so t
 stay individually reviewable and revertible. Suites at the end of the session:
 `flutter analyze` clean, **309 Dart tests**, **156 functions tests** (from 292 / 132).
 
-> ⚠️ **THE CLOUD FUNCTIONS ARE NOT DEPLOYED.** Everything server-side in this session — the
-> D1 authorization fix, the D4 duplicate guard, `totalCoopPlays`, the D11 friend-name join —
-> exists only in `main` and in the local emulator. **Production still has the D1 hole: any
-> signed-in user can read, edit, or delete any play by id.** Deploying is the first thing the
-> next session should do. See "Next Immediate Step".
+**Deployed to production 2026-07-29** (`firebase deploy --only functions`). Verified against
+source: 17 exported functions, 17 deployed, no orphans, and `deletePlay` / `updatePlay` /
+`getPlay` all carry the D1 authorization fix. **The D1 hole is closed in production.**
+
+The deploy also removed `getFriendProfile`, a function that existed in the project but not in
+source — dead since the friend profile moved to `getFriendProfileDirect` (three direct
+Firestore reads guarded by the `isFriendOf` rule). Confirmed unreferenced before deleting: it
+is absent from `functions/src`, and the client's `httpsCallable` names do not include it.
+
+No rules or index deploy was needed — `firestore.rules` was already correct; the gap was that
+callables bypass it.
 
 | # | Item | Verdict |
 |---|------|---------|
@@ -246,27 +252,25 @@ Suites: `flutter analyze` clean, **309 Dart tests**, **156 functions tests**.
 
 ## Next Immediate Step
 
-All 14 confirmed Part 1 defects are fixed and merged. **Start here:**
+All 14 confirmed Part 1 defects are fixed, merged, and **deployed**. **Start here:**
 
-### 1. Deploy the Cloud Functions — do this before anything else
+### 1. Smoke-test production against a real account — not yet done
 
-```bash
-cd functions && npm run build && npm test   # expect 156 passing
-npm run deploy                              # firebase deploy --only functions
-```
+The deploy introduced **new denials on live traffic**, and this has not been exercised by a
+real user yet. It could not be done from the test rig: the simulator build is pinned to the
+emulators via `--dart-define=USE_EMULATORS=true`, and the probe accounts exist only in the
+Auth emulator.
 
-Until this runs, production still has the **D1 authorization hole**: `deletePlay`,
-`updatePlay` and `getPlay` accept any authenticated caller with a play id. `firestore.rules`
-needs **no** change — it was already correct; the gap was that callables run with Admin SDK
-credentials that bypass rules, so each one must re-apply the check itself.
+Check, signed in as yourself on a production build:
 
-Deploying also ships D4's duplicate-participant guard, `totalCoopPlays` (D8) and D11's
-friend-name join. Nothing else needs deploying — no rules or index changes in this session.
+- Open a play you are part of → loads, and Edit works.
+- Log a new play → saves, and Home updates.
+- Delete a play → the row disappears *and* the counts move (D2 means a failure now shows a
+  snackbar rather than silently pretending to succeed).
 
-**Smoke-test after deploying**, because these are new denials on live traffic: open a play you
-are part of (should load and be editable), and confirm a normal add-play still saves. The one
-behaviour change a real user could notice is that `getPlay` now returns `permission-denied`
-for a play you are not in — no client flow does that, but it is the thing to watch.
+The one behaviour change a real user could hit is `getPlay` returning `permission-denied` for
+a play they are not in. No client flow does that — `getPlay` is only reached from your own
+play lists — but it is the thing to watch in Crashlytics for a day or so.
 
 ### 2. Then, in rough value order
 
