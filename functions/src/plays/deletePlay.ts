@@ -61,6 +61,12 @@ export const deletePlay = onCall<DeletePlayData>(async (request) => {
 
     const { gameId } = play;
 
+    // Co-op plays deliberately skip stats/gameStats/library on write (see
+    // createPlay), so there is nothing to roll back. Decrementing here would
+    // subtract counts the play never added — dropping totalGamesPlayed below
+    // the library sum, and deleting a library entry outright once it hits 0.
+    const coop = play.mode === "coop";
+
     // Step 2: participants subcollection (query read — all docs in one RPC).
     const participantsSnap = await tx.get(
       playRef.collection("participants")
@@ -74,7 +80,8 @@ export const deletePlay = onCall<DeletePlayData>(async (request) => {
 
     for (const doc of participantsSnap.docs) {
       const { userId, isWinner } = doc.data() as ParticipantDocument;
-      if (userId === null) continue; // guests have no derived data
+      // Mirrors createPlay: co-op wrote no derived data, guests have none.
+      if (coop || userId === null) continue;
 
       const agg = aggregates.get(userId) ?? { count: 0, wins: 0 };
       agg.count += 1;
