@@ -58,9 +58,13 @@ export const getMyFriends = onCall<GetMyFriendsData>(async (request) => {
     const snap = await query.get();
     console.log("Query result size:", snap.size);
 
-    // This system intentionally avoids joins with users collection to minimize reads and latency.
-    // Friend docs are the source of truth for name/photoUrl — missing fields are skipped, not repaired.
-    const friends: FriendSummary[] = snap.docs.flatMap((doc) => {
+    // Friend docs carry a name/photoUrl snapshot taken when the request was
+    // accepted, and nothing ever refreshes it — so a friend who renamed showed
+    // under their old name indefinitely. This previously skipped the join to
+    // save reads; the profile is resolved live instead, because a wrong name is
+    // a worse trade than one batched read on a list of this size. Doing it here
+    // rather than by fanning out on rename also repairs already-stale docs.
+    const stored = snap.docs.flatMap((doc) => {
       const d = doc.data();
       if (!d.userId || !d.name || !d.createdAt) {
         console.warn(`getMyFriends: doc ${doc.id} missing required fields — skipping`);
@@ -72,6 +76,24 @@ export const getMyFriends = onCall<GetMyFriendsData>(async (request) => {
         photoUrl: (d.photoUrl as string | null) ?? null,
         createdAt: safeTimestampToISO(d.createdAt, "createdAt", doc.id),
       }];
+    });
+
+    // One getAll for the whole page, not a read per friend.
+    const profileSnaps = stored.length > 0
+      ? await db.getAll(...stored.map((f) => db.collection("users").doc(f.userId)))
+      : [];
+
+    const friends: FriendSummary[] = stored.map((f, i) => {
+      const profile = profileSnaps[i];
+      const liveName = profile?.get("name");
+      const livePhoto = profile?.get("photoUrl");
+      return {
+        ...f,
+        // Fall back to the snapshot when the profile is gone or nameless, so a
+        // deleted account still renders instead of vanishing from the list.
+        name: typeof liveName === "string" && liveName.length > 0 ? liveName : f.name,
+        photoUrl: (typeof livePhoto === "string" ? livePhoto : null) ?? f.photoUrl,
+      };
     });
 
     console.log(`getMyFriends OK — returning ${friends.length} friends`);

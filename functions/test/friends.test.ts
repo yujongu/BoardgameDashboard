@@ -322,6 +322,50 @@ describe("getMyFriends", () => {
     });
   });
 
+  // Regression for defects.md D11: users/{uid}/friends/{fid} stores a name
+  // snapshot written at accept time, so a friend who renamed kept showing under
+  // their old name indefinitely — it is stored data, not a cache, so no client
+  // refresh could fix it. getMyFriends now resolves the live profile.
+  it("reflects a friend's current name after they rename", async () => {
+    const requestId = await sendRequest(ALICE, BOB);
+    await callAcceptFriendRequest(requestId, BOB);
+
+    // The stored snapshot keeps the old name...
+    const before = await callGetMyFriends(ALICE);
+    expect(before.friends[0].name).toBe("Bob Test");
+
+    await db.collection("users").doc(BOB).update({ name: "Bobby Renamed" });
+
+    // ...but the response reports the current one.
+    const after = await callGetMyFriends(ALICE);
+    expect(after.friends[0].name).toBe("Bobby Renamed");
+
+    // The friend doc itself is deliberately left as-is; the join is what fixes
+    // this, so already-stale documents are repaired without a migration.
+    const stored = await db
+      .collection("users").doc(ALICE)
+      .collection("friends").doc(BOB)
+      .get();
+    expect(stored.get("name")).toBe("Bob Test");
+  });
+
+  it("reflects an updated photo, and falls back when the profile is gone", async () => {
+    const requestId = await sendRequest(ALICE, BOB);
+    await callAcceptFriendRequest(requestId, BOB);
+
+    await db
+      .collection("users").doc(BOB)
+      .update({ photoUrl: "https://example.com/new-bob.png" });
+    const updated = await callGetMyFriends(ALICE);
+    expect(updated.friends[0].photoUrl).toBe("https://example.com/new-bob.png");
+
+    // A deleted account must still render from the snapshot rather than vanish.
+    await db.collection("users").doc(BOB).delete();
+    const afterDelete = await callGetMyFriends(ALICE);
+    expect(afterDelete.friends).toHaveLength(1);
+    expect(afterDelete.friends[0].name).toBe("Bob Test");
+  });
+
   it("respects the limit parameter", async () => {
     const reqFromBob = await sendRequest(BOB, ALICE);
     await callAcceptFriendRequest(reqFromBob, ALICE);
