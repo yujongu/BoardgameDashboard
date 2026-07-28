@@ -6,7 +6,7 @@ Results of executing **Part 1** of `docs/manual-test-plan.md` against two iOS si
 
 Companion doc: `docs/backlog.md` (feature gaps). This file is runtime defects only.
 
-Scoreboard: **14 confirmed** (5 fixed — D1, D3, D4, D5, D6), 1 not a defect (1.12), 1 not
+Scoreboard: **14 confirmed — all 14 now fixed** (D1–D13), 1 not a defect (1.12), 1 not
 runnable here (1.16).
 Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong UI · **S4** polish.
 
@@ -65,7 +65,12 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
   meaningful: with the guard neutered, exactly the 6 "denies" assertions fail and the 8
   positive-path ones still pass. Full suite: **146 passed**.
 
-### D2 (plan 1.8). Delete failures are silent — **S1**
+### D2 (plan 1.8). Delete failures are silent — **S1** — ✅ FIXED 2026-07-28
+
+> **Fixed.** The call is awaited with a spinner in place of the delete icon, the button disabled
+> while in flight, and a snackbar on failure. It goes through `playRepositoryProvider` rather
+> than `playDetailProvider` because popping disposes that notifier — the reason the result was
+> being discarded in the first place.
 
 - **What's wrong:** the detail page pops the route *before* the Cloud Function resolves and
   calls `.ignore()` on the future, discarding errors. A failed delete is indistinguishable
@@ -84,11 +89,15 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 
 ### D3 (plan 1.2). Deleting a co-op play rolls back stats it never wrote — **S2** — ✅ FIXED 2026-07-28
 
-> **Fixed.** `deletePlay` now reads `mode` and skips the derived-data rollback for co-op,
-> mirroring `createPlay`'s own `if (coop || p.userId === null) continue;`. Four regression
-> cases in `functions/test/deletePlay.test.ts` (`deletePlay (cooperative)`). Re-verified on
-> the emulator: `totalGamesPlayed` and `library.playCount` are unchanged across a co-op
-> create **and** delete.
+> **Fixed.** `deletePlay` reads `mode` and skips the competitive rollback for co-op — it does
+> not touch `totalGamesPlayed`, `totalWins`, `gameStats`, or `library`. Four regression cases
+> in `functions/test/deletePlay.test.ts` (`deletePlay (cooperative)`). Re-verified on the
+> emulator: `totalGamesPlayed` and `library.playCount` are unchanged across a co-op create
+> **and** delete.
+>
+> Subsequently refined by **D8**: co-op now writes one figure of its own,
+> `stats.totalCoopPlays`, and `deletePlay` rolls back exactly that. The rollback is symmetric
+> with what co-op actually wrote, which is the property that was missing here.
 
 
 - **What's wrong:** `createPlay` deliberately skips stats/gameStats/library for co-op
@@ -193,7 +202,9 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 - **Related:** the calculator tracks only one player's five expeditions — there is no
   second-player column for a 2-player game. Separate enhancement, not a defect.
 
-### D7 (plan 1.15). Same-day plays sort by a phantom time — **S2**
+### D7 (plan 1.15). Same-day plays sort by a phantom time — **S2** — ✅ FIXED 2026-07-28
+
+> **Fixed.** Picking a date now preserves the current time-of-day instead of storing midnight.
 
 - **What's wrong:** Add Play stores `DateTime.now()` unless the date picker is touched, in
   which case it stores **midnight local**. Two plays logged minutes apart on the same day can
@@ -210,7 +221,12 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 
 ## S3 — Wrong or stale UI
 
-### D8 (plan 1.1). Home PLAYS count disagrees with the Recent Plays list — **S3**
+### D8 (plan 1.1). Home PLAYS count disagrees with the Recent Plays list — **S3** — ✅ FIXED 2026-07-28
+
+> **Fixed.** Decision taken: co-op counts toward PLAYS, never toward the win rate. Added
+> `stats/{uid}.totalCoopPlays`, written by `createPlay` and rolled back by `deletePlay`, kept
+> separate from `totalGamesPlayed` so `totalGamesPlayed === sum(library.playCount)` still holds.
+> **Not backfilled** — co-op plays logged before this change are not counted.
 
 - **What's wrong:** the stat tile and the "Recent Plays" subtitle both sum
   `library.playCount`, which co-op plays never write; the list below streams *every* play.
@@ -223,7 +239,10 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
   the least surprising to a user looking at four cards under the number 2.
 - **Files:** `lib/features/home/home_tab.dart`, the stats/library providers.
 
-### D9 (plan 1.7). Play History keeps a play after you delete it — **S3**
+### D9 (plan 1.7). Play History keeps a play after you delete it — **S3** — ✅ FIXED 2026-07-28
+
+> **Fixed.** The page acts on the boolean the detail route pops and refetches from the first
+> page, which also picks up edits that move a play's date and therefore its position.
 
 - **What's wrong:** `PlayHistoryPage` holds its pages in local state and ignores the delete
   result, so the row survives. Home is correct because it streams.
@@ -235,7 +254,10 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
   the page) on `true`.
 - **Files:** `lib/features/plays/play_history_page.dart`.
 
-### D10 (plan 1.11). Table picker sheet overflows with many tables — **S3**
+### D10 (plan 1.11). Table picker sheet overflows with many tables — **S3** — ✅ FIXED 2026-07-28
+
+> **Fixed.** `isScrollControlled: true`, capped at 70% of screen height, and wrapped in a
+> `SingleChildScrollView` so every table and the "New table" row stay reachable.
 
 - **What's wrong:** `_TablePickerSheet` is a non-scrollable `Column` inside a bottom sheet that
   is not `isScrollControlled`.
@@ -248,7 +270,13 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 - **Files:** `lib/features/plays/add_play_screen.dart:1379` (`_TablePickerSheet`) and the
   `showModalBottomSheet` call at line ~166.
 
-### D11 (plan 1.10). Friends' names go stale after a rename — **S3**
+### D11 (plan 1.10). Friends' names go stale after a rename — **S3** — ✅ FIXED 2026-07-28
+
+> **Fixed.** `getMyFriends` resolves the live profile in one batched `getAll`, falling back to
+> the stored snapshot when the profile is missing. This reverses the function's documented
+> "avoid joins" decision — one batched read is a better trade than a wrong name, and resolving
+> on read repairs already-stale documents without a migration. **Pending friend-request cards
+> still carry the same snapshot pattern.**
 
 - **What's wrong:** `users/{uid}/friends/{fid}` stores a **name snapshot** written at accept
   time and never refreshed.
@@ -289,7 +317,14 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
   `lib/features/library/campaign_record_section.dart:76`,
   `lib/shared/repositories/campaign_repository.dart:50-55`.
 
-### D13 (plan 1.3). Deleting a co-op play does not rewind the campaign board — **S3**
+### D13 (plan 1.3). Deleting a co-op play does not rewind the campaign board — **S3** — ✅ FIXED 2026-07-28
+
+> **Fixed.** Decision taken: the latch is intended — a mission the team really beat stays beaten
+> even if the play record is tidied up — so `deletePlay` still does not rewind. The board card
+> gained the missing undo: a "Correct Mission N" action opening the shared `EditMissionDialog`
+> for the last completed stage, where both tries and passed can be corrected. The dialog was
+> extracted from `add_play_screen.dart` into `lib/features/library/edit_mission_dialog.dart` so
+> both screens share one implementation.
 
 - **What's wrong:** `createPlay` advances the stage (`completed`, `sessionCount++`);
   `deletePlay` has no campaign handling at all.

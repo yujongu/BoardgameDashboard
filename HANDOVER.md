@@ -3,28 +3,34 @@
 ## Current Milestone
 
 **Executed `docs/manual-test-plan.md` Part 1 (the 16 targeted defect repros)** against two
-iOS simulators + the Firebase emulator suite. **14 of 16 confirmed, 1 already fixed, 1 not
-runnable here.** No production data touched; no app code changed this session.
+iOS simulators + the Firebase emulator suite, then **fixed every confirmed defect**.
+
+Result: **14 of 16 confirmed → all 14 fixed**; 1.12 is not a defect; 1.16 appears already
+fixed but is not runnable here (no Android AVD). No production data touched — everything ran
+against the emulator suite.
 
 Full write-up with repro steps, evidence and fix pointers: **`docs/defects.md`** (D1–D13).
 
+Branch `fix/play-authorization`, not merged. Suites at the end of the session:
+`flutter analyze` clean, **309 Dart tests**, **156 functions tests** (from 292 / 132).
+
 | # | Item | Verdict |
 |---|------|---------|
-| 1.1 | Home PLAYS count vs Recent Plays list (co-op) | **CONFIRMED** |
-| 1.2 | Deleting a co-op play corrupts lifetime stats | **CONFIRMED** |
-| 1.3 | Deleting a co-op play does not rewind the campaign board | **CONFIRMED** |
-| 1.4 | No way to join someone else's campaign table | **CONFIRMED — worse than documented** |
-| 1.5 | Edit Play can add an already-present participant | **CONFIRMED** |
-| 1.6 | A play can exceed the game's max players | **CONFIRMED — it saves** |
-| 1.7 | Play History keeps a play after deletion | **CONFIRMED** |
-| 1.8 | Delete failures are silent | **CONFIRMED** |
-| 1.9 | Lost Cities wagers don't count toward the 8-card bonus | **CONFIRMED** |
-| 1.10 | Friends' names go stale after a rename | **CONFIRMED** |
-| 1.11 | Table picker sheet overflows with many tables | **CONFIRMED (360px overflow)** |
+| 1.1 | Home PLAYS count vs Recent Plays list (co-op) | **CONFIRMED — ✅ FIXED** |
+| 1.2 | Deleting a co-op play corrupts lifetime stats | **CONFIRMED — ✅ FIXED** |
+| 1.3 | Deleting a co-op play does not rewind the campaign board | **CONFIRMED — ✅ FIXED (undo added; latch intended)** |
+| 1.4 | No way to join someone else's campaign table | **CONFIRMED — worse than documented — NOT FIXED** |
+| 1.5 | Edit Play can add an already-present participant | **CONFIRMED — ✅ FIXED** |
+| 1.6 | A play can exceed the game's max players | **CONFIRMED — ✅ FIXED (Add Play; Edit residual)** |
+| 1.7 | Play History keeps a play after deletion | **CONFIRMED — ✅ FIXED** |
+| 1.8 | Delete failures are silent | **CONFIRMED — ✅ FIXED** |
+| 1.9 | Lost Cities wagers don't count toward the 8-card bonus | **CONFIRMED — ✅ FIXED** |
+| 1.10 | Friends' names go stale after a rename | **CONFIRMED — ✅ FIXED** |
+| 1.11 | Table picker sheet overflows with many tables | **CONFIRMED (360px overflow) — ✅ FIXED** |
 | 1.12 | Stage stepper impractical for Gloomhaven | **NOT A DEFECT — tap-to-type works** |
 | 1.13 | Any signed-in user can edit/delete any play | **CONFIRMED — most severe — ✅ FIXED** |
-| 1.14 | Non-friends can be added as participants | **CONFIRMED** |
-| 1.15 | Same-day ordering looks wrong | **CONFIRMED** |
+| 1.14 | Non-friends can be added as participants | **CONFIRMED — NOT FIXED (product call)** |
+| 1.15 | Same-day ordering looks wrong | **CONFIRMED — ✅ FIXED** |
 | 1.16 | Status bar style hardcoded for dark | **Appears already fixed (code-level only)** |
 
 ## Context & Decisions (this session)
@@ -180,19 +186,55 @@ properly rather than chasing the lockfile.
   guests named "Sam" still returns 200.
 - Suites after both: `flutter analyze` clean, **300 Dart tests**, **153 functions tests**.
 
+## D2, D7, D8, D9, D10, D11, D13 — the remainder, all FIXED
+
+Two needed a product decision, both taken by the owner:
+
+- **D8 / 1.1 — co-op counts toward PLAYS, never toward the win rate.** Added
+  `stats/{uid}.totalCoopPlays`, written by `createPlay` and rolled back by `deletePlay`.
+  Deliberately a **separate field** rather than folding into `totalGamesPlayed`, so the
+  invariant `totalGamesPlayed === sum(library.playCount)` still holds. Client reads it via the
+  new `coopPlayCountProvider`; absent fields read as 0. **Not backfilled** — co-op plays logged
+  before this commit are uncounted. Verified live: PLAYS 6 → 7 after logging a co-op *loss*,
+  win rate unmoved at 100%.
+- **D13 / 1.3 — the latch is intended, so `deletePlay` still does not rewind the board.** What
+  was missing was the undo. The board card gained a "Correct Mission N" action for the last
+  completed stage. Note an editor already existed for this — `_EditMissionDialog` in
+  `add_play_screen.dart` — but only inside the Add-Play flow; it is now extracted to
+  `lib/features/library/edit_mission_dialog.dart` and shared. The ± stepper could already
+  un-complete a *run* of stages but preserves their tries; only this dialog can correct those.
+
+The rest were client-side:
+
+- **D9 / 1.7** — Play History refetches on the boolean the detail route pops.
+- **D2 / 1.8** — delete is awaited with a spinner, disabled button, and a failure snackbar.
+  Goes through `playRepositoryProvider`, not `playDetailProvider`: popping disposes that
+  notifier, which is exactly why the result was discarded before.
+- **D10 / 1.11** — table picker is `isScrollControlled`, capped at 70% height, scrollable.
+- **D7 / 1.15** — picking a date preserves the current time-of-day instead of midnight.
+- **D11 / 1.10** — `getMyFriends` resolves live profiles in one batched `getAll`. **This
+  reverses a documented decision** in that function ("intentionally avoids joins ... to
+  minimize reads"); one batched read on a list of tens is a better trade than a wrong name, and
+  resolving on read repairs already-stale docs without a migration or a new collection-group
+  index. The same snapshot pattern still exists on **pending friend-request cards**.
+
+Suites: `flutter analyze` clean, **309 Dart tests**, **156 functions tests**.
+
 ## Next Immediate Step
 
-D1, D3, D4, D5 and D6 are done. Remaining, in rough value order:
+All 14 confirmed Part 1 defects are fixed. What's left:
 
-- **D8 / 1.1** — needs a **product decision** first: should co-op count toward plays, and
-  toward win-rate's denominator? Don't code before that is settled.
-- **D13 / 1.3** — also a product decision: does a campaign stage "latch" once beaten? If yes,
-  document it and add an undo affordance; if no, rewind `sessionCount`/`completed` on delete.
-- **D9 / 1.7**, **D10 / 1.11**, **D11 / 1.10**, **D7 / 1.15**, **D2 / 1.8** — client-side,
-  each small and independent.
-- **Accessibility**: icon-only controls (FAB, winner trophy, remove ×) expose no labels.
+- **Backfill `totalCoopPlays`** if pre-existing co-op plays matter — a script over `plays`
+  where `mode == "coop"`, incrementing per participant. Until then those PLAYS counts are low.
+- **D5 residual** — `EditPlayPage` can still exceed the player maximum; it holds only
+  `gameId`/`gameName`, so fixing it means resolving the catalog game there.
+- **Friend-request cards** carry the same stale-name snapshot D11 fixed for the friends list.
+- **Accessibility** — icon-only controls (FAB, winner trophy, remove ×) expose no labels; this
+  is the Part 8 VoiceOver item, and it is failing.
+- **`updatePlay` has no `mode` guard.** Co-op plays hide Edit in the UI, so it is not reachable
+  today, but D1 showed that "unreachable in the UI" is not a guarantee. Same bug class as D3.
+- **Parts 2–8** of the manual test plan have still not been run.
 
-Parts 2–8 of the manual test plan have still not been run.
 
 ---
 

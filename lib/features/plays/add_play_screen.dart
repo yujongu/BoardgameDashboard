@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,6 +11,7 @@ import '../../shared/theme/app_colors.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
 import '../library/campaign_record_section.dart';
 import '../library/campaign_registry.dart';
+import '../library/edit_mission_dialog.dart';
 import 'add_play_notifier.dart';
 import 'participant_picker_sheet.dart';
 
@@ -246,9 +246,9 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       AppStrings.of(context),
       state.coopSpec?.stageAxis,
     );
-    final result = await showDialog<_MissionEdit>(
+    final result = await showDialog<MissionEdit>(
       context: context,
-      builder: (_) => _EditMissionDialog(
+      builder: (_) => EditMissionDialog(
         axis: axis,
         stage: stage,
         initialTries: campaign.triesFor(stage),
@@ -1179,136 +1179,6 @@ class _MissionRecordRow extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Result of the edit-mission dialog: the corrected tries count and passed flag.
-class _MissionEdit {
-  final int tries;
-  final bool passed;
-  const _MissionEdit(this.tries, this.passed);
-}
-
-class _EditMissionDialog extends StatefulWidget {
-  final String axis;
-  final int stage;
-  final int initialTries;
-  final bool initialPassed;
-
-  const _EditMissionDialog({
-    required this.axis,
-    required this.stage,
-    required this.initialTries,
-    required this.initialPassed,
-  });
-
-  @override
-  State<_EditMissionDialog> createState() => _EditMissionDialogState();
-}
-
-class _EditMissionDialogState extends State<_EditMissionDialog> {
-  late final TextEditingController _tries = TextEditingController(
-    text: '${widget.initialTries}',
-  );
-  late bool _passed = widget.initialPassed;
-
-  @override
-  void dispose() {
-    _tries.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final n = int.tryParse(_tries.text.trim()) ?? widget.initialTries;
-    Navigator.of(context).pop(_MissionEdit(n < 0 ? 0 : n, _passed));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = AppStrings.of(context);
-    return AlertDialog(
-      backgroundColor: context.colors.surfaceHigh,
-      title: Text(
-        '${s.crewEditMissionTitle} · ${s.stageLabelNumbered(widget.axis, widget.stage)}',
-        style: GoogleFonts.newsreader(
-          color: context.colors.onSurface,
-          fontSize: 18,
-        ),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _tries,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: GoogleFonts.spaceGrotesk(
-              color: context.colors.onSurface,
-              fontSize: 15,
-            ),
-            decoration: InputDecoration(
-              labelText: s.crewTriesLabel,
-              labelStyle: GoogleFonts.spaceGrotesk(
-                color: context.colors.outline,
-                fontSize: 13,
-              ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: context.colors.outlineVariant),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: context.colors.primary),
-              ),
-            ),
-            onSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                s.crewMissionPassed,
-                style: GoogleFonts.spaceGrotesk(
-                  color: context.colors.onSurface,
-                  fontSize: 14,
-                ),
-              ),
-              Switch(
-                value: _passed,
-                activeThumbColor: context.colors.primary,
-                onChanged: (v) => setState(() => _passed = v),
-              ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            s.commonCancelCaps,
-            style: GoogleFonts.spaceGrotesk(
-              color: context.colors.outline,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: _submit,
-          child: Text(
-            s.commonOk,
-            style: GoogleFonts.spaceGrotesk(
-              color: context.colors.primary,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

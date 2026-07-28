@@ -154,4 +154,73 @@ void main() {
     await tester.tap(find.byIcon(Icons.close).first);
     expect(changed!.roster, ['Bob']);
   });
+
+  // ── Undo for the latched stage (defects.md D13) ───────────────────────────
+  //
+  // Campaign progress latches by design: logging a won mission completes it and
+  // deleting that play does not rewind the board. Without an undo there was no
+  // way to take back a mission completed by mistake, or to correct the tries a
+  // deleted play left behind — the ± stepper can un-complete a run of stages
+  // but deliberately preserves each stage's recorded tries.
+
+  testWidgets('offers to correct the last completed mission', (tester) async {
+    await tester.pumpWidget(wrap(campaignWith(current: 5), (_) {}));
+    expect(find.text('Correct Mission 4'), findsOneWidget);
+  });
+
+  testWidgets('offers no correction at the first mission', (tester) async {
+    // Nothing is complete yet, so there is nothing to take back.
+    await tester.pumpWidget(wrap(campaignWith(current: 1), (_) {}));
+    expect(find.textContaining('Correct'), findsNothing);
+  });
+
+  testWidgets('un-passing the last mission re-pins it as current', (
+    tester,
+  ) async {
+    Campaign? changed;
+    await tester.pumpWidget(wrap(campaignWith(current: 5), (c) => changed = c));
+
+    await tester.tap(find.text('Correct Mission 4'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Switch)); // Passed -> off
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(changed!.isStageCompleted(4), isFalse);
+    // Mission 4 is incomplete again, so it becomes the current mission.
+    expect(changed!.nextIncompleteStage(_spec.stageCount), 4);
+    // Earlier missions are untouched.
+    expect(changed!.isStageCompleted(3), isTrue);
+  });
+
+  testWidgets('corrects the recorded tries without changing completion', (
+    tester,
+  ) async {
+    Campaign? changed;
+    await tester.pumpWidget(wrap(campaignWith(current: 3), (c) => changed = c));
+
+    await tester.tap(find.text('Correct Mission 2'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '4');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(changed!.triesFor(2), 4);
+    expect(changed!.isStageCompleted(2), isTrue);
+  });
+
+  testWidgets('cancelling the correction changes nothing', (tester) async {
+    Campaign? changed;
+    await tester.pumpWidget(wrap(campaignWith(current: 3), (c) => changed = c));
+
+    await tester.tap(find.text('Correct Mission 2'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CANCEL'));
+    await tester.pumpAndSettle();
+
+    expect(changed, isNull);
+  });
 }

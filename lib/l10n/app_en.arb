@@ -161,6 +161,12 @@
   },
   "crewPassed": "PASSED",
   "crewFailed": "FAILED",
+  "campaignCorrectStage": "Correct {label}",
+  "@campaignCorrectStage": {
+    "placeholders": {
+      "label": { "type": "String" }
+    }
+  },
   "crewEditMissionTitle": "Edit mission",
   "crewTriesLabel": "Tries",
   "crewMissionPassed": "Passed",
