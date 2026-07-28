@@ -8,6 +8,7 @@ import {
 } from "firebase-admin/firestore";
 import { db } from "../shared/db";
 import { gameStatsRef, statsRef, userLibraryRef } from "../shared/helpers";
+import { assertParticipant, assertNoDuplicateParticipants } from "../shared/auth";
 import { ParticipantDocument, PlayDocument, UserLibraryDocument } from "../shared/types";
 
 // ─── Input / output types ─────────────────────────────────────────────────────
@@ -268,6 +269,7 @@ function validate(data: UpdatePlayData): void {
       );
     }
   }
+  assertNoDuplicateParticipants(data.participants);
 }
 
 // ─── Callable function ────────────────────────────────────────────────────────
@@ -282,6 +284,8 @@ export const updatePlay = onCall<UpdatePlayData>({ minInstances: 1 }, async (req
 
   const { playId, gameId, gameName, participants, location, notes } = data;
   const playedAt = Timestamp.fromDate(new Date(data.playedAt));
+  // Captured before the transaction closure so narrowing survives.
+  const uid = request.auth.uid;
   const playRef = db.collection("plays").doc(playId);
 
   await db.runTransaction(async (tx) => {
@@ -297,6 +301,7 @@ export const updatePlay = onCall<UpdatePlayData>({ minInstances: 1 }, async (req
       throw new HttpsError("not-found", `Play ${playId} does not exist.`);
     }
     const oldPlay = playSnap.data() as PlayDocument;
+    assertParticipant(oldPlay, uid);
 
     // Step 3: build old aggregate from existing participant docs.
     const oldAgg = buildAggregateMap(

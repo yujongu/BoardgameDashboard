@@ -49,6 +49,30 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
     }
   }
 
+  /// Opens a play's detail route. It pops `true` when the play was edited or
+  /// deleted, which makes the pages held in local state stale — Home streams and
+  /// self-corrects, this screen does not, so it must refetch.
+  Future<void> _openPlay(PlaySummary play) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => PlayDetailPage(initialData: play)),
+    );
+    if (changed == true && mounted) await _reload();
+  }
+
+  /// Discards every loaded page and refetches from the first one. Reloading
+  /// wholesale (rather than dropping the one row) also picks up edits that
+  /// change a play's date, and therefore its position in the ordering.
+  Future<void> _reload() async {
+    setState(() {
+      _plays.clear();
+      _cursor = null;
+      _hasMore = true;
+      _error = null;
+      _loading = false;
+    });
+    await _loadNextPage();
+  }
+
   Future<void> _loadNextPage() async {
     if (_loading || !_hasMore) return;
     setState(() {
@@ -128,14 +152,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
         if (i == _plays.length) return _buildFooter();
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: _PlayRow(
-            play: _plays[i],
-            onTap: () => Navigator.of(context).push<bool>(
-              MaterialPageRoute(
-                builder: (_) => PlayDetailPage(initialData: _plays[i]),
-              ),
-            ),
-          ),
+          child: _PlayRow(play: _plays[i], onTap: () => _openPlay(_plays[i])),
         );
       },
     );

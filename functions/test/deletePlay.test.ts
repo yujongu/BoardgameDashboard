@@ -308,3 +308,109 @@ describe("deletePlay", () => {
     });
   });
 });
+
+// ─── Cooperative deletes ──────────────────────────────────────────────────────
+//
+// Regression cases for defects.md D3 (manual-test-plan 1.2). createPlay skips
+// stats/gameStats/library entirely for co-op, but deletePlay used to roll back
+// unconditionally — subtracting counts the play had never added.
+
+describe("deletePlay (cooperative)", () => {
+  afterEach(clearDb);
+
+  const CREW: Pick<CreatePlayInput, "gameId" | "gameName"> = {
+    gameId: "the-crew-the-quest-for-planet-nine-2019",
+    gameName: "The Crew",
+  };
+
+  const coopPlay = (): CreatePlayInput => ({
+    ...CREW,
+    playedAt: PLAYED_AT,
+    participants: [
+      { userId: "u1", name: "Alice", isWinner: false },
+      { userId: "u2", name: "Bob", isWinner: false },
+    ],
+    mode: "coop",
+    outcome: "win",
+  });
+
+  it("still deletes the play document and its participants", async () => {
+    const { playId } = await callCreatePlay(coopPlay(), "u1");
+
+    await callDeletePlay(playId, "u1");
+
+    expect(await playExists(playId)).toBe(false);
+    expect(await getParticipants(playId)).toHaveLength(0);
+  });
+
+  it("rolls back the co-op counter and creates no other derived data", async () => {
+    const { playId } = await callCreatePlay(coopPlay(), "u1");
+    expect(await getStats("u1")).toMatchObject({ totalCoopPlays: 1 });
+
+    await callDeletePlay(playId, "u1");
+
+    // The co-op counter is symmetric — it is the one figure co-op wrote.
+    expect(await getStats("u1")).toMatchObject({ totalCoopPlays: 0 });
+    expect(await getStats("u2")).toMatchObject({ totalCoopPlays: 0 });
+
+    // Everything else must stay absent rather than be created at a negative
+    // count by a rollback for writes that never happened.
+    expect(await getGameStats("u1", CREW.gameId)).toBeNull();
+    expect(await getLibrary("u1", CREW.gameId)).toBeNull();
+    expect((await getStats("u1"))?.totalGamesPlayed).toBeUndefined();
+  });
+
+  it("leaves competitive totals untouched when a co-op play is deleted", async () => {
+    // One competitive play establishes the counters, then a co-op play for a
+    // different game is logged and deleted. The competitive figures must not move.
+    await callCreatePlay(
+      {
+        ...CHESS,
+        playedAt: PLAYED_AT,
+        participants: [{ userId: "u1", name: "Alice", isWinner: true }],
+      },
+      "u1"
+    );
+    const statsBefore = await getStats("u1");
+    expect(statsBefore).toMatchObject({ totalGamesPlayed: 1, totalWins: 1 });
+
+    const { playId } = await callCreatePlay(coopPlay(), "u1");
+    await callDeletePlay(playId, "u1");
+
+    // The invariant from the test plan's Part 8 data check:
+    //   stats.totalGamesPlayed === sum(library.playCount)
+    expect(await getStats("u1")).toMatchObject({
+      totalGamesPlayed: 1,
+      totalWins: 1,
+    });
+    expect(await getLibrary("u1", CHESS.gameId)).toMatchObject({
+      playCount: 1,
+      winCount: 1,
+    });
+  });
+
+  it("does not erase the library entry of a game also played competitively", async () => {
+    // Same gameId both ways: the co-op rollback used to decrement the shared
+    // library doc, and decrementUserLibrary deletes the entry at playCount 0.
+    await callCreatePlay(
+      {
+        ...CREW,
+        playedAt: PLAYED_AT,
+        participants: [{ userId: "u1", name: "Alice", isWinner: true }],
+      },
+      "u1"
+    );
+    const { playId } = await callCreatePlay(coopPlay(), "u1");
+
+    await callDeletePlay(playId, "u1");
+
+    expect(await getLibrary("u1", CREW.gameId)).toMatchObject({
+      playCount: 1,
+      winCount: 1,
+    });
+    expect(await getGameStats("u1", CREW.gameId)).toMatchObject({
+      playCount: 1,
+      winCount: 1,
+    });
+  });
+});

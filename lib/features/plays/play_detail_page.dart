@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
+import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
 import '../library/campaign_record_section.dart';
 import '../library/campaign_registry.dart';
@@ -22,6 +23,7 @@ class PlayDetailPage extends ConsumerStatefulWidget {
 class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
   // Navigation-only flag — does not drive any UI rebuild.
   bool _mutated = false;
+  bool _deleting = false;
 
   Future<void> _onEdit(PlayDetailState state) async {
     final notifier = ref.read(playDetailProvider(widget.initialData).notifier);
@@ -109,12 +111,30 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
     );
     if (confirmed != true || !mounted) return;
 
-    // Pop before the CF resolves — the Future outlives notifier disposal.
+    setState(() => _deleting = true);
+    try {
+      // Called on the repository rather than through playDetailProvider: popping
+      // disposes that notifier, so awaiting its future was unsafe — which is why
+      // the result used to be discarded, hiding every failure.
+      await ref
+          .read(playRepositoryProvider)
+          .deletePlay(widget.initialData.playId);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _deleting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s.playDeleteFailed,
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
+          ),
+          backgroundColor: context.colors.surfaceHigh,
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
     Navigator.of(context).pop(true);
-    ref
-        .read(playDetailProvider(widget.initialData).notifier)
-        .deletePlay()
-        .ignore();
   }
 
   @override
@@ -159,13 +179,24 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                         : null,
                   ),
                 IconButton(
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.redAccent,
-                    size: 20,
-                  ),
+                  icon: _deleting
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: context.colors.outline,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.delete_outline,
+                          color: Colors.redAccent,
+                          size: 20,
+                        ),
                   tooltip: s.commonDelete,
-                  onPressed: _onDelete,
+                  // Null while in flight so a second tap cannot fire a second
+                  // delete before the first resolves.
+                  onPressed: _deleting ? null : _onDelete,
                 ),
                 const SizedBox(width: 4),
               ],

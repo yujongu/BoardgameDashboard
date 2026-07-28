@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,6 +11,7 @@ import '../../shared/theme/app_colors.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
 import '../library/campaign_record_section.dart';
 import '../library/campaign_registry.dart';
+import '../library/edit_mission_dialog.dart';
 import 'add_play_notifier.dart';
 import 'participant_picker_sheet.dart';
 
@@ -123,7 +123,23 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       ),
     );
     if (picked != null) {
-      ref.read(addPlayProvider.notifier).setPlayedAt(picked);
+      // showDatePicker returns midnight. Keep the existing time-of-day so a play
+      // logged today does not sort below one logged minutes earlier, which is
+      // what happened when only the untouched path stored DateTime.now().
+      final current = ref.read(addPlayProvider).playedAt;
+      ref
+          .read(addPlayProvider.notifier)
+          .setPlayedAt(
+            DateTime(
+              picked.year,
+              picked.month,
+              picked.day,
+              current.hour,
+              current.minute,
+              current.second,
+              current.millisecond,
+            ),
+          );
     }
   }
 
@@ -139,8 +155,21 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          ParticipantPickerBottomSheet(onAdd: _addParticipantFromPicker),
+      // Consumer so the sheet re-renders as participants are added while it is
+      // open — the "Added" marks and the at-max notice must stay current.
+      builder: (_) => Consumer(
+        builder: (context, ref, _) {
+          final state = ref.watch(addPlayProvider);
+          return ParticipantPickerBottomSheet(
+            onAdd: _addParticipantFromPicker,
+            addedUserIds: state.participants
+                .where((p) => p.userId != null)
+                .map((p) => p.userId!)
+                .toSet(),
+            atMax: !state.canAddParticipant,
+          );
+        },
+      ),
     );
   }
 
@@ -162,6 +191,9 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     final pick = await showModalBottomSheet<_TablePick>(
       context: context,
       backgroundColor: Colors.transparent,
+      // Without this the sheet is capped at half the screen and its non-scrolling
+      // Column overflows once there are more than ~6 tables.
+      isScrollControlled: true,
       builder: (_) =>
           _TablePickerSheet(campaigns: campaigns, spec: state.coopSpec!),
     );
@@ -214,9 +246,9 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       AppStrings.of(context),
       state.coopSpec?.stageAxis,
     );
-    final result = await showDialog<_MissionEdit>(
+    final result = await showDialog<MissionEdit>(
       context: context,
-      builder: (_) => _EditMissionDialog(
+      builder: (_) => EditMissionDialog(
         axis: axis,
         stage: stage,
         initialTries: campaign.triesFor(stage),
@@ -293,6 +325,11 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
         : s.maxPlayersAdded;
     final saveButtonText = state.belowMinPlayers
         ? s.minPlayersNeeded(state.effectiveMinPlayers)
+        : state.aboveMaxPlayers
+        ? s.maxPlayersExceeded(
+            state.participants.length - state.maxPlayers!,
+            state.maxPlayers!,
+          )
         : s.savePlay;
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -1146,136 +1183,6 @@ class _MissionRecordRow extends StatelessWidget {
   }
 }
 
-/// Result of the edit-mission dialog: the corrected tries count and passed flag.
-class _MissionEdit {
-  final int tries;
-  final bool passed;
-  const _MissionEdit(this.tries, this.passed);
-}
-
-class _EditMissionDialog extends StatefulWidget {
-  final String axis;
-  final int stage;
-  final int initialTries;
-  final bool initialPassed;
-
-  const _EditMissionDialog({
-    required this.axis,
-    required this.stage,
-    required this.initialTries,
-    required this.initialPassed,
-  });
-
-  @override
-  State<_EditMissionDialog> createState() => _EditMissionDialogState();
-}
-
-class _EditMissionDialogState extends State<_EditMissionDialog> {
-  late final TextEditingController _tries = TextEditingController(
-    text: '${widget.initialTries}',
-  );
-  late bool _passed = widget.initialPassed;
-
-  @override
-  void dispose() {
-    _tries.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final n = int.tryParse(_tries.text.trim()) ?? widget.initialTries;
-    Navigator.of(context).pop(_MissionEdit(n < 0 ? 0 : n, _passed));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = AppStrings.of(context);
-    return AlertDialog(
-      backgroundColor: context.colors.surfaceHigh,
-      title: Text(
-        '${s.crewEditMissionTitle} · ${s.stageLabelNumbered(widget.axis, widget.stage)}',
-        style: GoogleFonts.newsreader(
-          color: context.colors.onSurface,
-          fontSize: 18,
-        ),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _tries,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: GoogleFonts.spaceGrotesk(
-              color: context.colors.onSurface,
-              fontSize: 15,
-            ),
-            decoration: InputDecoration(
-              labelText: s.crewTriesLabel,
-              labelStyle: GoogleFonts.spaceGrotesk(
-                color: context.colors.outline,
-                fontSize: 13,
-              ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: context.colors.outlineVariant),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: context.colors.primary),
-              ),
-            ),
-            onSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                s.crewMissionPassed,
-                style: GoogleFonts.spaceGrotesk(
-                  color: context.colors.onSurface,
-                  fontSize: 14,
-                ),
-              ),
-              Switch(
-                value: _passed,
-                activeThumbColor: context.colors.primary,
-                onChanged: (v) => setState(() => _passed = v),
-              ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            s.commonCancelCaps,
-            style: GoogleFonts.spaceGrotesk(
-              color: context.colors.outline,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: _submit,
-          child: Text(
-            s.commonOk,
-            style: GoogleFonts.spaceGrotesk(
-              color: context.colors.primary,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _OutcomeButton extends StatelessWidget {
   final String label;
   final bool selected;
@@ -1395,47 +1302,54 @@ class _TablePickerSheet extends StatelessWidget {
           border: Border.all(color: context.colors.amberBorder),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final c in campaigns)
-              ListTile(
-                leading: Icon(
-                  Icons.groups_outlined,
-                  color: context.colors.outline,
-                ),
-                title: Text(
-                  c.roster.isEmpty
-                      ? s.campaignUntitledTable
-                      : c.roster.join(', '),
-                  style: GoogleFonts.newsreader(
-                    color: context.colors.onSurface,
-                    fontSize: 16,
-                  ),
-                ),
-                subtitle: Text(
-                  s.campaignStageProgress(c.completedCount, spec.stageCount),
-                  style: GoogleFonts.spaceGrotesk(
+        // Capped and scrollable: the list grows with the number of tables, and
+        // the "new table" row must stay reachable however many there are.
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final c in campaigns)
+                ListTile(
+                  leading: Icon(
+                    Icons.groups_outlined,
                     color: context.colors.outline,
-                    fontSize: 12,
+                  ),
+                  title: Text(
+                    c.roster.isEmpty
+                        ? s.campaignUntitledTable
+                        : c.roster.join(', '),
+                    style: GoogleFonts.newsreader(
+                      color: context.colors.onSurface,
+                      fontSize: 16,
+                    ),
+                  ),
+                  subtitle: Text(
+                    s.campaignStageProgress(c.completedCount, spec.stageCount),
+                    style: GoogleFonts.spaceGrotesk(
+                      color: context.colors.outline,
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(context).pop(_PickExisting(c)),
+                ),
+              ListTile(
+                leading: Icon(Icons.add, color: context.colors.primary),
+                title: Text(
+                  s.campaignNewTable,
+                  style: GoogleFonts.spaceGrotesk(
+                    color: context.colors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
                   ),
                 ),
-                onTap: () => Navigator.of(context).pop(_PickExisting(c)),
+                onTap: () => Navigator.of(context).pop(const _PickNew()),
               ),
-            ListTile(
-              leading: Icon(Icons.add, color: context.colors.primary),
-              title: Text(
-                s.campaignNewTable,
-                style: GoogleFonts.spaceGrotesk(
-                  color: context.colors.primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              onTap: () => Navigator.of(context).pop(const _PickNew()),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

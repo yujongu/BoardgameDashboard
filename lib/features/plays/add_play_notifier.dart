@@ -73,6 +73,9 @@ class AddPlayState {
   bool get canSave {
     if (selectedGame == null) return false;
     if (participants.length < _effectiveMin) return false;
+    // Switching to a game with a lower cap leaves the extra participants in
+    // place, so the maximum has to be re-checked here and not only when adding.
+    if (participants.length > _effectiveMax) return false;
     if (!participants.any((p) => p.name.trim().isNotEmpty)) return false;
     if (isCoop) {
       if (outcome == null) return false;
@@ -91,6 +94,11 @@ class AddPlayState {
   /// True when a game is selected but not enough players have been added yet.
   bool get belowMinPlayers =>
       selectedGame != null && participants.length < _effectiveMin;
+
+  /// True when a game is selected and the play holds more players than it
+  /// allows — only reachable by switching to a game with a smaller maximum.
+  bool get aboveMaxPlayers =>
+      selectedGame != null && participants.length > _effectiveMax;
 
   /// Max players for the selected game, or null when none is selected / unbounded.
   int? get maxPlayers => selectedGame?.maxPlayers;

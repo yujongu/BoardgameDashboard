@@ -8,6 +8,7 @@ import '../../shared/models/campaign.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
 import 'campaign_registry.dart';
+import 'edit_mission_dialog.dart';
 
 /// Localized singular label for a campaign's stage axis (Mission/Scenario/Month).
 String stageAxisLabel(AppStrings s, StageAxis? axis) {
@@ -293,6 +294,38 @@ class CampaignCard extends StatelessWidget {
     _setCurrent(stage);
   }
 
+  /// Corrects the tries and passed status of the last completed stage.
+  ///
+  /// Campaign progress latches: logging a win marks a stage complete, and
+  /// deleting that play does not rewind the board — a mission the team really
+  /// beat should stay beaten even if the play record is tidied up. That leaves
+  /// no way to take back a stage marked complete by mistake, which is what this
+  /// provides. The ± stepper can already un-complete a run of stages, but it
+  /// preserves each stage's recorded tries; only this can correct those.
+  Future<void> _correctPreviousStage(BuildContext context) async {
+    final target = _current - 1;
+    if (target < 1) return;
+    final result = await showDialog<MissionEdit>(
+      context: context,
+      builder: (_) => EditMissionDialog(
+        axis: stageAxisLabel(AppStrings.of(context), spec.stageAxis),
+        stage: target,
+        initialTries: campaign.triesFor(target),
+        initialPassed: campaign.isStageCompleted(target),
+      ),
+    );
+    if (result == null) return;
+    final next = <String, CampaignStage>{...campaign.stages};
+    final existing = next['$target'];
+    next['$target'] = CampaignStage(
+      completed: result.passed,
+      sessionCount: result.tries,
+      lastOutcome: existing?.lastOutcome,
+      lastPlayedAt: existing?.lastPlayedAt,
+    );
+    onChanged(campaign.copyWith(stages: next));
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
@@ -409,6 +442,27 @@ class CampaignCard extends StatelessWidget {
               ),
             ],
           ),
+          // Undo path for the latch: nothing else on this card can take back a
+          // stage marked complete, or correct the tries a deleted play left
+          // behind. Hidden at stage 1, where nothing is completed yet.
+          if (_current > 1)
+            TextButton(
+              onPressed: () => _correctPreviousStage(context),
+              child: Text(
+                s.campaignCorrectStage(
+                  s.stageLabelNumbered(
+                    stageAxisLabel(s, spec.stageAxis),
+                    _current - 1,
+                  ),
+                ),
+                style: GoogleFonts.spaceGrotesk(
+                  color: context.colors.outline,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
         ],
       ),
     );

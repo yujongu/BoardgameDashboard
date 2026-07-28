@@ -1,3 +1,243 @@
+# Handover — 2026-07-28 (session: manual test plan, Part 1 execution)
+
+## Current Milestone
+
+**Executed `docs/manual-test-plan.md` Part 1 (the 16 targeted defect repros)** against two
+iOS simulators + the Firebase emulator suite, then **fixed every confirmed defect**.
+
+Result: **14 of 16 confirmed → all 14 fixed**; 1.12 is not a defect; 1.16 appears already
+fixed but is not runnable here (no Android AVD). No production data touched — everything ran
+against the emulator suite.
+
+Full write-up with repro steps, evidence and fix pointers: **`docs/defects.md`** (D1–D13).
+
+Branch `fix/play-authorization`, not merged. Suites at the end of the session:
+`flutter analyze` clean, **309 Dart tests**, **156 functions tests** (from 292 / 132).
+
+| # | Item | Verdict |
+|---|------|---------|
+| 1.1 | Home PLAYS count vs Recent Plays list (co-op) | **CONFIRMED — ✅ FIXED** |
+| 1.2 | Deleting a co-op play corrupts lifetime stats | **CONFIRMED — ✅ FIXED** |
+| 1.3 | Deleting a co-op play does not rewind the campaign board | **CONFIRMED — ✅ FIXED (undo added; latch intended)** |
+| 1.4 | No way to join someone else's campaign table | **CONFIRMED — worse than documented — NOT FIXED** |
+| 1.5 | Edit Play can add an already-present participant | **CONFIRMED — ✅ FIXED** |
+| 1.6 | A play can exceed the game's max players | **CONFIRMED — ✅ FIXED (Add Play; Edit residual)** |
+| 1.7 | Play History keeps a play after deletion | **CONFIRMED — ✅ FIXED** |
+| 1.8 | Delete failures are silent | **CONFIRMED — ✅ FIXED** |
+| 1.9 | Lost Cities wagers don't count toward the 8-card bonus | **CONFIRMED — ✅ FIXED** |
+| 1.10 | Friends' names go stale after a rename | **CONFIRMED — ✅ FIXED** |
+| 1.11 | Table picker sheet overflows with many tables | **CONFIRMED (360px overflow) — ✅ FIXED** |
+| 1.12 | Stage stepper impractical for Gloomhaven | **NOT A DEFECT — tap-to-type works** |
+| 1.13 | Any signed-in user can edit/delete any play | **CONFIRMED — most severe — ✅ FIXED** |
+| 1.14 | Non-friends can be added as participants | **CONFIRMED — NOT FIXED (product call)** |
+| 1.15 | Same-day ordering looks wrong | **CONFIRMED — ✅ FIXED** |
+| 1.16 | Status bar style hardcoded for dark | **Appears already fixed (code-level only)** |
+
+## Context & Decisions (this session)
+
+- **Test rig**: two booted simulators (iPhone 17 Pro = Alice, iPhone 17 = Bob), app built
+  once with `flutter build ios --simulator --debug --dart-define=USE_EMULATORS=true` and
+  `simctl install`ed on both. UI driven by **idb** (`brew install idb-companion` + `fb-idb`
+  in a venv). This required `brew trust facebook/fb` — Homebrew now gates third-party taps.
+- **fb-idb 1.1.7 is incompatible with Python 3.14** (`asyncio.get_event_loop()` no longer
+  auto-creates a loop). Worked around with a 3-line shim that calls
+  `asyncio.set_event_loop(asyncio.new_event_loop())` before `idb.cli.main`. If idb is
+  adopted for CI, pin Python ≤3.12 instead.
+- **Driving strategy**: `idb ui describe-all` returns the accessibility tree, so taps target
+  elements by label rather than pixel coordinates. Far more robust than screenshot math.
+- **Data-layer defects (1.2, 1.3, 1.4, 1.5, 1.13, 1.14) were proven by calling the emulated
+  callables directly** (node + `fetch` with an Auth-emulator ID token) and reading Firestore,
+  rather than through the UI. That gives exact before/after numbers instead of inference.
+- 1.8 was reproduced by killing **only** the Functions emulator (port 5001) so Firestore
+  stayed up — a closer analogue to "delete fails" than full airplane mode.
+
+## The 'Gravel' (non-obvious findings)
+
+- **1.13 is the one to fix first.** `deletePlay`/`updatePlay` check `request.auth` but never
+  that the caller is a participant or the creator. Verified: account C (not in the play,
+  not a friend) called `updatePlay` **and** `deletePlay` on an A+B play — both returned 200
+  and the play was destroyed. Firestore rules don't help; the Admin SDK bypasses them.
+- **1.4 is worse than the plan states.** `memberIds` is never updated by `createPlay`, so B
+  not only can't *see* A's table — B gets `403 PERMISSION_DENIED "Only campaign members may
+  log sessions."` if they try to log to it. Note the two creation paths disagree:
+  `campaign_record_section.dart:76` passes `memberIds: const []` (Game Detail → New table,
+  creator only), while `add_play_screen.dart:184` derives members from the participant list.
+- **1.2 breaks the Part 8 invariant measurably**: after one competitive play + one co-op play
+  + deleting the co-op play, `stats/{uid}.totalGamesPlayed` = 0 while
+  `sum(library.playCount)` = 1. A second sequence produced `totalWins` (2) >
+  `totalGamesPlayed` (1) — an impossible state.
+- **1.9 loses exactly 20 points** whenever an expedition reaches 8 cards *including* wagers,
+  because the bonus is added after the multiplier. Confirmed in the UI: 2 handshakes +
+  cards 2–7 scores **21**, rulebook says **41**. `selectedNumbers.length >= 8` should be
+  `selectedNumbers.length + handshakeCount >= 8` (`expedition_column.dart:16`).
+- **1.12 should be struck from the plan** — tapping the mission number opens a "Mission"
+  dialog with a 1–50 range hint, and out-of-range input (999) clamps to 50 correctly.
+- **1.16 looks already fixed** by the P2 theming work: `appBarTheme.systemOverlayStyle`
+  switches light/dark (`app_colors.dart:230`) and `ProfileAppBar` is a `SliverAppBar`, so
+  the tab screens inherit it. The `SystemChrome.setSystemUIOverlayStyle(...light)` call at
+  `main.dart:79` is a harmless leftover. **Not empirically verified — no Android AVD exists
+  on this machine** (`flutter emulators` lists only the iOS simulator).
+- **Incidental (not in Part 1)**: every icon-only control exposes `AXLabel = None` — the
+  add-play FAB, the winner trophy, and the remove ×. That is the Part 8 VoiceOver item
+  failing; worth fixing alongside 1.13.
+- **Gotcha for future rig scripts**: the callables read `users/{uid}.name`, but the field is
+  easy to confuse with `displayName`. Seeding only `displayName` makes `sendFriendRequest`
+  fail with `FAILED_PRECONDITION "Your profile is missing a name."`.
+- Firebase Auth state lives in the **simulator keychain and survives app uninstall** — use
+  `xcrun simctl keychain <udid> reset` to force a clean login.
+- `idb ui text` silently drops characters on long strings; feed input in ≤8-char chunks and
+  read the field back via the accessibility tree to verify.
+
+## D1 / 1.13 — FIXED this session
+
+Policy chosen by the owner: **any registered participant** may read, edit, or delete a play.
+
+- New `functions/src/shared/auth.ts` exports `assertParticipant(play, uid)`, throwing
+  `permission-denied` when `uid` is not in `play.participantIds`. The file carries the
+  rationale (why rules don't cover callables) so the next reader doesn't have to re-derive it.
+- Applied in `deletePlay.ts`, `updatePlay.ts`, **and `reads/getPlay.ts`** — the read side had
+  the same hole, which the test plan didn't list. Each call sits after the doc is loaded and
+  confirmed to exist, so `not-found` still precedes `permission-denied`, and `deletePlay`
+  keeps its idempotent early return.
+- `uid` is captured **before** the `runTransaction` closure in delete/update; TypeScript loses
+  the `request.auth` narrowing inside the async callback otherwise.
+- Tests: `functions/test/playAuthorization.test.ts`, 14 cases. **Full suite 146 passed.**
+  Confirmed the tests actually bite — neutering the guard fails exactly the 6 "denies" cases
+  while the 8 positive-path cases still pass.
+- Re-verified end-to-end on the emulator: stranger → `403 PERMISSION_DENIED` on getPlay,
+  updatePlay and deletePlay; non-creator participant → all three succeed.
+- **No client change needed.** `getPlay` is only reached from the user's own play lists, and
+  `fetchSharedPlays` queries `participantIds arrayContains uid`, so nothing legitimate relied
+  on the old behaviour.
+
+## Build-artifact changes in this working tree (decided: keep all, revert nothing)
+
+Three files changed as a by-product of running `flutter build ios`. They were reviewed
+individually rather than reverted wholesale:
+
+- **`ios/Podfile.lock` + `macos/Flutter/GeneratedPluginRegistrant.swift` — keep; these are the
+  missing iOS/macOS half of P3.** `pubspec.yaml` has `firebase_crashlytics` / `firebase_analytics`
+  committed (`aa1476b`), but both generated files were last touched in `8add70e`, *before* P3 —
+  that session verified with `flutter build apk --debug`, which never regenerates iOS/macOS
+  artifacts. The registrant now registers `FirebaseAnalyticsPlugin` and
+  `FLTFirebaseCrashlyticsPlugin`; the pods lock gains Firebase/Analytics + Firebase/Crashlytics
+  11.15.0. Reverting would leave Crashlytics and Analytics declared in Dart but never
+  initialized natively on iOS/macOS. This closes the "Device/Mac-only verification still
+  outstanding" note from the P3 handover.
+- **`pubspec.lock` — keep; it cannot be meaningfully reverted on this machine.** `meta`
+  1.18.0 → 1.17.0 and `test_api` 0.7.11 → 0.7.10 are pinned by the Flutter SDK. Verified
+  empirically: reverting the file and running `flutter pub get` reproduces a byte-identical
+  result. The committed lockfile was generated by a **newer Flutter** than this machine's
+  **3.41.7 / Dart 3.11.5**.
+- **Verified green on the downgrade**: `flutter analyze` clean, `flutter test` **292 passed**,
+  `npm test` in `functions/` **146 passed**.
+
+**Decision on the SDK divergence: do nothing.** Anyone on a newer Flutter will flip those four
+lines back, but the packages are test-only transitives with no functional impact. Adding `fvm`
+or a `.flutter-version` file is not worth the ceremony for a single-developer repo — revisit
+only if a second machine or CI starts building this project, at which point pin the SDK
+properly rather than chasing the lockfile.
+
+## D3 + D6 — also FIXED this session
+
+- **D6 (Lost Cities, `expedition_column.dart:17`)**: the bonus condition is now
+  `selectedNumbers.length + handshakeCount >= 8`. Wagers are cards by the rulebook, so any
+  expedition reaching 8 cards *with* a wager was silently losing exactly 20 points (the bonus
+  is added after the multiplier, so the loss is flat). Three regression cases cover the
+  boundary at 0–3 wagers plus the 7-card negative case. **Verified in the simulator**: the
+  same taps that scored 21 now score 41.
+- **D3 (`deletePlay.ts`)**: reads `mode` and skips the derived-data rollback for co-op,
+  mirroring `createPlay`'s `if (coop || p.userId === null) continue;`. Implemented by leaving
+  the aggregate map empty, so no derived refs are built, `tx.getAll` is skipped, and the
+  rollback loop no-ops — the play doc and participant docs are still deleted. Four regression
+  cases in a new `deletePlay (cooperative)` block. **Verified on the emulator**:
+  `totalGamesPlayed` and `library.playCount` unchanged across a co-op create *and* delete.
+- Both fixes were confirmed to be genuinely pinned by their tests — reverting each fails
+  exactly the new positive cases and nothing else.
+- Suites after both: `flutter analyze` clean, **295 Dart tests**, **150 functions tests**.
+
+## D4 + D5 — also FIXED this session
+
+- **D4 (duplicate participant), server**: `assertNoDuplicateParticipants` in `shared/auth.ts`
+  rejects a repeated registered `userId` from `createPlay`/`updatePlay` with
+  `invalid-argument`. Guests are **deliberately exempt** — `userId` is null, they have no
+  derived data, and Part 3 of the test plan expects two same-named guests to be allowed.
+- **D4, client — this was the real root cause**: `ParticipantListSection` read
+  `addPlayProvider` for both its "Added" marks *and* its at-max notice, even when the sheet
+  was opened from Edit Play. A shared widget with a hidden dependency on one of its two
+  callers' state. Both it and `ParticipantPickerBottomSheet` now take `addedUserIds` and
+  `atMax` as **required** parameters; the provider import is gone. Add Play wraps the sheet in
+  a `Consumer` and Edit in a `StatefulBuilder` so both keep updating live as players are added
+  — without that, a *newly* added player would go unmarked and could be added twice again.
+- **D5 (max players)**: `canSave` now rejects `participants.length > _effectiveMax`, with a
+  new `aboveMaxPlayers` flag driving the save-bar label ("Remove N to fit M players", new
+  `maxPlayersExceeded` l10n key — run `flutter gen-l10n` after touching the arb).
+  Participants are **not** pruned on game switch: an existing test pins that behaviour, and
+  silently deleting entered players is worse than blocking the save.
+- **Known residual on D5**: `EditPlayPage` holds only `gameId`/`gameName`, not min/max, so it
+  cannot evaluate the cap and passes `atMax: false`. Editing a play can still exceed the
+  maximum. Fixing it means resolving the catalog game in the edit page — recorded in
+  `docs/defects.md` D5 rather than left silent.
+- Both guards verified to bite: neutering each fails exactly its new cases.
+- **Verified in the simulator**: the Edit picker now shows `Bob · Added` (was plain `Bob`) and
+  tapping him adds no row; switching a 6-player play to 7 Wonders Duel shows
+  "Remove 4 to fit 2 players" and the save bar is inert. Live emulator: `updatePlay` with a
+  duplicate returns `400 INVALID_ARGUMENT` and leaves `participantCount` at 2; a play with two
+  guests named "Sam" still returns 200.
+- Suites after both: `flutter analyze` clean, **300 Dart tests**, **153 functions tests**.
+
+## D2, D7, D8, D9, D10, D11, D13 — the remainder, all FIXED
+
+Two needed a product decision, both taken by the owner:
+
+- **D8 / 1.1 — co-op counts toward PLAYS, never toward the win rate.** Added
+  `stats/{uid}.totalCoopPlays`, written by `createPlay` and rolled back by `deletePlay`.
+  Deliberately a **separate field** rather than folding into `totalGamesPlayed`, so the
+  invariant `totalGamesPlayed === sum(library.playCount)` still holds. Client reads it via the
+  new `coopPlayCountProvider`; absent fields read as 0. **Not backfilled** — co-op plays logged
+  before this commit are uncounted. Verified live: PLAYS 6 → 7 after logging a co-op *loss*,
+  win rate unmoved at 100%.
+- **D13 / 1.3 — the latch is intended, so `deletePlay` still does not rewind the board.** What
+  was missing was the undo. The board card gained a "Correct Mission N" action for the last
+  completed stage. Note an editor already existed for this — `_EditMissionDialog` in
+  `add_play_screen.dart` — but only inside the Add-Play flow; it is now extracted to
+  `lib/features/library/edit_mission_dialog.dart` and shared. The ± stepper could already
+  un-complete a *run* of stages but preserves their tries; only this dialog can correct those.
+
+The rest were client-side:
+
+- **D9 / 1.7** — Play History refetches on the boolean the detail route pops.
+- **D2 / 1.8** — delete is awaited with a spinner, disabled button, and a failure snackbar.
+  Goes through `playRepositoryProvider`, not `playDetailProvider`: popping disposes that
+  notifier, which is exactly why the result was discarded before.
+- **D10 / 1.11** — table picker is `isScrollControlled`, capped at 70% height, scrollable.
+- **D7 / 1.15** — picking a date preserves the current time-of-day instead of midnight.
+- **D11 / 1.10** — `getMyFriends` resolves live profiles in one batched `getAll`. **This
+  reverses a documented decision** in that function ("intentionally avoids joins ... to
+  minimize reads"); one batched read on a list of tens is a better trade than a wrong name, and
+  resolving on read repairs already-stale docs without a migration or a new collection-group
+  index. The same snapshot pattern still exists on **pending friend-request cards**.
+
+Suites: `flutter analyze` clean, **309 Dart tests**, **156 functions tests**.
+
+## Next Immediate Step
+
+All 14 confirmed Part 1 defects are fixed. What's left:
+
+- **Backfill `totalCoopPlays`** if pre-existing co-op plays matter — a script over `plays`
+  where `mode == "coop"`, incrementing per participant. Until then those PLAYS counts are low.
+- **D5 residual** — `EditPlayPage` can still exceed the player maximum; it holds only
+  `gameId`/`gameName`, so fixing it means resolving the catalog game there.
+- **Friend-request cards** carry the same stale-name snapshot D11 fixed for the friends list.
+- **Accessibility** — icon-only controls (FAB, winner trophy, remove ×) expose no labels; this
+  is the Part 8 VoiceOver item, and it is failing.
+- **`updatePlay` has no `mode` guard.** Co-op plays hide Edit in the UI, so it is not reachable
+  today, but D1 showed that "unreachable in the UI" is not a guarantee. Same bug class as D3.
+- **Parts 2–8** of the manual test plan have still not been run.
+
+
+---
+
 # Handover — 2026-07-28 (session: P3 — Crashlytics + Analytics)
 
 ## Current Milestone

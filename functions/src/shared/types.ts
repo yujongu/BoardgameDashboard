@@ -146,6 +146,15 @@ export interface StatsDocument {
   totalGamesPlayed: number;
   /** Total number of play sessions this user has won. */
   totalWins: number;
+  /**
+   * Total cooperative sessions this user has taken part in.
+   *
+   * Kept separate from totalGamesPlayed so the invariant
+   * `totalGamesPlayed === sum(library.playCount)` still holds — co-op writes no
+   * library or gameStats entries, and has no winner to feed a win rate.
+   * Absent on documents written before this field existed.
+   */
+  totalCoopPlays?: number;
   /** Timestamp of the most recent session. Absent if the user has no plays yet. */
   lastPlayedAt?: Timestamp;
 }

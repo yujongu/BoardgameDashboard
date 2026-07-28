@@ -13,7 +13,8 @@ int calculateExpeditionScore(List<int> selectedNumbers, int handshakeCount) {
 
   total *= (handshakeCount + 1);
 
-  if (selectedNumbers.length >= 8) {
+  // Wagers are cards too, so they count toward the 8-card bonus.
+  if (selectedNumbers.length + handshakeCount >= 8) {
     total += 20;
   }
 

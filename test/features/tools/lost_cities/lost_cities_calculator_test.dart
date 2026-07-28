@@ -34,6 +34,31 @@ void main() {
       // 24 * (2+1) = 72; + 20 bonus = 92
       expect(calculateExpeditionScore(const [2, 3, 4, 5, 6, 7, 8, 9], 2), 92);
     });
+
+    // ── The 8-card boundary counts wagers as cards ────────────────────────────
+    // Regression cases for defects.md D6: the bonus used to test only
+    // selectedNumbers.length, so any expedition that reached 8 cards *with* a
+    // wager silently lost exactly 20 points.
+
+    test('wagers count toward the eight-card bonus', () {
+      // 2 wagers + 6 numbers = 8 cards. -20+27 = 7; 7*3 = 21; +20 bonus = 41.
+      expect(calculateExpeditionScore(const [2, 3, 4, 5, 6, 7], 2), 41);
+    });
+
+    test('the boundary holds at exactly eight cards for every wager count', () {
+      // Each row is 8 total cards: (8 - wagers) numbers starting at 2.
+      expect(calculateExpeditionScore(const [2, 3, 4, 5, 6, 7, 8, 9], 0), 44);
+      expect(calculateExpeditionScore(const [2, 3, 4, 5, 6, 7, 8], 1), 50);
+      expect(calculateExpeditionScore(const [2, 3, 4, 5, 6, 7], 2), 41);
+      expect(calculateExpeditionScore(const [2, 3, 4, 5, 6], 3), 20);
+    });
+
+    test('seven total cards still earn no bonus', () {
+      // 1 wager + 6 numbers = 7 cards. -20+27 = 7; 7*2 = 14; no bonus.
+      expect(calculateExpeditionScore(const [2, 3, 4, 5, 6, 7], 1), 14);
+      // 3 wagers + 4 numbers = 7 cards. -20+14 = -6; -6*4 = -24; no bonus.
+      expect(calculateExpeditionScore(const [2, 3, 4, 5], 3), -24);
+    });
   });
 
   testWidgets('screen builds without throwing', (tester) async {
