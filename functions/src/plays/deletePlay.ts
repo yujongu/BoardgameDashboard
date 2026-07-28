@@ -8,6 +8,7 @@ import {
   statsRef,
   userLibraryRef,
 } from "../shared/helpers";
+import { assertParticipant } from "../shared/auth";
 import { ParticipantDocument, PlayDocument } from "../shared/types";
 
 // ─── Input / output types ─────────────────────────────────────────────────────
@@ -38,6 +39,8 @@ export const deletePlay = onCall<DeletePlayData>(async (request) => {
   const data = request.data;
   validate(data);
 
+  // Captured before the transaction closure so narrowing survives.
+  const uid = request.auth.uid;
   const playRef = db.collection("plays").doc(data.playId);
 
   await db.runTransaction(async (tx) => {
@@ -53,7 +56,10 @@ export const deletePlay = onCall<DeletePlayData>(async (request) => {
     // Idempotent — if already deleted, treat as success.
     if (!playSnap.exists) return;
 
-    const { gameId } = playSnap.data() as PlayDocument;
+    const play = playSnap.data() as PlayDocument;
+    assertParticipant(play, uid);
+
+    const { gameId } = play;
 
     // Step 2: participants subcollection (query read — all docs in one RPC).
     const participantsSnap = await tx.get(

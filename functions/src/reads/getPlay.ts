@@ -1,6 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { Timestamp } from "firebase-admin/firestore";
 import { db } from "../shared/db";
+import { assertParticipant } from "../shared/auth";
 import { ParticipantDocument, PlayDocument } from "../shared/types";
 
 // ─── Input / output types ─────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ export const getPlay = onCall<GetPlayData>(async (request) => {
   }
 
   const play = playSnap.data() as PlayDocument;
+  assertParticipant(play, request.auth.uid);
 
   const participants: ParticipantResult[] = participantsSnap.docs.map((doc) => {
     const p = doc.data() as ParticipantDocument;
