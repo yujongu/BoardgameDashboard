@@ -1,3 +1,71 @@
+# Handover — 2026-07-28 (session: 28 score calculators)
+
+## Current Milestone
+
+**Score-calculator tools for 28 more catalog games (5 → 33 total).** Plan file:
+`~/.claude/plans/i-want-you-to-piped-turing.md`. Approved scope: all 28 "strong-fit"
+games (those whose final score is an additive tally); **bespoke screen per game**; **full
+l10n**. Co-op / social-deduction / party / abstract games were deliberately excluded.
+
+Status: **fully implemented; `flutter analyze` clean; `flutter test` 289 pass; NOT
+committed.** Each new tool has unit tests for the pure scoring/winner fns + 2 widget
+tests. **No iOS/Android simulator on this Windows box** (only Windows desktop + Chrome/
+Edge web) — the pixel-level on-device check was **not** performed. The 28 widget tests do
+render every screen with the production theme, and a `RenderFlex` overflow throws during
+`pumpWidget`, so the passing build-smoke tests confirm no overflow at the default surface.
+
+## Context & Decisions (this session)
+
+- **Template**: every tool is a structural copy of `lib/features/tools/wingspan/` — a
+  top-level pure `<game>Total({...})` + `<game>Winners(List<int>)`, a category `enum` +
+  `label(AppStrings)` resolver extension, and a `StatefulWidget` composing the **unchanged**
+  shared `SelectorChipRow` / `ScoreInputRow` / `CalculatorTotalsBar`
+  (`presentation/widgets/calculator_widgets.dart`).
+- **Scoring model**: each category is a **VP subtotal the player enters** (adding aid, not
+  a rules engine). Fixed multipliers live in the total fn (e.g. Azul columns ×7); penalties
+  subtract; negatives use `ScoreInputRow(signed: true)` (Sushi Go puddings, Sushi Go Party
+  desserts, Point Salad cards).
+- **Special scoring**: Tigris & Euphrates total = `min(4 colours)` with a section header
+  showing the score; Photosynthesis total = tokens only, remaining light is a **winner
+  tiebreak** (mirrors 7 Wonders coins → `photosynthesisWinners({totals, light})`); Blokus =
+  `allPlaced*15 + monomino*5 − remaining` (can be negative); Takenoko emperor ×2; Kingdomino
+  Middle Kingdom +10 / Harmony +5; Patchwork `buttons + 7×7*7 − empty*2` (**2-player-only**,
+  no player selector).
+- **Point Salad**: scoring cards are randomised per game, so the tool is a 6-row **signed**
+  per-player adder (documented in-file), not a category breakdown.
+- **l10n**: full ARB (`generate: true` + `l10n.yaml`). ~200 keys added to
+  `lib/l10n/app_en.arb`, regenerated via `flutter gen-l10n`. Per-game prefixes (`azul*`,
+  `csc*`, `ttr*`, `conc*`, …). Two parametrized keys: `ptsCard(n)`, `tigrisScoreHeader(score)`.
+  Generated `app_localizations*.dart` is **git-ignored** (regenerate on pub get / gen-l10n).
+- **Registry** `lib/features/tools/registry/game_tools_registry.dart` now has **33 game-id
+  keys**. No Firestore rules change — tools read/write nothing.
+
+## The 'Gravel' (non-obvious)
+
+- **Widget-test finder trap**: `find.widgetWithText(TextField, '')` **drops** a field once
+  it has text, shifting later `.at(n)` indices → use `find.byType(TextField).at(n)` (stable).
+  And when the total equals an entered field value (Tigris `min`, Photosynthesis `tokens`),
+  `find.text(total)` matches **both** the input and the totals bar → assert the unique player
+  chip `find.text('P1 · N')` instead.
+- **Wave-1 undercount**: the tile/pattern group is **7** games; the first pass built 5 and
+  **missed Kingdomino & Patchwork** (added afterward as "Wave 1b"). All 28 are present now —
+  re-derive the count from the plan's list, not a task title.
+- **Nothing committed** — all working-tree on `main`. Branch before committing. Commit set =
+  new `lib/features/tools/<game>/` screens + `lib/l10n/app_en.arb` + the registry + the new
+  `test/features/tools/<game>/` tests (generated l10n is git-ignored, so don't commit it).
+- Heavier euros (Concordia, Castles of Burgundy, Scythe, etc.) are additive subtotals — the
+  calculator sums what's typed, it can't validate a category. That's the intended "simple"
+  ceiling for this task.
+
+## Next Immediate Step
+
+Visual pass on a device/emulator (none on this box): open the game-detail page for a sample
+across the three groups — **Azul, Ticket to Ride, Concordia, Tigris & Euphrates, Patchwork** —
+confirm the Score Calculator card appears and each screen renders without overflow / with
+working player-switching + totals. Then branch + commit.
+
+---
+
 # Handover — 2026-07-24 (session 2: cooperative play logging)
 
 ## Current Milestone

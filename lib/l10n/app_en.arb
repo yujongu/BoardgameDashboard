@@ -495,5 +495,204 @@
     }
   },
   "coopTeamWon": "Team won",
-  "coopTeamLost": "Team lost"
+  "coopTeamLost": "Team lost",
+
+  "toolAzulDesc": "Add board score plus row, column, and colour bonuses",
+  "toolAzulSummerPavilionDesc": "Add round scores, star bonuses, and tile penalties",
+  "toolCascadiaDesc": "Add wildlife, habitat corridors, and nature tokens",
+  "toolCalicoDesc": "Add cats, buttons, and design-goal tiles",
+  "toolSagradaDesc": "Add objectives and favor tokens, less empty spaces",
+
+  "azulTitle": "AZUL",
+  "azulPlacement": "Board placement score",
+  "azulRows": "Complete rows (×2 VP)",
+  "azulColumns": "Complete columns (×7 VP)",
+  "azulColors": "Complete colours (×10 VP)",
+
+  "azulSummerPavilionTitle": "SUMMER PAVILION",
+  "aspRound": "Round placement score",
+  "aspStars": "Star completion bonuses",
+  "aspLeftover": "Unused tiles (−1 VP each)",
+
+  "cascadiaTitle": "CASCADIA",
+  "cscWildlife": "Wildlife scoring",
+  "cscHabitat": "Habitat corridors (incl. bonuses)",
+  "cscNature": "Nature tokens (1 VP each)",
+
+  "calicoTitle": "CALICO",
+  "clcCats": "Cats",
+  "clcButtons": "Buttons",
+  "clcGoals": "Design-goal tiles",
+
+  "sagradaTitle": "SAGRADA",
+  "sagPublic": "Public objectives",
+  "sagPrivate": "Private objective",
+  "sagFavor": "Favor tokens (1 VP each)",
+  "sagEmpty": "Empty spaces (−1 VP each)",
+
+  "toolTicketToRideDesc": "Add routes, tickets, and the longest-route bonus",
+  "toolTicketToRideEuropeDesc": "Add routes, tickets, longest route, and stations",
+  "toolSushiGoDesc": "Add maki, sets, nigiri, and pudding points",
+  "toolSushiGoPartyDesc": "Add nigiri, rolls, appetizers, specials, and desserts",
+  "toolParksDesc": "Add park cards, photos, and gear bonuses",
+  "toolEverdellDesc": "Add cards, tokens, prosperity, and events",
+  "toolPointSaladDesc": "Add up each player's scoring cards",
+
+  "ticketToRideTitle": "TICKET TO RIDE",
+  "ttrRoutes": "Train route points",
+  "ttrTicketsDone": "Completed tickets",
+  "ttrTicketsFailed": "Failed tickets (−VP)",
+  "ttrLongest": "Longest route (×10 VP)",
+
+  "ticketToRideEuropeTitle": "TTR: EUROPE",
+  "ttreRoutes": "Train route points",
+  "ttreTicketsDone": "Completed tickets",
+  "ttreTicketsFailed": "Failed tickets (−VP)",
+  "ttreLongest": "Longest route (×10 VP)",
+  "ttreStations": "Unused stations (×4 VP)",
+
+  "sushiGoTitle": "SUSHI GO!",
+  "sgMaki": "Maki rolls",
+  "sgTsd": "Tempura / Sashimi / Dumplings",
+  "sgNigiri": "Nigiri (incl. wasabi)",
+  "sgPudding": "Puddings (± end bonus)",
+
+  "sushiGoPartyTitle": "SUSHI GO PARTY!",
+  "sgpNigiri": "Nigiri",
+  "sgpRolls": "Rolls (maki / temaki)",
+  "sgpAppetizers": "Appetizers",
+  "sgpSpecials": "Specials",
+  "sgpDesserts": "Desserts (± end bonus)",
+
+  "parksTitle": "PARKS",
+  "prkParks": "Park cards",
+  "prkPhotos": "Photos",
+  "prkGear": "Gear & bonus tiles",
+
+  "everdellTitle": "EVERDELL",
+  "evrCards": "Card points",
+  "evrTokens": "Point tokens",
+  "evrProsperity": "Prosperity cards",
+  "evrEvents": "Events & journey",
+
+  "pointSaladTitle": "POINT SALAD",
+  "ptsCard": "Scoring card {n} VP",
+  "@ptsCard": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+
+  "toolStoneAgeDesc": "Add the score track and civilisation-card categories",
+  "toolPuertoRicoDesc": "Add VP chips, buildings, and large-building bonuses",
+  "toolConcordiaDesc": "Add each of the six god-card scoring categories",
+  "toolCastlesOfBurgundyDesc": "Add in-game, region, and leftover points",
+  "toolLordsOfWaterdeepDesc": "Add quests, Lord bonus, and leftover resources",
+  "toolSuburbiaDesc": "Add population, goals, and bonus markers",
+  "toolScytheDesc": "Add coins from stars, territory, resources, and structures",
+  "toolLostRuinsOfArnakDesc": "Add research, idols, cards, and trophies",
+  "toolRaceForTheGalaxyDesc": "Add card VP, VP chips, and 6-cost bonuses",
+  "toolRollForTheGalaxyDesc": "Add tile VP, bonus tiles, and leftover credits",
+  "toolTigrisAndEuphratesDesc": "Score your weakest treasure colour",
+  "toolTakenokoDesc": "Add panda, plot, gardener, and emperor points",
+  "toolPhotosynthesisDesc": "Add scoring tokens; light breaks ties",
+  "toolBlokusDesc": "Score leftover squares plus all-placed bonuses",
+
+  "stoneAgeTitle": "STONE AGE",
+  "staInGame": "In-game VP track",
+  "staBuildings": "Building cards",
+  "staGreen": "Green civilisation cards",
+  "staMultipliers": "Multiplier civilisation cards",
+
+  "puertoRicoTitle": "PUERTO RICO",
+  "prChips": "Victory point chips",
+  "prBuildings": "Building VP",
+  "prLarge": "Large-building bonuses",
+
+  "concordiaTitle": "CONCORDIA",
+  "concVesta": "Vesta (money & goods)",
+  "concJupiter": "Jupiter (non-brick houses)",
+  "concSaturnus": "Saturnus (provinces)",
+  "concMercurius": "Mercurius (goods types)",
+  "concMars": "Mars (colonists)",
+  "concMinerva": "Minerva (profession goods)",
+
+  "castlesOfBurgundyTitle": "CASTLES OF BURGUNDY",
+  "cobInGame": "In-game tile & shipment VP",
+  "cobRegions": "Region-completion bonuses",
+  "cobLeftover": "Leftover goods & silver",
+
+  "lordsOfWaterdeepTitle": "LORDS OF WATERDEEP",
+  "lowQuests": "Completed-quest VP",
+  "lowLord": "Lord bonus VP",
+  "lowLeftover": "Leftover gold & cubes",
+
+  "suburbiaTitle": "SUBURBIA",
+  "subPopulation": "Population",
+  "subPersonal": "Personal goal",
+  "subPublic": "Public goals",
+  "subBonus": "Bonus markers",
+
+  "scytheTitle": "SCYTHE",
+  "scyCoins": "Coins",
+  "scyStars": "Stars",
+  "scyTerritories": "Territories",
+  "scyResources": "Resources",
+  "scyStructure": "Structure bonus",
+
+  "lostRuinsOfArnakTitle": "LOST RUINS OF ARNAK",
+  "arnResearch": "Research track",
+  "arnIdols": "Idols",
+  "arnCards": "Card VP",
+  "arnTrophies": "Trophies & tokens",
+
+  "raceForTheGalaxyTitle": "RACE FOR THE GALAXY",
+  "rftgCards": "Card VP",
+  "rftgChips": "VP chips",
+  "rftgSixDev": "6-cost development bonuses",
+
+  "rollForTheGalaxyTitle": "ROLL FOR THE GALAXY",
+  "rollgTiles": "Tile VP",
+  "rollgBonus": "Bonus-tile VP",
+  "rollgCredits": "Leftover credits",
+
+  "tigrisAndEuphratesTitle": "TIGRIS & EUPHRATES",
+  "teRed": "Red (temples)",
+  "teBlue": "Blue (farms)",
+  "teGreen": "Green (markets)",
+  "teBlack": "Black (settlements)",
+  "tigrisScoreHeader": "SCORE = WEAKEST COLOUR — {score}",
+  "@tigrisScoreHeader": {
+    "placeholders": {
+      "score": { "type": "int" }
+    }
+  },
+
+  "takenokoTitle": "TAKENOKO",
+  "takPanda": "Panda objectives",
+  "takPlots": "Plot objectives",
+  "takGardener": "Gardener objectives",
+  "takEmperor": "Emperor bonus (×2 VP)",
+
+  "photosynthesisTitle": "PHOTOSYNTHESIS",
+  "phoTokens": "Scoring point tokens",
+  "phoLight": "Remaining light (tiebreak)",
+
+  "blokusTitle": "BLOKUS",
+  "bloRemaining": "Remaining squares (−1 VP each)",
+  "bloAllPlaced": "All pieces placed (+15 VP)",
+  "bloMonomino": "Final piece single square (+5 VP)",
+
+  "toolKingdominoDesc": "Add kingdom score plus Middle Kingdom and Harmony",
+  "toolPatchworkDesc": "Buttons plus the 7×7 bonus, less empty spaces",
+
+  "kingdominoTitle": "KINGDOMINO",
+  "kdKingdom": "Kingdom (territory) score",
+  "kdMiddle": "Middle Kingdom (+10 VP)",
+  "kdHarmony": "Harmony (+5 VP)",
+
+  "patchworkTitle": "PATCHWORK",
+  "pwButtons": "Buttons",
+  "pwSpecial": "7×7 tile bonus (+7 VP)",
+  "pwEmpty": "Empty spaces (×−2 VP)"
 }
