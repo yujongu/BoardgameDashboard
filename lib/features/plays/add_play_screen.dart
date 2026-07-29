@@ -12,6 +12,7 @@ import '../../shared/widgets/game_picker_sheet.dart';
 import '../library/campaign_record_section.dart';
 import '../library/campaign_registry.dart';
 import '../library/edit_mission_dialog.dart';
+import '../library/new_table_sheet.dart';
 import 'add_play_notifier.dart';
 import 'participant_picker_sheet.dart';
 
@@ -143,6 +144,24 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     }
   }
 
+  /// Seats the play with a table's participants, rebuilding the name
+  /// controllers so they stay index-aligned with the new list.
+  void _applyCampaignParticipants(Campaign campaign) {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    _controllers.clear();
+    for (final c in _scoreControllers) {
+      c.dispose();
+    }
+    _scoreControllers.clear();
+    ref.read(addPlayProvider.notifier).setCampaign(campaign);
+    for (final m in campaign.participants) {
+      _addController(initialText: m.name);
+    }
+    setState(() {});
+  }
+
   void _addParticipantFromPicker(String name, String? userId) {
     _addController(initialText: name);
     ref
@@ -199,7 +218,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     );
     if (pick == null) return;
     if (pick is _PickExisting) {
-      ref.read(addPlayProvider.notifier).setCampaign(pick.campaign);
+      _applyCampaignParticipants(pick.campaign);
     } else {
       await _createTable();
     }
@@ -209,25 +228,22 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
     final state = ref.read(addPlayProvider);
     final game = state.selectedGame;
     if (game == null) return;
-    final names = state.participants
-        .map((p) => p.name.trim())
-        .where((n) => n.isNotEmpty)
-        .toList();
-    final memberIds = state.participants
-        .map((p) => p.userId)
-        .whereType<String>()
-        .toList();
+    // Seats are collected explicitly rather than inherited from whoever
+    // happens to be on the Add Play form: the list is frozen at creation, so
+    // taking an ambient snapshot would lock people out permanently.
+    final seats = await showNewTableSheet(context);
+    if (seats == null || !mounted) return;
     try {
       final campaign = await ref
           .read(campaignRepositoryProvider)
           .createCampaign(
             gameId: game.gameId,
             gameName: game.name,
-            roster: names,
-            memberIds: memberIds,
+            participants: seats,
+            creatorName: seats.first.name,
           );
       if (!mounted) return;
-      ref.read(addPlayProvider.notifier).setCampaign(campaign);
+      _applyCampaignParticipants(campaign);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -265,7 +281,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
       lastPlayedAt: existing?.lastPlayedAt,
     );
     final updated = campaign.copyWith(stages: next);
-    ref.read(addPlayProvider.notifier).setCampaign(updated);
+    _applyCampaignParticipants(updated);
     try {
       await ref.read(campaignRepositoryProvider).saveCampaign(updated);
     } catch (_) {
@@ -317,6 +333,9 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final state = ref.watch(addPlayProvider);
+    // Once a campaign table is picked, the play's players are the table's
+    // fixed seats — the list becomes read-only.
+    final seatedAtTable = state.campaign != null;
     final countText = state.maxPlayers != null
         ? s.playersCountMax(state.participants.length, state.maxPlayers!)
         : s.playersCountOnly(state.participants.length);
@@ -406,8 +425,10 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
                         controller: _controllers[e.key],
                         scoreController: _scoreControllers[e.key],
                         isWinner: e.value.isWinner,
-                        canRemove: e.key != 0,
-                        readOnly: e.value.userId == state.currentUserId,
+                        canRemove: e.key != 0 && !seatedAtTable,
+                        readOnly:
+                            seatedAtTable ||
+                            e.value.userId == state.currentUserId,
                         showWinner: !state.isCoop,
                         onToggleWinner: () => ref
                             .read(addPlayProvider.notifier)
@@ -416,14 +437,18 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  _AddParticipantButton(
-                    label: addButtonText,
-                    enabled: state.canAddParticipant,
-                    onTap: state.canAddParticipant
-                        ? _showParticipantPicker
-                        : null,
-                  ),
+                  // A table's seats are fixed, and everyone at it plays every
+                  // session, so the list is not editable once one is picked.
+                  if (!seatedAtTable) ...[
+                    const SizedBox(height: 4),
+                    _AddParticipantButton(
+                      label: addButtonText,
+                      enabled: state.canAddParticipant,
+                      onTap: state.canAddParticipant
+                          ? _showParticipantPicker
+                          : null,
+                    ),
+                  ],
                   const SizedBox(height: 32),
                 ],
               ),
@@ -989,9 +1014,9 @@ class _CoopControls extends StatelessWidget {
   }
 
   static String _rosterSummary(AppStrings s, Campaign campaign) =>
-      campaign.roster.isEmpty
+      campaign.participants.isEmpty
       ? s.campaignUntitledTable
-      : campaign.roster.join(', ');
+      : campaign.participantNames.join(', ');
 }
 
 /// A pair of win/loss (or pass/fail) buttons wired to [onOutcome].
@@ -1318,9 +1343,9 @@ class _TablePickerSheet extends StatelessWidget {
                     color: context.colors.outline,
                   ),
                   title: Text(
-                    c.roster.isEmpty
+                    c.participants.isEmpty
                         ? s.campaignUntitledTable
-                        : c.roster.join(', '),
+                        : c.participantNames.join(', '),
                     style: GoogleFonts.newsreader(
                       color: context.colors.onSurface,
                       fontSize: 16,

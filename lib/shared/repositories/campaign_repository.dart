@@ -43,22 +43,34 @@ class CampaignRepository {
 
   /// Creates a new table/campaign owned by the caller. Returns the created
   /// [Campaign] (with an empty stage board).
+  ///
+  /// [participants] is the complete, final seat list — it cannot be changed
+  /// afterwards, so every registered player who should see this table must be
+  /// present here. The caller is always seated, and `memberIds` is derived
+  /// from the non-guest participants.
   Future<Campaign> createCampaign({
     required String gameId,
     required String gameName,
-    required List<String> roster,
-    required List<String> memberIds,
+    required List<CampaignMember> participants,
+    required String creatorName,
   }) async {
     final uid = _uid;
     if (uid == null) throw StateError('Not signed in');
-    // The creator is always a member (Firestore rules require this).
-    final members = {uid, ...memberIds}.toList();
+    // The creator is always seated (Firestore rules require them in memberIds).
+    final seats = participants.any((p) => p.userId == uid)
+        ? participants
+        : [CampaignMember(name: creatorName, userId: uid), ...participants];
+    final members = {
+      uid,
+      for (final p in seats)
+        if (p.userId != null) p.userId!,
+    }.toList();
     final doc = _col.doc();
     await doc.set({
       'gameId': gameId,
       'gameName': gameName,
       'memberIds': members,
-      'roster': roster,
+      'participants': [for (final p in seats) p.toJson()],
       'stages': <String, dynamic>{},
       'createdBy': uid,
       'createdAt': FieldValue.serverTimestamp(),
@@ -69,17 +81,19 @@ class CampaignRepository {
       gameId: gameId,
       gameName: gameName,
       memberIds: members,
-      roster: roster,
+      participants: seats,
       stages: const {},
       createdBy: uid,
     );
   }
 
-  /// Persists manual edits (roster changes, manual stage toggles from the
-  /// board). Co-op play logging advances stages server-side, not here.
+  /// Persists manual stage edits from the board (corrections to tries or a
+  /// completed flag). Co-op play logging advances stages server-side, not here.
+  ///
+  /// Deliberately writes no membership: a table's seats are fixed at creation,
+  /// and `firestore.rules` rejects an update that changes them.
   Future<void> saveCampaign(Campaign campaign) async {
     await _col.doc(campaign.id).set({
-      'roster': campaign.roster,
       'stages': campaign.stages.map((k, v) => MapEntry(k, v.toJson())),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));

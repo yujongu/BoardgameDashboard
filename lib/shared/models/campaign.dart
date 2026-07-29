@@ -39,12 +39,41 @@ class CampaignStage {
   };
 }
 
+/// One seat at a table. [userId] is null for a guest — someone who plays but
+/// has no account, so they are shown by name and nothing is written for them.
+class CampaignMember {
+  final String name;
+  final String? userId;
+
+  const CampaignMember({required this.name, this.userId});
+
+  bool get isGuest => userId == null;
+
+  factory CampaignMember.fromJson(Map<String, dynamic> json) => CampaignMember(
+    name: json['name'] as String? ?? '',
+    userId: json['userId'] as String?,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    if (userId != null) 'userId': userId,
+  };
+}
+
 class Campaign {
   final String id;
   final String gameId;
   final String gameName;
+
+  /// Registered members' uids, denormalized from [participants] so Firestore
+  /// rules and the `array-contains` table query can use it (neither can reach
+  /// into a map inside an array). Frozen at creation.
   final List<String> memberIds;
-  final List<String> roster;
+
+  /// Everyone at the table, guests included. Frozen at creation: a table's
+  /// seats cannot be added to or removed from once it exists.
+  final List<CampaignMember> participants;
+
   final Map<String, CampaignStage> stages;
   final String? createdBy;
   final DateTime? updatedAt;
@@ -54,7 +83,7 @@ class Campaign {
     required this.gameId,
     required this.gameName,
     required this.memberIds,
-    required this.roster,
+    required this.participants,
     required this.stages,
     this.createdBy,
     this.updatedAt,
@@ -65,7 +94,11 @@ class Campaign {
     gameId: json['gameId'] as String,
     gameName: json['gameName'] as String,
     memberIds: List<String>.from(json['memberIds'] as List? ?? const []),
-    roster: List<String>.from(json['roster'] as List? ?? const []),
+    participants: ((json['participants'] as List?) ?? const [])
+        .map(
+          (e) => CampaignMember.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
     stages: ((json['stages'] as Map?) ?? const {}).map(
       (key, value) => MapEntry(
         key as String,
@@ -81,10 +114,13 @@ class Campaign {
     'gameId': gameId,
     'gameName': gameName,
     'memberIds': memberIds,
-    'roster': roster,
+    'participants': participants.map((p) => p.toJson()).toList(),
     'stages': stages.map((k, v) => MapEntry(k, v.toJson())),
     if (createdBy != null) 'createdBy': createdBy,
   };
+
+  /// Display names of everyone at the table, in seat order.
+  List<String> get participantNames => [for (final p in participants) p.name];
 
   bool isStageCompleted(int stage) => stages['$stage']?.completed ?? false;
 
@@ -104,15 +140,14 @@ class Campaign {
 
   int get completedCount => stages.values.where((s) => s.completed).length;
 
-  Campaign copyWith({
-    List<String>? roster,
-    Map<String, CampaignStage>? stages,
-  }) => Campaign(
+  /// Only [stages] varies over a table's life — the seats are fixed at
+  /// creation, so there is deliberately no way to copy with new members.
+  Campaign copyWith({Map<String, CampaignStage>? stages}) => Campaign(
     id: id,
     gameId: gameId,
     gameName: gameName,
     memberIds: memberIds,
-    roster: roster ?? this.roster,
+    participants: participants,
     stages: stages ?? this.stages,
     createdBy: createdBy,
     updatedAt: updatedAt,

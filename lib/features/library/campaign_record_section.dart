@@ -9,6 +9,7 @@ import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
 import 'campaign_registry.dart';
 import 'edit_mission_dialog.dart';
+import 'new_table_sheet.dart';
 
 /// Localized singular label for a campaign's stage axis (Mission/Scenario/Month).
 String stageAxisLabel(AppStrings s, StageAxis? axis) {
@@ -67,14 +68,16 @@ class _CampaignSectionState extends ConsumerState<CampaignSection> {
   }
 
   Future<void> _newTable() async {
+    final seats = await showNewTableSheet(context);
+    if (seats == null || !mounted) return;
     try {
       await ref
           .read(campaignRepositoryProvider)
           .createCampaign(
             gameId: widget.gameId,
             gameName: widget.gameName,
-            roster: const [],
-            memberIds: const [],
+            participants: seats,
+            creatorName: seats.first.name,
           );
       await _load();
     } catch (_) {
@@ -256,29 +259,6 @@ class CampaignCard extends StatelessWidget {
     onChanged(campaign.copyWith(stages: next));
   }
 
-  Future<void> _addMember(BuildContext context) async {
-    final s = AppStrings.of(context);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (_) => _TextInputDialog(
-        title: s.crewAddMemberTitle,
-        hintText: s.crewNameHint,
-      ),
-    );
-    if (name == null) return;
-    final trimmed = name.trim();
-    if (trimmed.isEmpty || campaign.roster.contains(trimmed)) return;
-    onChanged(campaign.copyWith(roster: [...campaign.roster, trimmed]));
-  }
-
-  void _removeMember(String name) {
-    onChanged(
-      campaign.copyWith(
-        roster: campaign.roster.where((m) => m != name).toList(),
-      ),
-    );
-  }
-
   Future<void> _editStage(BuildContext context) async {
     final s = AppStrings.of(context);
     final entered = await showDialog<String>(
@@ -339,32 +319,11 @@ class CampaignCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _CaptionLabel(s.crewSectionCrew),
-              GestureDetector(
-                onTap: () => _addMember(context),
-                child: Row(
-                  children: [
-                    Icon(Icons.add, color: context.colors.primary, size: 14),
-                    const SizedBox(width: 2),
-                    Text(
-                      s.crewAdd,
-                      style: GoogleFonts.spaceGrotesk(
-                        color: context.colors.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // The seats are fixed when the table is created, so this is a plain
+          // read-only list — no add affordance, no remove on the chips.
+          _CaptionLabel(s.crewSectionCrew),
           const SizedBox(height: 10),
-          if (campaign.roster.isEmpty)
+          if (campaign.participants.isEmpty)
             Text(
               s.crewNoMembers,
               style: GoogleFonts.newsreader(
@@ -378,11 +337,8 @@ class CampaignCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final member in campaign.roster)
-                  _MemberChip(
-                    name: member,
-                    onRemove: () => _removeMember(member),
-                  ),
+                for (final member in campaign.participants)
+                  _MemberChip(name: member.name),
               ],
             ),
           const SizedBox(height: 16),
@@ -490,14 +446,13 @@ class _CaptionLabel extends StatelessWidget {
 
 class _MemberChip extends StatelessWidget {
   final String name;
-  final VoidCallback onRemove;
 
-  const _MemberChip({required this.name, required this.onRemove});
+  const _MemberChip({required this.name});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 6, 6, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: BorderRadius.circular(8),
@@ -513,11 +468,6 @@ class _MemberChip extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
-          ),
-          const SizedBox(width: 6),
-          GestureDetector(
-            onTap: onRemove,
-            child: Icon(Icons.close, color: context.colors.outline, size: 14),
           ),
         ],
       ),

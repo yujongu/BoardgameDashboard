@@ -170,9 +170,21 @@ class AddPlayNotifier extends StateNotifier<AddPlayState> {
   void setOutcome(String outcome) => state = state.copyWith(outcome: outcome);
 
   /// Selects a table and defaults the stage to its next incomplete one.
+  /// Pins [campaign] and seats the play with the table's participants.
+  ///
+  /// A table's seats are fixed, and everyone at the table plays every session,
+  /// so the participant list is taken wholesale from the campaign rather than
+  /// being edited on the form.
   void setCampaign(Campaign campaign) {
     final stage = campaign.nextIncompleteStage(state.coopSpec?.stageCount ?? 1);
-    state = state.copyWith(campaign: campaign, stage: stage);
+    state = state.copyWith(
+      campaign: campaign,
+      stage: stage,
+      participants: [
+        for (final m in campaign.participants)
+          ParticipantData(name: m.name, userId: m.userId),
+      ],
+    );
   }
 
   void setStage(int stage) => state = state.copyWith(stage: stage);

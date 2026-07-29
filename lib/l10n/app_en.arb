@@ -167,6 +167,11 @@
       "label": { "type": "String" }
     }
   },
+  "tableNewTitle": "New table",
+  "tableSeatsFinalHint": "Add everyone who plays at this table. Players cannot be added or removed later.",
+  "tableAddPlayer": "Add player",
+  "tableCreate": "Create table",
+  "tableGuestTag": "GUEST",
   "crewEditMissionTitle": "Edit mission",
   "crewTriesLabel": "Tries",
   "crewMissionPassed": "Passed",

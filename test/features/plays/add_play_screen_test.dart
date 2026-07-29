@@ -173,7 +173,7 @@ void main() {
           gameId: 'the-crew-the-quest-for-planet-nine-2019',
           gameName: 'The Crew',
           memberIds: ['u1'],
-          roster: ['Me'],
+          participants: [CampaignMember(name: 'Me', userId: 'u1')],
           stages: {'1': CampaignStage(completed: true, sessionCount: 3)},
         ),
       );

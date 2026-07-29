@@ -1,3 +1,120 @@
+# Handover — 2026-07-29 (session: D12 campaign membership)
+
+## Current Milestone
+
+**Fixed D12 / plan 1.4 — two people could not share one campaign table.** Product call
+taken by the owner this session: **a table's participants are fixed at creation**, every
+participant sees the table and can log sessions against it, and guests (people with no
+account) are allowed as display-only seats.
+
+Status: **implemented; `flutter analyze` clean; `flutter test` 309 pass. NOT committed, rules
+NOT deployed, production `campaigns` NOT yet wiped** (see Next Immediate Step).
+
+## Context & Decisions (this session)
+
+- **Root cause was never `createPlay`.** Its membership gate (`createPlay.ts:149`) was
+  already the right check; it failed only because creation wrote the wrong `memberIds`.
+  **No Cloud Function change was needed** — `functions/` is untouched.
+- **`roster` is gone, replaced by `participants: List<CampaignMember>`** where
+  `CampaignMember = {name, userId?}` and a null `userId` is a guest. The old model kept
+  `roster` (names) and `memberIds` (uids) as **unpaired parallel lists**, so there was no way
+  to tell which name belonged to which uid — impossible to auto-fill a play's participants
+  from a table. `memberIds` survives as a denormalized uid list because Firestore rules and
+  `array-contains` cannot reach into a map inside an array.
+- **Immutability is enforced in rules, not just UI**: the `campaigns` `allow update` now
+  requires `memberIds` and `participants` to be unchanged. `allow delete` is unchanged.
+  `saveCampaign` was narrowed to write only `stages`/`updatedAt` to match.
+- **One creation flow for both entry points**: new `lib/features/library/new_table_sheet.dart`
+  (`showNewTableSheet`) collects the seat list once, reusing `ParticipantPickerBottomSheet`
+  (which already supports guests). Game Detail's `_newTable` and Add Play's `_createTable`
+  both call it. The old Add Play path snapshotted `state.participants` at creation — under
+  immutability that ordering trap would lock people out permanently, so seats are now
+  collected explicitly.
+- **`AddPlayNotifier.setCampaign` now also seats the play** with the table's participants, and
+  the Add Play list goes read-only (`seatedAtTable`): no add button, no remove, names locked.
+
+## The 'Gravel' (non-obvious)
+
+- **`_controllers` / `_scoreControllers` must be rebuilt whenever `setCampaign` runs** — the
+  invariant at `add_play_screen.dart:33` is that they stay index-aligned with
+  `state.participants`, and `setCampaign` now replaces that list wholesale. All three call
+  sites go through `_applyCampaignParticipants`, which disposes and rebuilds them. Calling
+  `setCampaign` directly from the screen will silently desync the text fields.
+- **Three `campaign_card_test.dart` tests were deleted, not fixed** — they asserted the
+  roster add-dialog and chip-removal behaviour that the policy removes. Replaced by one
+  `crew list is read-only` test. Suite went 309 → 307 → 309 with the two new notifier tests.
+- **Generated l10n went stale on the pull** and again mid-session: `flutter gen-l10n` must be
+  re-run after editing `app_en.arb`, and the errors it produces (`undefined_getter` on
+  `AppStrings`) look like source errors but are not. Five new `table*` keys were added.
+- **UI NOT visually confirmed** — this is a Windows box with no iOS/Android simulator, so the
+  new-table sheet and the locked participant list have not been seen rendered. The widget
+  tests pump the card with the production theme, but nothing has exercised
+  `showNewTableSheet` on a device.
+- **Existing production tables are now unreadable-by-design**: docs written before this change
+  have no `participants` field, so the card renders an empty crew list. That is why the wipe
+  below is not optional.
+
+## Next Immediate Step
+
+1. **Wipe the production `campaigns` collection** (owner chose "start clean"; needs an
+   explicit go-ahead — it is destructive and was not run this session). Old docs have no
+   `participants` and cannot be repaired under an immutability rule.
+2. ~~`firebase deploy --only firestore:rules`~~ — **DONE 2026-07-29**, the immutability guard
+   is live in production.
+3. Branch + commit (nothing is committed; working tree on `main`).
+4. Device pass: create a table with a friend + a guest, confirm the friend sees it on their
+   own account and can log a session against it — the actual D12 scenario.
+
+---
+
+# Handover — 2026-07-29 (session: production smoke test)
+
+## Current Milestone
+
+**Ran the production smoke test** from the previous session's checklist (see that section
+below, now marked ☑). **Part A and Part B both passed in full — 7/7 Part B checks green.**
+This closes the last open item from the Part 1 defect sweep: the D1–D13 fixes are now
+confirmed working against production, not just the emulator.
+
+- **Part A** (deployed backend, existing app build): play loads with participants, edit saves,
+  competitive play moves PLAYS + WINS, delete drops the counts, co-op play writes
+  `totalCoopPlays` without touching `totalGamesPlayed`/`library.playCount`, rename propagates
+  to a friend's list (D11).
+- **Part B** (client fixes, production build from `main`): D6 Lost Cities scores 41, D5 save
+  bar blocks the over-cap play, D4 shows "Added" in the Edit picker, D9 history row disappears
+  after delete, D10 table picker scrolls to "New table", D13 "Correct Mission N" opens the
+  editor, D2 offline delete surfaces an error and the play survives.
+
+## Context & Decisions (this session)
+
+- Verification only — **no code changed, nothing to commit.** `main` is unchanged at `9e8233f`.
+- Part B needed a production build (**no `--dart-define=USE_EMULATORS=true`**, or it retests the
+  emulator). `main.dart` defaults the define to false, so plain release flags hit production.
+
+## The 'Gravel' (non-obvious)
+
+- **The client fixes are verified but still not *released*.** Part B was run from a local build
+  off `main`; no artifact has shipped to any store or tester. Anyone on an older build still has
+  D2/D4/D5/D6/D9/D10/D13. Cutting a release is the natural follow-up.
+- Part B writes to **production Firestore on a real account** — the plays logged during the run
+  are real. Delete any leftovers if they were not cleaned up during the pass.
+- **D7 (same-day play ordering) was not in the checklist** and remains unverified in production.
+  It is slow to observe: log two plays minutes apart the same day, tapping today in the date
+  picker on the second, then confirm the newer sorts on top.
+- **D5 residual is still live**: `EditPlayPage` holds only `gameId`/`gameName`, so *editing* a
+  play can still exceed the player cap. Known and out of scope — not a smoke-test failure.
+
+## Next Immediate Step
+
+The smoke test is closed, so the queue is now the item-2 backlog in the section below. In
+value order: **cut and ship a release build** (the client fixes are verified but unreleased),
+then **D12 / plan 1.4 — campaign membership**, the highest-value unfixed defect: two people
+still cannot share one campaign board (`createPlay` never adds participants to `memberIds`, and
+`campaign_record_section.dart:76` disagrees with `add_play_screen.dart:184`). It needs a product
+call first — should logging a session imply joining the table?
+
+---
+
 # Handover — 2026-07-28 (session: manual test plan, Part 1 execution)
 
 ## Current Milestone
@@ -254,9 +371,12 @@ Suites: `flutter analyze` clean, **309 Dart tests**, **156 functions tests**.
 
 All 14 confirmed Part 1 defects are fixed, merged, and **deployed**. **Start here:**
 
-### 1. ☐ SMOKE TEST PRODUCTION — outstanding, do this first
+### 1. ☑ SMOKE TEST PRODUCTION — **DONE 2026-07-29** (see the top session)
 
-**Why it's still open:** the deploy added *new denials* to live traffic and no real account has
+> Both parts passed manually against production. The checklist below is kept as the record of
+> what was covered; do not re-run it unless the backend is redeployed.
+
+**Why it was open:** the deploy added *new denials* to live traffic and no real account has
 exercised them. It could not be done from the test rig — that build is pinned to the emulators
 via `--dart-define=USE_EMULATORS=true`, and the probe accounts exist only in the Auth emulator.
 Everything verified so far was emulator-side or a deployment-inventory check, **never

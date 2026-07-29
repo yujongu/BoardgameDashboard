@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:board_game_dashboard/features/plays/add_play_notifier.dart';
+import 'package:board_game_dashboard/shared/models/campaign.dart';
 import 'package:board_game_dashboard/shared/models/catalog_game.dart';
 import 'package:board_game_dashboard/shared/models/play.dart';
 import 'package:board_game_dashboard/shared/repositories/play_repository.dart';
@@ -374,6 +375,53 @@ void main() {
       expect(ok, isFalse);
       expect(n.state.saving, isFalse);
       expect(n.state.saveError, isNotNull);
+    });
+  });
+
+  // A table's seats are fixed at creation and everyone at it plays every
+  // session, so picking a table seats the play with exactly its participants
+  // rather than whatever was already on the form (defects.md D12).
+  group('setCampaign seats the play from the table', () {
+    const table = Campaign(
+      id: 't1',
+      gameId: 'the-crew-the-quest-for-planet-nine-2019',
+      gameName: 'The Crew',
+      memberIds: ['uid-a', 'uid-b'],
+      participants: [
+        CampaignMember(name: 'Alice', userId: 'uid-a'),
+        CampaignMember(name: 'Bob', userId: 'uid-b'),
+        CampaignMember(name: 'Carol'),
+      ],
+      stages: {},
+    );
+
+    test('replaces the participant list with the table roster', () {
+      final n = AddPlayNotifier();
+      addTearDown(n.dispose);
+      n.addParticipantWithData('Someone else', userId: 'uid-z');
+
+      n.setCampaign(table);
+
+      expect(n.state.participants.map((p) => p.name), [
+        'Alice',
+        'Bob',
+        'Carol',
+      ]);
+      expect(n.state.participants.map((p) => p.userId), [
+        'uid-a',
+        'uid-b',
+        null,
+      ]);
+    });
+
+    test('pins the current stage', () {
+      final n = AddPlayNotifier();
+      addTearDown(n.dispose);
+
+      n.setCampaign(table);
+
+      expect(n.state.campaign?.id, 't1');
+      expect(n.state.stage, 1);
     });
   });
 }

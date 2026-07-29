@@ -15,7 +15,10 @@ const _spec = CoopSpec(
 
 /// Builds a campaign whose furthest-incomplete stage is [current] by marking
 /// stages 1..current-1 complete.
-Campaign campaignWith({List<String> roster = const [], required int current}) {
+Campaign campaignWith({
+  List<String> roster = const [],
+  required int current,
+}) {
   final stages = <String, CampaignStage>{};
   for (var i = 1; i < current; i++) {
     stages['$i'] = const CampaignStage(completed: true);
@@ -25,7 +28,7 @@ Campaign campaignWith({List<String> roster = const [], required int current}) {
     gameId: 'the-crew-the-quest-for-planet-nine-2019',
     gameName: 'The Crew',
     memberIds: const [],
-    roster: roster,
+    participants: [for (final n in roster) CampaignMember(name: n)],
     stages: stages,
   );
 }
@@ -106,43 +109,9 @@ void main() {
     },
   );
 
-  testWidgets('add dialog appends a trimmed crew member', (tester) async {
-    Campaign? changed;
-    await tester.pumpWidget(
-      wrap(campaignWith(roster: ['Alice'], current: 3), (c) => changed = c),
-    );
-
-    await tester.tap(find.text('ADD'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), '  Carol ');
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-
-    expect(changed!.roster, ['Alice', 'Carol']);
-  });
-
-  testWidgets('duplicate and empty names are ignored', (tester) async {
-    Campaign? changed;
-    await tester.pumpWidget(
-      wrap(campaignWith(roster: ['Alice'], current: 3), (c) => changed = c),
-    );
-
-    await tester.tap(find.text('ADD'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Alice');
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-    expect(changed, isNull);
-
-    await tester.tap(find.text('ADD'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), '   ');
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-    expect(changed, isNull);
-  });
-
-  testWidgets('tapping a chip close icon removes that member', (tester) async {
+  // Seats are fixed when the table is created (D12): the card lists the
+  // table's participants and offers no way to add or remove one.
+  testWidgets('crew list is read-only', (tester) async {
     Campaign? changed;
     await tester.pumpWidget(
       wrap(
@@ -151,8 +120,12 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byIcon(Icons.close).first);
-    expect(changed!.roster, ['Bob']);
+    expect(find.text('Alice'), findsOneWidget);
+    expect(find.text('Bob'), findsOneWidget);
+    // No add affordance, and no per-chip remove control.
+    expect(find.text('ADD'), findsNothing);
+    expect(find.byIcon(Icons.close), findsNothing);
+    expect(changed, isNull);
   });
 
   // ── Undo for the latched stage (defects.md D13) ───────────────────────────
