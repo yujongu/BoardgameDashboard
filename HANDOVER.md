@@ -54,16 +54,32 @@ NOT deployed, production `campaigns` NOT yet wiped** (see Next Immediate Step).
   have no `participants` field, so the card renders an empty crew list. That is why the wipe
   below is not optional.
 
+## Post-implementation ops (done this session)
+
+- **Rules deployed** to prod `gameshelf-283dc` — the immutability guard is live.
+- **Production `campaigns` wiped**: all 3 docs deleted, collection now empty. Two were
+  empty test tables; the third (`0aUvVDBRgLSarJxbXw0b`) held **10 completed missions and
+  12 logged sessions** of real Crew progress. That was surfaced before deleting and the
+  owner confirmed the wipe anyway. A JSON backup of all three docs was written first, to
+  the session scratchpad — **that path is temporary and will not survive**; copy it
+  somewhere durable if the progress is ever wanted back.
+- **Committed** on branch `fix/campaign-membership` (`188f9fe`), 12 files. Not merged, not
+  pushed. `pubspec.lock` (transitive `meta`/`test_api` bumps from the analyze hook's
+  `pub get`) and the generated macos plugin registrant were deliberately left out.
+- Useful fact found while checking: **예진 has no account** — the only registered users are
+  정우 (the owner), Avik Abdula, and two test accounts. So on a rebuilt table 예진 is a
+  guest seat, which is exactly what the new model expects.
+
 ## Next Immediate Step
 
-1. **Wipe the production `campaigns` collection** (owner chose "start clean"; needs an
-   explicit go-ahead — it is destructive and was not run this session). Old docs have no
-   `participants` and cannot be repaired under an immutability rule.
-2. ~~`firebase deploy --only firestore:rules`~~ — **DONE 2026-07-29**, the immutability guard
-   is live in production.
-3. Branch + commit (nothing is committed; working tree on `main`).
-4. Device pass: create a table with a friend + a guest, confirm the friend sees it on their
-   own account and can log a session against it — the actual D12 scenario.
+**Device pass — the actual D12 scenario, which no test covers**: create a table with a
+registered friend plus a guest, then confirm from the *friend's* account that the table
+appears on their Game Detail and that they can log a session against it. That round trip
+is the whole point of the fix and has never been executed against production.
+
+Then rebuild the wiped Crew table (10 missions can be re-entered through the board card's
+"Correct Mission N" editor), merge, and ship a build — note the client fixes from the
+previous session are still unreleased too, so one release covers both.
 
 ---
 
