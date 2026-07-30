@@ -122,14 +122,38 @@ table and picking a **friend** gave no on-screen feedback at all.
 
 ## Next Immediate Step
 
-D12 is closed, and with it the last item from the Part 1 defect sweep. **No verification work
-is outstanding** — the app is distributed locally only (no App Store / TestFlight), so there
-is no release step to chase.
+**Run `docs/single-account-test-guide.md` on a simulator.** The owner has this queued and will
+run it themselves — it is a manual pass, not a coding task. Do not start new feature work
+ahead of it without asking; its findings should shape what comes next.
 
-Optional cleanup: **rebuild the wiped Crew table** (the 10 completed missions can be re-entered
-through the board card's "Correct Mission N" editor).
+The guide is a step-by-step, single-account pass (no second account, no emulator) covering all
+33 calculators with **expected totals computed from the shipped formulas**, competitive
+logging, edit/delete, solo co-op tables, library/catalog, theme/layout/accessibility/lifecycle,
+and a closing Firestore integrity check plus cleanup.
 
-Remaining backlog, in rough value order — all of it is now *new* work rather than follow-up:
+**Important build caveat.** The guide was written against the build on the owner's *phone*
+(`8cb94b3`) and tells the reader to skip three items whose fixes were not installed there:
+
+| Skipped item | Fixed in |
+|---|---|
+| Home PLAYS / list label (plan 1.1) | `7e9c1c7` |
+| New-table sheet → add a **friend** → "Added" mark | `1df4614` |
+| "Home PLAYS excludes co-op" (plan 4e) | `7e9c1c7` |
+
+A **simulator build off current `main` includes all three**, so they must be run, not skipped —
+they are the only outstanding verification of the last two commits. The guide's "Before you
+start" check catches this (if the header reads "Recent Sessions", the skips do not apply), but
+confirm it explicitly rather than trusting the reader to notice.
+
+Two known-failing items are flagged in the guide so they are not re-reported as new: the D5
+residual (Edit Play can exceed the player cap) and the unlabelled icon-only controls.
+
+Optional cleanup, unrelated: **rebuild the wiped Crew table** (the 10 completed missions can be
+re-entered through the board card's "Correct Mission N" editor).
+
+### After the test pass
+
+Backlog in rough value order — all *new* work rather than follow-up:
 
 - **1.14 / non-friend participants** — a product call, not a bug: today anyone can be added to
   a play and have their stats moved without consent. Should the participant picker's global
@@ -145,7 +169,10 @@ Remaining backlog, in rough value order — all of it is now *new* work rather t
   Home's PLAYS figure. The prod `campaigns` wipe did not touch `plays`, so old co-op plays
   still exist.
 - **`docs/manual-test-plan.md` Parts 2-8 have never been executed** — only Part 1 (the 16
-  targeted defect repros) was. That is the largest untouched body of verification work.
+  targeted defect repros) was. The single-account guide above covers a large slice of them;
+  what it cannot reach needs a **second account** (all of Part 6 Friends, cross-user stats
+  rollbacks, the D12 sharing round trip in Part 4b) or the **emulator** (every security probe,
+  since any real build points at production).
 - **H6b / P4** — avatar upload for email/password users (`image_picker` + Storage).
 
 ---
