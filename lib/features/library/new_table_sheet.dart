@@ -60,14 +60,20 @@ class _NewTableSheetState extends State<_NewTableSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => ParticipantPickerBottomSheet(
-        addedUserIds: _addedUserIds,
-        atMax: false,
-        onAdd: (name, userId) {
-          setState(
-            () => _seats.add(CampaignMember(name: name, userId: userId)),
-          );
-        },
+      // StatefulBuilder so the picker rebuilds as seats are added while it is
+      // open: its "Added" marks are a pure function of addedUserIds, and the
+      // picker sits on its own route, so this sheet's setState cannot reach it.
+      // Without it a friend gets no feedback at all (guests self-flash "ADDED").
+      builder: (_) => StatefulBuilder(
+        builder: (context, setPickerState) => ParticipantPickerBottomSheet(
+          addedUserIds: _addedUserIds,
+          atMax: false,
+          onAdd: (name, userId) {
+            _seats.add(CampaignMember(name: name, userId: userId));
+            setPickerState(() {}); // refresh the picker's "Added" marks
+            setState(() {}); // refresh the seat list behind it
+          },
+        ),
       ),
     );
   }

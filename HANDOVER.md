@@ -37,6 +37,30 @@ confirmed against production, not just unit-tested.
 - **`AddPlayNotifier.setCampaign` now also seats the play** with the table's participants, and
   the Add Play list goes read-only (`seatedAtTable`): no add button, no remove, names locked.
 
+## Follow-up fix — no "Added" feedback in the new-table picker (2026-07-30)
+
+Found by the owner during the D12 device test: pressing **+ / Add player** while creating a
+table and picking a **friend** gave no on-screen feedback at all.
+
+- **Cause:** `ParticipantListSection` renders its "Added" mark as a pure function of the
+  `addedUserIds` prop. `showNewTableSheet`'s picker was built once inside
+  `showModalBottomSheet`'s `builder`, and it sits on **its own route** — so
+  `_NewTableSheetState.setState` could not rebuild it, and it kept the stale set captured when
+  it opened. **Guests were unaffected** because the picker flashes its own transient "ADDED"
+  for them (`_addedGuestName`, only when `userId == null`), which is why the bug looked
+  friend-specific.
+- **This is a re-run of D4's root cause** — a shared picker whose marks depend on caller
+  state. The codebase already had both fixes: `Consumer` in Add Play (Riverpod), `StatefulBuilder`
+  in Edit Play (local state). The new sheet uses local state, so it now uses `StatefulBuilder`
+  and calls **both** setters on add: `setPickerState` for the marks, `setState` for the seat
+  list behind the picker.
+- **Regression test** `test/features/library/new_table_sheet_test.dart`, verified meaningful by
+  neutering `setPickerState` — it then fails with `Found 0 widgets with text "Added"`, exactly
+  the reported symptom. Suite 309 → **310**.
+- **Lesson for any future sheet-on-sheet**: a modal route's `builder` runs once. Passing a
+  parent's live state into a child route needs `Consumer`/`StatefulBuilder`, or the child
+  silently renders a snapshot.
+
 ## The 'Gravel' (non-obvious)
 
 - **`_controllers` / `_scoreControllers` must be rebuilt whenever `setCampaign` runs** — the
