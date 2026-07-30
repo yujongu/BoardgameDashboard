@@ -7,8 +7,12 @@ taken by the owner this session: **a table's participants are fixed at creation*
 participant sees the table and can log sessions against it, and guests (people with no
 account) are allowed as display-only seats.
 
-Status: **implemented; `flutter analyze` clean; `flutter test` 309 pass. NOT committed, rules
-NOT deployed, production `campaigns` NOT yet wiped** (see Next Immediate Step).
+Status: **DONE and verified.** `flutter analyze` clean, `flutter test` **309 pass**, merged to
+`main` and pushed (`16fa9d7`), rules deployed, production `campaigns` wiped, merged branches
+cleaned up. **The owner confirmed the two-account round trip works on-device 2026-07-30** —
+a table created with a registered friend plus a guest is visible to the friend on their own
+account and accepts a logged session. That was the exact scenario D12 broke, so the fix is
+confirmed against production, not just unit-tested.
 
 ## Context & Decisions (this session)
 
@@ -72,14 +76,31 @@ NOT deployed, production `campaigns` NOT yet wiped** (see Next Immediate Step).
 
 ## Next Immediate Step
 
-**Device pass — the actual D12 scenario, which no test covers**: create a table with a
-registered friend plus a guest, then confirm from the *friend's* account that the table
-appears on their Game Detail and that they can log a session against it. That round trip
-is the whole point of the fix and has never been executed against production.
+D12 is closed, and with it the last item from the Part 1 defect sweep. **No verification work
+is outstanding** — the app is distributed locally only (no App Store / TestFlight), so there
+is no release step to chase.
 
-Then rebuild the wiped Crew table (10 missions can be re-entered through the board card's
-"Correct Mission N" editor), merge, and ship a build — note the client fixes from the
-previous session are still unreleased too, so one release covers both.
+Optional cleanup: **rebuild the wiped Crew table** (the 10 completed missions can be re-entered
+through the board card's "Correct Mission N" editor).
+
+Remaining backlog, in rough value order — all of it is now *new* work rather than follow-up:
+
+- **1.14 / non-friend participants** — a product call, not a bug: today anyone can be added to
+  a play and have their stats moved without consent. Should the participant picker's global
+  user search be friends-only?
+- **D5 residual** — `EditPlayPage` can still exceed a game's player maximum; it holds only
+  `gameId`/`gameName`, so fixing it means resolving the catalog game there.
+- **Accessibility** — icon-only controls (FAB, winner trophy, remove ×) expose no labels. This
+  is the manual plan's Part 8 VoiceOver item and it is failing.
+- **`updatePlay` has no `mode` guard** — co-op plays hide Edit in the UI, so it is unreachable
+  today, but the function would corrupt a co-op play if ever called on one.
+- **Friend-request cards** carry the same stale-name snapshot D11 fixed for the friends list.
+- **Backfill `totalCoopPlays`** — only matters if co-op plays predating D8 should count toward
+  Home's PLAYS figure. The prod `campaigns` wipe did not touch `plays`, so old co-op plays
+  still exist.
+- **`docs/manual-test-plan.md` Parts 2-8 have never been executed** — only Part 1 (the 16
+  targeted defect repros) was. That is the largest untouched body of verification work.
+- **H6b / P4** — avatar upload for email/password users (`image_picker` + Storage).
 
 ---
 
