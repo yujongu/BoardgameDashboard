@@ -50,17 +50,15 @@ shows every play. The stat tile sums `library.playCount`; the list does not.
       still incremented. Confirm this is intended (the stage "latches" by design)
       or needs an undo path.
 
-### 1.4 No way to join someone else's campaign table
-`memberIds` is only set at creation; `createPlay` never adds participants to it, and
+### 1.4 No way to join someone else's campaign table — **FIXED 2026-07-30, strike from the plan**
+`memberIds` was only set at creation; `createPlay` never added participants to it, and
 tables are listed by `memberIds array-contains uid`.
 
-- [ ] A creates a table from Game Detail → New table (roster empty, members = [A]).
-- [ ] A logs a co-op session on that table with B as a participant.
-- [ ] B opens the same game's detail page → **no tables listed**; B's own Add Play
-      → Table shows nothing to pick, so B must create a second table for the same
-      physical campaign. Two diverging boards for one group.
-- [ ] Also check: if A creates the table from the Add Play flow instead, members
-      come from the participant list — verify B *does* see it that way.
+Resolved by the fixed-membership model (`docs/defects.md` D12): a table's seats are
+chosen once, at creation, and include everyone who should ever see it. Verified
+on-device — a table created with B seated is visible to B and accepts B's sessions.
+**Coverage moved to Part 4b**; do not re-run the steps below, they describe the old
+creation flow (Game Detail no longer creates a members = [A] table).
 
 ### 1.5 Edit Play lets you add a participant who is already in the play
 The picker's "already added" marks come from the Add-Play provider, not from the
@@ -210,14 +208,58 @@ Add Play stores `now` unless you touch the date picker, which sets midnight loca
 
 ## Part 4 — Logging a play (co-op / campaigns)
 
-- [ ] Pick The Crew → winner trophies and score fields disappear; the **TABLE**
-      picker leads (no WON/LOST yet — that only appears once a table is chosen).
-- [ ] Pandemic (no board) → no table/mission controls; the plain RESULT WON/LOST
-      alone is enough (one-shot co-op path is unchanged).
-- [ ] Pick a table → a **MISSION RECORD** list appears (current mission first, then
-      completed history each showing its tries) plus a pinned **CURRENT MISSION** =
-      first incomplete mission with **PASSED / FAILED** buttons. There is **no free
-      stage stepper** here anymore.
+> Rewritten 2026-07-30 for the **fixed-membership table** model (D12). A table's
+> participants are chosen once, at creation, and can never be added to or removed
+> from — in the UI *or* by Firestore rules. Everyone seated sees the table on their
+> own account and can log against it. Guests (no account) are display-only seats.
+
+### 4a — Creating a table
+
+- [ ] Add Play → The Crew → **TABLE** picker leads; winner trophies and score fields
+      are gone (no WON/LOST yet — that only appears once a table is chosen).
+- [ ] Table picker → **New table** → the new-table sheet opens, listing **you** as the
+      first seat, above the hint that players cannot be added or removed later.
+- [ ] Your own seat has **no ×** — the creator cannot give up their seat.
+- [ ] **+ Add player** → your friends list. Tap friend B → B is marked **Added**
+      *immediately, while the picker is still open*, and is no longer tappable.
+      (This regressed once — the picker is on its own route and kept a stale
+      `addedUserIds`. Guests masked it by flashing their own "ADDED".)
+- [ ] Type a name that is not a user → add as **guest** → transient "ADDED" flash, and
+      the seat appears tagged **GUEST**.
+- [ ] Close the picker → every added seat is on the list behind it, in the order added.
+- [ ] Remove a non-creator seat with × → it goes. This is the **only** point where the
+      seat list can change.
+- [ ] **Create table** → the table is selected on the form and the mission controls
+      appear.
+- [ ] Cancel the sheet instead (swipe/back) → no table is created, and the form still
+      has no table selected.
+- [ ] Game Detail → the same **New table** flow is reachable there and behaves
+      identically (it used to create a permanently solo table).
+- [ ] Table picker rows are labelled with the seats' names, comma-separated; a table
+      with no named seats reads "Untitled table".
+- [ ] Pandemic (no board) → no table/mission controls at all; the plain RESULT
+      WON/LOST is enough (one-shot co-op path is unchanged).
+
+### 4b — Shared visibility (the point of D12)
+
+- [ ] **On B's device**, open the same game's detail page → the table A created with B
+      in it **is listed**. Before the fix B saw "No campaigns yet".
+- [ ] B logs a session against that table → succeeds. Before the fix this was
+      `PERMISSION_DENIED "Only campaign members may log sessions."`
+- [ ] B's logged session advances the board **for A too** (reopen on A's device).
+- [ ] A guest-only participant has no account, so nothing is expected on their side —
+      confirm they still render as a seat everywhere the table is shown.
+- [ ] Non-member C (not seated) cannot see the table in their own list. In the Firestore
+      console, `memberIds` contains exactly the registered seats and **never changes**
+      after creation, no matter how many sessions are logged.
+
+### 4c — Logging against a table
+
+- [ ] Pick a table → the players list is **filled from the table and locked**: no
+      "+ Add player" button, no remove ×, names not editable.
+- [ ] A **MISSION RECORD** list appears (current mission first, then completed history
+      each showing its tries) plus a pinned **CURRENT MISSION** = first incomplete
+      mission with **PASSED / FAILED** buttons. There is no free stage stepper here.
 - [ ] Save without choosing PASSED/FAILED → disabled. Save without picking a table →
       disabled.
 - [ ] Log PASSED on the current mission → board advances; history row reads
@@ -229,21 +271,37 @@ Add Play stores `now` unless you touch the date picker, which sets midnight loca
 - [ ] Tap a mission row in the record → edit dialog: change **Tries** and toggle
       **Passed**. Confirm the record updates, the change persists (reopen the table),
       and un-passing an earlier mission re-pins it as the current mission.
+- [ ] After that mission edit, the players list is still the table's seats and still
+      locked (the edit re-pins the campaign, which rebuilds the participant rows).
 - [ ] Two members log the same mission at the same time from two devices → no lost
       update, `sessionCount` = 2.
-- [ ] Member A edits the roster on the board while B has the page open → B's page
-      is stale until reopened (no live listener). Confirm acceptable.
-- [ ] Board stepper: step back from mission 5 to 3 → missions 3–5 are marked
-      incomplete. Confirm that's intended (it discards completion, keeps history).
-- [ ] Tap the big number → type a mission out of range (0, 999, letters).
-- [ ] Add a roster member with a duplicate name → silently ignored.
 - [ ] Switch from a co-op game to a competitive game mid-form → outcome/table/stage
-      clear and the winner UI returns.
+      clear, the winner UI returns, and the players list is **editable again**.
 - [ ] Switch from competitive to co-op *after* typing scores → scores are dropped
       (server ignores them for co-op) — verify nothing surprising is stored.
+
+### 4d — The board card on Game Detail
+
+- [ ] The crew list is **read-only**: the seats render as plain chips with no × and
+      there is no **ADD** action. (Both were removed with D12.)
+- [ ] Board stepper: step back from mission 5 to 3 → missions 3–5 are marked
+      incomplete. Confirm that's intended (it discards completion, keeps history).
+- [ ] Tap the big number → type a mission out of range (0, 999, letters) → clamped.
+- [ ] **Correct Mission N** on a table past mission 1 → opens the edit dialog for the
+      last completed stage; tries and passed can both be corrected (this is the
+      deliberate undo for D13 — deleting a co-op play does not rewind the board).
+- [ ] While A has the page open, B logs a session from the other device → A's board is
+      **stale until reopened** (there is no live listener). Confirm acceptable.
+
+### 4e — Co-op plays elsewhere
+
 - [ ] Co-op play detail: result banner shown, **Edit hidden**, Delete present.
 - [ ] Co-op games never appear in the Library tab — confirm Browse-all is the
       intended discovery path.
+- [ ] Home **PLAYS** counts co-op sessions; the **win rate** does not move for them
+      (`stats.totalCoopPlays` is separate from `totalGamesPlayed`).
+- [ ] Delete a co-op play → `totalGamesPlayed` and every `library.playCount` are
+      unchanged, `totalCoopPlays` drops by 1, and the board does **not** rewind.
 
 ## Part 5 — Editing & deleting plays
 

@@ -296,7 +296,35 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 
 ## S3/S4 — Campaign model
 
-### D12 (plan 1.4). No way to join someone else's campaign table — **S3**
+### D12 (plan 1.4). No way to join someone else's campaign table — **S3** — ✅ FIXED 2026-07-30
+
+> **Fixed, by fixing creation rather than by adding a join.** Decision taken: a table's
+> participants are chosen once, at creation, and can never be added to or removed from;
+> everyone seated sees the table and may log against it; guests (no account) are allowed as
+> display-only seats.
+>
+> `roster` (names) and `memberIds` (uids) were **unpaired parallel lists**, so nothing said
+> which name belonged to which uid — the blocker for auto-filling a play from a table. They
+> were replaced by `participants: List<CampaignMember>` (`{name, userId?}`, null = guest), with
+> `memberIds` kept as the denormalized uid list that Firestore rules and `array-contains`
+> require. Immutability is enforced in `firestore.rules` (`allow update` requires `memberIds`
+> and `participants` unchanged), not just in the UI.
+>
+> **No Cloud Function change was needed** — `createPlay`'s membership gate was already the
+> right check and failed only because creation wrote the wrong members. The fix is one new
+> creation flow (`showNewTableSheet`) used by both entry points, which previously disagreed:
+> Game Detail passed `memberIds: const []` and Add Play snapshotted the form.
+>
+> Verified on-device 2026-07-30: a table created with B seated is listed on B's own Game
+> Detail and accepts B's logged sessions. Pre-existing production `campaigns` docs had no
+> `participants` field and could not be repaired under an immutability rule, so the collection
+> was wiped with the owner's approval (3 docs, one holding 10 completed missions).
+>
+> **Follow-up defect found during that device test and fixed the same day:** picking a *friend*
+> in the new-table sheet gave no feedback, because the picker sits on its own route and kept a
+> stale `addedUserIds` — the same root cause as D4. Guests masked it by flashing their own
+> "ADDED". Fixed with `StatefulBuilder`; regression test
+> `test/features/library/new_table_sheet_test.dart`.
 
 - **What's wrong:** `memberIds` is only ever set at creation; `createPlay` never adds session
   participants to it, and tables are listed by `memberIds array-contains uid`. The two
