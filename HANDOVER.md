@@ -37,6 +37,28 @@ confirmed against production, not just unit-tested.
 - **`AddPlayNotifier.setCampaign` now also seats the play** with the table's participants, and
   the Add Play list goes read-only (`seatedAtTable`): no add button, no remove, names locked.
 
+## Decision reversal — PLAYS is competitive-only (2026-07-30)
+
+Owner ran manual test 1.1 and **reversed the D8 product decision**: PLAYS should count
+competitive games only, so 2 competitive + 2 co-op reads **"PLAYS 2"**, not 4.
+
+- Excluding co-op from the tile alone would have **restored the original 1.1 symptom** — a
+  "2" sitting above four cards. So the list was **relabelled, not filtered**: the header is
+  now **"Recent Sessions"** with its own `sessionsCount` subtitle counting all sessions, while
+  PLAYS / WINS / WIN RATE are uniformly competitive-only. Two numbers that visibly measure
+  different things. Co-op stays visible on Home, which filtering would have cost.
+- `StatsRow` **no longer takes `coopPlays`** (the widget is competitive-only end to end).
+  `coopPlayCountProvider` is still watched by `home_tab` for the session count, and
+  `stats.totalCoopPlays` is still written by `createPlay` — none of that changed.
+- l10n: `homeRecentPlays` → **`homeRecentSessions`** ("Recent Sessions"). The existing
+  `sessionsCount` plural was reused. `_SectionHeader` uppercases its own subtitle, so the
+  caps in that key are not doubled.
+- `test/features/home/stats_row_test.dart` was **inverted, not patched** — all four cases
+  encoded the old "co-op counts" rule. `docs/defects.md` D8 and manual-test-plan 1.1 and
+  Part 4e were corrected too; Part 4e had been written the same day asserting the old rule.
+- **Not visually confirmed** (no simulator on this box) — the relabelled header and the new
+  count have not been seen rendered.
+
 ## Follow-up fix — no "Added" feedback in the new-table picker (2026-07-30)
 
 Found by the owner during the D12 device test: pressing **+ / Add player** while creating a

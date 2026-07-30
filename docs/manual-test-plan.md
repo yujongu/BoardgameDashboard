@@ -21,14 +21,18 @@ suggests something is already wrong — do these first, they have the highest hi
 
 Each has the repro, what should happen, and what the code suggests will happen.
 
-### 1.1 Home "PLAYS" count disagrees with the Recent Plays list (co-op)
-Co-op plays deliberately skip all library/stats writes, but the Recent Plays stream
-shows every play. The stat tile sums `library.playCount`; the list does not.
+### 1.1 Home "PLAYS" count disagrees with the Recent Plays list (co-op) — **RESOLVED 2026-07-30**
+Originally: the stat tile summed `library.playCount` (competitive only) while the list
+streamed every play, so "2 PLAYS" sat above four cards.
+
+Settled after two passes. **PLAYS means competitive games only**; the list below keeps
+showing every session and is now labelled **"Recent Sessions"** with its own count, so
+the two numbers visibly measure different things instead of contradicting each other.
 
 - [ ] Log 2 competitive plays, then log 2 co-op plays (The Crew or Pandemic).
-- [ ] Home tab: stat tile says **PLAYS 2**, but four cards are listed and the
-      "Recent Plays" header subtitle says "2 plays". Decide whether co-op should
-      count toward plays (and toward win-rate's denominator).
+- [ ] Home tab: **PLAYS 2** (co-op excluded), **WIN RATE** unaffected by the co-op games,
+      and the **"Recent Sessions"** header reads **4 SESSIONS** above four cards.
+- [ ] Delete a co-op play → PLAYS stays 2, the session count drops to 3.
 
 ### 1.2 Deleting a co-op play corrupts lifetime stats
 `deletePlay` never checks `mode`, so it rolls back stats a co-op play never wrote.
@@ -298,8 +302,9 @@ Add Play stores `now` unless you touch the date picker, which sets midnight loca
 - [ ] Co-op play detail: result banner shown, **Edit hidden**, Delete present.
 - [ ] Co-op games never appear in the Library tab — confirm Browse-all is the
       intended discovery path.
-- [ ] Home **PLAYS** counts co-op sessions; the **win rate** does not move for them
-      (`stats.totalCoopPlays` is separate from `totalGamesPlayed`).
+- [ ] Home **PLAYS** does **not** count co-op sessions, and neither does the win rate.
+      They appear in the **"Recent Sessions"** list and its count instead
+      (`stats.totalCoopPlays`, kept separate from `totalGamesPlayed`).
 - [ ] Delete a co-op play → `totalGamesPlayed` and every `library.playCount` are
       unchanged, `totalCoopPlays` drops by 1, and the board does **not** rewind.
 

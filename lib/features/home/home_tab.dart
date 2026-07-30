@@ -33,14 +33,17 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     // Co-op writes no library entry, so it needs its own lifetime counter.
     final coopPlays = ref.watch(coopPlayCountProvider).valueOrNull ?? 0;
 
-    // True lifetime session count: competitive (sum of per-game playCount) plus
-    // co-op. Counting co-op keeps this in step with the session list below —
-    // they used to disagree, showing "2 PLAYS" above four cards.
+    // Total lifetime *sessions*: competitive (sum of per-game playCount) plus
+    // co-op. This counts everything the list below streams, so the two agree.
+    // It is deliberately NOT the PLAYS stat above, which is competitive-only —
+    // that is why this section is labelled "Recent Sessions" rather than
+    // "Recent Plays": one number counts games won or lost, the other counts
+    // times the group sat down.
     final competitivePlays = libraryAsync.valueOrNull?.fold<int>(
       0,
       (sum, e) => sum + e.playCount,
     );
-    final totalPlays = competitivePlays == null
+    final totalSessions = competitivePlays == null
         ? null
         : competitivePlays + coopPlays;
 
@@ -58,8 +61,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             child: libraryAsync.when(
               loading: () => const _StatsShimmer(),
               error: (_, _) => const SizedBox.shrink(),
-              data: (library) =>
-                  StatsRow(library: library, coopPlays: coopPlays),
+              data: (library) => StatsRow(library: library),
             ),
           ),
         ),
@@ -72,14 +74,16 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           ),
         ),
 
-        // "Recent Plays" section header
+        // "Recent Sessions" section header — counts co-op too, unlike PLAYS.
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
             child: _SectionHeader(
-              title: s.homeRecentPlays,
-              subtitle: totalPlays != null ? s.playsCount(totalPlays) : null,
-              onSeeAll: (totalPlays ?? 0) > 0
+              title: s.homeRecentSessions,
+              subtitle: totalSessions != null
+                  ? s.sessionsCount(totalSessions)
+                  : null,
+              onSeeAll: (totalSessions ?? 0) > 0
                   ? () => Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const PlayHistoryPage(),
@@ -141,19 +145,18 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 class StatsRow extends StatelessWidget {
   final List<LibraryEntry> library;
 
-  /// Lifetime co-op sessions — counted in PLAYS but never in the win rate.
-  final int coopPlays;
-
-  const StatsRow({super.key, required this.library, required this.coopPlays});
+  const StatsRow({super.key, required this.library});
 
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
+    // Every figure here is competitive-only, co-op sessions included in none of
+    // them: a co-op session has no individual winner, so it cannot contribute to
+    // wins or the win rate, and PLAYS is deliberately the count of competitive
+    // games. Co-op sessions are surfaced by the "Recent Sessions" list below,
+    // whose own count is separate for exactly that reason.
     final competitivePlays = library.fold(0, (sum, e) => sum + e.playCount);
-    final totalPlays = competitivePlays + coopPlays;
     final totalWins = library.fold(0, (sum, e) => sum + e.winCount);
-    // Win rate stays competitive-only: a co-op session has no individual winner,
-    // so counting it would drag the rate down for a game nobody "lost".
     final winRate = competitivePlays == 0
         ? 0
         : (totalWins * 100 ~/ competitivePlays);
@@ -167,7 +170,7 @@ class StatsRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _StatCell(value: '$totalPlays', label: s.homeStatPlays),
+          _StatCell(value: '$competitivePlays', label: s.homeStatPlays),
           _Divider(),
           _StatCell(value: '$totalWins', label: s.homeStatWins),
           _Divider(),

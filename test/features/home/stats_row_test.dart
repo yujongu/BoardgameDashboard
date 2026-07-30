@@ -14,15 +14,12 @@ LibraryEntry _entry(String name, {required int plays, required int wins}) =>
       winCount: wins,
     );
 
-Widget _wrap(List<LibraryEntry> library, {required int coopPlays}) =>
-    MaterialApp(
-      theme: buildDarkTheme(),
-      localizationsDelegates: AppStrings.localizationsDelegates,
-      supportedLocales: AppStrings.supportedLocales,
-      home: Scaffold(
-        body: StatsRow(library: library, coopPlays: coopPlays),
-      ),
-    );
+Widget _wrap(List<LibraryEntry> library) => MaterialApp(
+  theme: buildDarkTheme(),
+  localizationsDelegates: AppStrings.localizationsDelegates,
+  supportedLocales: AppStrings.supportedLocales,
+  home: Scaffold(body: StatsRow(library: library)),
+);
 
 /// Reads the value rendered above a given stat label.
 String _statFor(WidgetTester tester, String label) {
@@ -39,51 +36,43 @@ String _statFor(WidgetTester tester, String label) {
 }
 
 void main() {
-  // Co-op plays write no library entry, so PLAYS summed the library and
-  // disagreed with the session list below it — "2 PLAYS" above four cards.
-  // Co-op now counts toward PLAYS but is deliberately kept out of the win rate.
+  // Every figure in this row is competitive-only. Co-op sessions write no
+  // library entry and are counted nowhere here -- they are surfaced by the
+  // "Recent Sessions" list, whose count is separate on purpose. An earlier
+  // version added co-op to PLAYS; that was reversed 2026-07-30 because PLAYS
+  // should mean games played competitively.
 
-  testWidgets('PLAYS counts co-op sessions alongside competitive ones', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _wrap([_entry('Catan', plays: 2, wins: 2)], coopPlays: 2),
-    );
+  testWidgets('PLAYS counts competitive games only', (tester) async {
+    // 2 competitive plays logged; any co-op sessions are invisible here because
+    // co-op never writes a library entry in the first place.
+    await tester.pumpWidget(_wrap([_entry('Catan', plays: 2, wins: 2)]));
 
-    expect(_statFor(tester, 'PLAYS'), '4');
+    expect(_statFor(tester, 'PLAYS'), '2');
   });
 
-  testWidgets('win rate ignores co-op sessions', (tester) async {
-    // 2 competitive plays, both won, plus 2 co-op sessions. The co-op games have
-    // no individual winner, so the rate stays 100% rather than falling to 50%.
-    await tester.pumpWidget(
-      _wrap([_entry('Catan', plays: 2, wins: 2)], coopPlays: 2),
-    );
+  testWidgets('win rate is competitive-only', (tester) async {
+    await tester.pumpWidget(_wrap([_entry('Catan', plays: 2, wins: 2)]));
 
     expect(_statFor(tester, 'WINS'), '2');
     expect(_statFor(tester, 'WIN RATE'), '100%');
   });
 
-  testWidgets('a co-op-only history reports plays without a win rate', (
-    tester,
-  ) async {
-    // Nothing competitive has been logged, so the win rate has no denominator
-    // and must read 0% rather than divide by zero.
-    await tester.pumpWidget(_wrap([], coopPlays: 3));
+  testWidgets('a co-op-only history reports all zeroes', (tester) async {
+    // Nothing competitive logged: the library is empty, so PLAYS is 0 and the
+    // win rate has no denominator -- it must read 0% rather than divide by zero.
+    await tester.pumpWidget(_wrap([]));
 
-    expect(_statFor(tester, 'PLAYS'), '3');
+    expect(_statFor(tester, 'PLAYS'), '0');
     expect(_statFor(tester, 'WINS'), '0');
     expect(_statFor(tester, 'WIN RATE'), '0%');
   });
 
-  testWidgets('with no co-op sessions the figures are unchanged', (
-    tester,
-  ) async {
+  testWidgets('sums playCount and winCount across the library', (tester) async {
     await tester.pumpWidget(
       _wrap([
         _entry('Catan', plays: 4, wins: 1),
         _entry('Azul', plays: 4, wins: 0),
-      ], coopPlays: 0),
+      ]),
     );
 
     expect(_statFor(tester, 'PLAYS'), '8');

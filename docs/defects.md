@@ -223,10 +223,24 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 
 ### D8 (plan 1.1). Home PLAYS count disagrees with the Recent Plays list — **S3** — ✅ FIXED 2026-07-28
 
-> **Fixed.** Decision taken: co-op counts toward PLAYS, never toward the win rate. Added
-> `stats/{uid}.totalCoopPlays`, written by `createPlay` and rolled back by `deletePlay`, kept
-> separate from `totalGamesPlayed` so `totalGamesPlayed === sum(library.playCount)` still holds.
-> **Not backfilled** — co-op plays logged before this change are not counted.
+> **Fixed.** Added `stats/{uid}.totalCoopPlays`, written by `createPlay` and rolled back by
+> `deletePlay`, kept separate from `totalGamesPlayed` so
+> `totalGamesPlayed === sum(library.playCount)` still holds. **Not backfilled** — co-op plays
+> logged before this change are not counted.
+>
+> **Decision revised 2026-07-30 after the owner ran 1.1.** The first pass had co-op count
+> toward PLAYS (option (a) below). The owner's call is that **PLAYS means competitive games
+> only** — 2 competitive + 2 co-op reads "PLAYS 2", not 4.
+>
+> Excluding co-op from the tile on its own would have restored the original symptom (a "2"
+> above four cards), so the list was relabelled rather than filtered: the header is now
+> **"Recent Sessions"** with its own `sessionsCount` subtitle covering all sessions, while
+> PLAYS/WINS/WIN RATE are uniformly competitive-only. That is option (c) — two figures that
+> plainly measure different things — reached by renaming instead of by adding a fourth tile.
+> Co-op sessions stay visible on Home, which filtering would have cost.
+>
+> `StatsRow` no longer takes `coopPlays` at all. `stats.totalCoopPlays` is still written and
+> still used, for the session count.
 
 - **What's wrong:** the stat tile and the "Recent Plays" subtitle both sum
   `library.playCount`, which co-op plays never write; the list below streams *every* play.
