@@ -274,7 +274,7 @@ function validate(data: UpdatePlayData): void {
 
 // ─── Callable function ────────────────────────────────────────────────────────
 
-export const updatePlay = onCall<UpdatePlayData>({ minInstances: 1 }, async (request) => {
+export const updatePlay = onCall<UpdatePlayData>(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Authentication required.");
   }

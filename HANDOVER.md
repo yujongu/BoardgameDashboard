@@ -1,3 +1,68 @@
+# Handover — 2026-08-02 (session: remove `minInstances: 1` to cut GCP idle CPU cost)
+
+## Current Milestone
+
+**Traced a recurring "Min Maintenance CPU" charge on the `gameshelf-283dc` GCP bill to
+`minInstances: 1` on two callables, and removed it.** `createPlay.ts:106` and
+`updatePlay.ts:277` each pinned a Cloud Run container alive 24/7; at the firebase-functions v2
+defaults (1 vCPU / 256 MiB, us-central1) that is ~$6.75/mo each, ~$13.50/mo total, billed flat
+regardless of actual usage and not absorbed by the invocation free tier.
+
+Status: **DONE and deployed.** `npm run build` clean, `npm test` 156/156,
+`firebase deploy --only functions:createPlay,functions:updatePlay` successful, and verified live
+against Cloud Run: `createplay` (rev `createplay-00012-kap`) and `updateplay`
+(rev `updateplay-00011-biw`) both carry **no `minScale` annotation → min instances 0**. The
+describe also confirmed **1 vCPU / 256 Mi**, i.e. the assumed v2 defaults, so the ~$13.50/mo
+estimate was accurate — nobody had raised `memory`/`cpu` in the console.
+
+**Not committed.** `createPlay.ts`, `updatePlay.ts`, and this file are modified in the working
+tree, so the repo is behind production. Committing these is the first thing to do next session.
+
+## Context & Decisions (this session)
+
+- **Why `minInstances` existed in the first place.** Added in `72f3b4b` (2026-05-17), a commit
+  titled *"feat(friends): add requests screen…"* that never mentioned it. Three latency changes
+  rode along in that one commit: `minInstances: 1` on `createPlay`/`updatePlay` (and nothing
+  else), `updatePlay`'s sequential transaction reads merged into a `Promise.all`, and
+  `add_play_screen._save()` switched from `await` to fire-and-forget. All three targeted one
+  complaint — **the Add Play Save button hung for seconds**, because a personal-use app hits a
+  cold start on nearly every save (Node 22 boot + `firebase-admin` init + first Firestore
+  connection).
+- **The fire-and-forget half was already reverted** in `1342aa9`, which restored `await` so save
+  failures could surface in a SnackBar. So as of today the UI *does* block on the round trip, and
+  removing `minInstances` genuinely reintroduces a visible delay on the first save after ~15 min
+  idle. Owner chose this trade knowingly (option B of four presented: pre-warm from the client,
+  plain removal, shrink idle vCPU via `cpu: 0.25`, or drop it from `updatePlay` only).
+
+## The 'Gravel'
+
+- **If the slow Save becomes annoying again, do NOT just re-add `minInstances`.** The cheap fix
+  is client-side pre-warming: the Add Play form takes 20+ seconds to fill out, so firing a
+  throwaway callable when the screen opens boots the container while the user types, for
+  effectively $0. That was the recommended option and is still the right one.
+- `deletePlay`, everything in `reads/`, and everything in `friends/` never had `minInstances` —
+  only the two play-write paths did. Nothing else on the bill to chase.
+- **All 17 Cloud Run services now show an empty `minScale`**, so nothing else in the project is
+  generating idle charges. Verified with:
+  `gcloud run services list --project gameshelf-283dc --region us-central1 --format="table(metadata.name,spec.template.metadata.annotations['autoscaling.knative.dev/minScale'])"`
+- **Billing lags the fix.** The Min Maintenance CPU line tapers over a day or two rather than
+  dropping to zero immediately, and already-accrued charges for this cycle still bill. Do not
+  read the first day's report as the change having failed.
+- `firebase deploy` warns that `firebase-functions` (`^7.2.5` in `functions/package.json`) is
+  outdated. **Pre-existing and unrelated** to this change — left alone deliberately, not yet
+  triaged.
+- Cloud Run service names are the function names **lowercased** (`createplay`, not `createPlay`),
+  which matters for any `gcloud run` command.
+
+## Next Immediate Step
+
+`git add functions/src/plays/createPlay.ts functions/src/plays/updatePlay.ts HANDOVER.md` and
+commit — production is currently ahead of the repo. After that, the open question is whether the
+reintroduced cold-start delay on the Add Play save button is actually tolerable in real use; if
+not, implement client-side pre-warming (see 'Gravel' above) rather than restoring `minInstances`.
+
+---
+
 # Handover — 2026-08-01 (session: calculator manual test pass §1–§3, D14–D17)
 
 ## Current Milestone
