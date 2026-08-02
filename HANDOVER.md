@@ -1,3 +1,90 @@
+# Handover — 2026-08-01 (session: calculator manual test pass §1–§3, D14–D17)
+
+## Current Milestone
+
+**Executed §1–§3 of `docs/single-account-test-guide.md` on an iOS simulator, then fixed every
+defect it found.** Full results: `docs/manual-test-results-2026-08-01.md`. Defects filed and
+fixed as **D14–D17** in `docs/defects.md`.
+
+Status: **DONE.** `flutter analyze` clean, `flutter test` **310 → 318**, all four defects fixed
+and re-verified on the device.
+
+**All 33 calculators are arithmetically correct** — every §1 vector and all 19 §2 games matched
+the value computed from the shipped formula. **D6 (Lost Cities, 2 handshakes + cards 2–7 → 41)
+is now confirmed fixed on a device**, not just in unit tests. None of the four new defects were
+in the scoring maths; they were in catalog data, input commit, and error handling.
+
+## Context & Decisions (this session)
+
+- **D16 (S2) — Terraforming Mars silently under-reported.** The stepper committed only on focus
+  loss, and iOS deliberately does not unfocus on an outside tap, so the last field you typed sat
+  visible in the box while the total ignored it (entered the guide's vector, tapped blank space,
+  got **54** with `12` showing next to `+0`). Fixed with
+  `onTapOutside: (_) => _focusNode.unfocus()`, which routes through the existing `_commit()`.
+  Repro now reads **66**.
+- **D14 (S3) — the catalog's error branch was dead code.** `_preload()`'s catch sets
+  `games: const []` *and* `error`, but both consumers gated the error UI on
+  `error != null && games == null`, so a failed load rendered as the ordinary "No games found"
+  empty state with no Retry. Dropped the guard in both, and `_doSearch` now carries `error`
+  across an empty query so clearing the search box cannot hide a failed preload.
+- **D17 (S4) — score fields accepted letters.** `ScoreInputRow` had a numeric `keyboardType` but
+  no `inputFormatters`, so a hardware keyboard or paste reached the field and `int.tryParse`
+  scored it 0. Added `digitsOnly`, plus a `^-?\d*$` formatter for the `signed: true` rows so
+  Point Salad / Sushi Go / 7 Wonders military keep their minus.
+- **D15 (S3) — a duplicate catalog doc hid a calculator.** Production `boardGames` held **two**
+  docs named "Ticket to Ride: Europe": `ticket-to-ride-europe` and the registry's
+  `ticket-to-ride-europe-2005`. Identical names mean Firestore breaks the sort tie on document
+  id, so the placeholder sorted **first** — the row a user actually taps showed "No tools
+  available yet." Deleted the placeholder with the owner's approval (**production data change**,
+  `boardGames` 119 → 118). It was referenced by nothing (0 plays, 0 campaigns, 0 library
+  entries) and was plainly an artifact: `example.com` thumbnail, wrong release year 2004. Its
+  full contents are recorded in the D15 entry in case it is ever needed again.
+- **Considered and rejected for D15:** adding the short id as a second `kGameToolsRegistry` key.
+  It would have made the calculator reachable without touching production, but left two
+  identical Browse rows forever and split play counts across two game ids.
+- **Guide correction:** §2 tells you to check the total equals "the plain sum you compute
+  yourself". That is wrong by design for four of the nineteen — Ticket to Ride and TtR Europe
+  (`longest × 10`, `− ticketsFailed`, `stations × 4`), Sagrada (`− emptySpaces`), and Azul:
+  Summer Pavilion (`− leftover`). Expected values were recomputed from the shipped formulas.
+
+## The 'Gravel' (non-obvious)
+
+- **The simulator was signed in as `testmain@gameshelf.test`, an *emulator* account.** Production
+  rejects its token, which silently empties the catalog — that is how D14 surfaced. If Browse
+  ever looks empty, check which account is signed in before suspecting the data.
+- **Two guide items could not be driven and are still unchecked:** device rotation, and the two
+  on-screen-keypad questions (does the keypad offer a minus; does the number pad have a Return
+  key). `idb` cannot rotate, this box denies Accessibility permission for menu/keystroke
+  automation, and the Simulator ignored every attempt to disconnect the hardware keyboard
+  (global pref, per-device pref via PlistBuddy, ⌘⇧K). **All typing in the run went through a
+  hardware keyboard** — which is also the only reason D17 was reachable at all. Both are seconds
+  to check on a real device, and the Return-key answer is what sets D16's true pre-fix severity.
+- **Every new test was verified meaningful** by removing its fix and watching it fail —
+  including both halves of D14 separately.
+- **D14's fix was seen rendering** by temporarily making `fetchInitialGames` throw, rebuilding,
+  screenshotting the error + RETRY, then reverting. There is no other way to induce a catalog
+  failure on the simulator without touching the host network.
+- Driver scaffolding lived in the session scratchpad (`sim.sh`, `game2.sh`, `compose2.py`,
+  `fb-idb` in a Python **3.9** venv — 3.14 breaks on `asyncio.get_event_loop`). **That path is
+  temporary and will not survive.** Worth re-creating rather than recovering; the one lesson
+  worth keeping is that blind-filling coordinates needs a guard, because a search that returns
+  nothing sends taps wandering into unrelated screens — one run ended up on the Profile page,
+  one tap from Sign Out.
+
+## Next Immediate Step
+
+**Nothing is outstanding from the calculator pass** — D14–D17 are all fixed, verified and
+documented.
+
+**Still unrun: §4–§9** of `docs/single-account-test-guide.md` — competitive logging,
+edit/delete, solo co-op tables, library/catalog, theme/layout/accessibility/lifecycle, and the
+closing Firestore integrity check plus cleanup. Those sections **write real data to production**,
+so unlike §1–§3 they need the §9 cleanup step taken seriously.
+
+Close the two loose threads above first if a real device is handy — they are seconds each.
+
+---
+
 # Handover — 2026-07-29 (session: D12 campaign membership)
 
 ## Current Milestone

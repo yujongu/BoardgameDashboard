@@ -8,6 +8,8 @@ Companion doc: `docs/backlog.md` (feature gaps). This file is runtime defects on
 
 Scoreboard: **14 confirmed — all 14 now fixed** (D1–D13), 1 not a defect (1.12), 1 not
 runnable here (1.16).
+Part 2 (2026-08-01 calculator pass): **4 confirmed — all 4 now fixed** (D14–D17), at the end of
+this file.
 Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong UI · **S4** polish.
 
 ---
@@ -459,3 +461,124 @@ function) is privileged, the caller is not, and the deputy fails to check.
 The remaining barrier is only that C must know a `playId` — that is obscurity, not access
 control. IDs leak through screenshots, shared links, logs, and support tickets, and are
 guessable in bulk given enough attempts.
+
+---
+
+## Part 2 execution — §1–§3 calculator pass (2026-08-01)
+
+Found while executing `docs/single-account-test-guide.md` §1–§3 against **production** on an
+iPhone 17 simulator, build `b5cea6c`. All 33 calculators were arithmetically correct; these four
+are everything else. Full run: `docs/manual-test-results-2026-08-01.md`.
+
+### D16 (guide 1.4). Terraforming Mars: a typed stepper value is not committed when you tap away — **S2** — ✅ FIXED 2026-08-01
+
+> **Fixed.** `onTapOutside: (_) => _focusNode.unfocus()` on the stepper's `TextField`, which
+> routes through the existing `_onFocusChange` → `_commit()`. Re-ran the exact repro on the
+> simulator: Card VP 12 then a tap on blank space now reads **+12 / total 66**, was 54.
+> Regression test `a typed stepper value commits when you tap outside it` — verified meaningful
+> by removing the callback, which fails it.
+
+- **What's wrong:** `_MarsStepperRow`'s field commits **only** on focus loss or `onSubmitted`
+  (`_onFocusChange` → `_commit`, `terraforming_mars_calculator_screen.dart:358-367`). There is no
+  `onTapOutside`, and on iOS Flutter deliberately does **not** unfocus a field when you tap
+  outside it. So tapping empty space leaves the typed number visible in the box while the score
+  still uses the old value.
+- **Repro / evidence:** entered TR 24, milestones 2, awards 5, greeneries 6, cities 9, then Card
+  VP **12**, then tapped blank space below the rows. Card VP's contribution stayed **+0** and the
+  total read **54**. Screenshot shows `12` sitting in the field next to `+0`. Tapping any other
+  stepper committed it and the total corrected to **66** — the expected value.
+- **Why S2:** the user sees a complete, plausible set of inputs and a total that is silently
+  wrong. The last field entered is the one at risk, which is the common case for "type the last
+  number, read the total".
+- **Severity depends on one unverified fact:** whether the iOS keypad for
+  `TextInputType.number` offers a Return key. If it does not (expected — `UIKeyboardTypeNumberPad`
+  has none), then on a real device `onSubmitted` can never fire and the *only* way to commit the
+  last field is to tap a different stepper. **Worth confirming on a real device**; the simulator
+  refused to show the software keyboard this session.
+- **Fix:** add `onTapOutside: (_) => _focusNode.unfocus()` to the stepper's `TextField`, which
+  routes through the existing `_commit()`. Consider the same for `ScoreInputRow`.
+- **Files:** `lib/features/tools/terraforming_mars/terraforming_mars_calculator_screen.dart:392`.
+
+### D15 (guide 2). Duplicate catalog doc makes the Ticket to Ride: Europe calculator unreachable — **S3** — ✅ FIXED 2026-08-02
+
+> **Fixed.** Owner approved removing the placeholder; `boardGames/ticket-to-ride-europe` deleted.
+> `boardGames` 119 → 118, `ticket-to-ride-europe-2005` untouched. Verified on the simulator:
+> Browse → "ticket to ride" now returns **one** row per game, and the Ticket to Ride: Europe
+> detail page shows its **Score Calculator** under Tools.
+
+- **What's wrong:** production `boardGames` holds **two** docs named "Ticket to Ride: Europe":
+  `ticket-to-ride-europe` and `ticket-to-ride-europe-2005`. `kGameToolsRegistry` is keyed by
+  document id and only knows the `-2005` one. The extra doc sorts first (same name, id breaks the
+  tie), so the first "Ticket to Ride: Europe" a user taps in Browse shows **"No tools available
+  yet."** and its calculator cannot be reached.
+- **Repro / evidence:** Browse → "ticket to ride" → second row → Game Detail titled
+  "TICKET TO RIDE: EUROPE", Tools section reads "No tools available yet." The third row is the
+  same game and does show the Score Calculator. Confirmed against production:
+  ```
+  ticket-to-ride-2004        | Ticket to Ride
+  ticket-to-ride-europe      | Ticket to Ride: Europe   ← no tools, sorts first
+  ticket-to-ride-europe-2005 | Ticket to Ride: Europe   ← has the calculator
+  ```
+- **Audit:** the rest of the catalog is clean — 119 docs, this is the **only** duplicated name,
+  and **no** registry key is missing a catalog doc. `functions/board-games-seed.json` contains
+  only the `-2005` id, so the short-id doc was created outside the seed.
+- **Fix applied 2026-08-02:** deleted the `ticket-to-ride-europe` doc. (A first attempt on
+  2026-08-01 was blocked by a tooling guard on production writes; re-run after the owner
+  confirmed.) Verified safe to remove — it was
+  referenced by **nothing**: 0 plays, 0 campaigns, 0 library entries across all users. It was
+  plainly a stray artifact, carrying a placeholder `example.com` thumbnail and the wrong release
+  year (2004; Ticket to Ride: Europe is 2005), neither of which the keeper has.
+  Full contents, in case it ever needs recreating:
+  ```json
+  {
+    "name": "Ticket to Ride: Europe",
+    "name_lower": "ticket to ride: europe",
+    "thumbnailUrl": "https://example.com/assets/ttr_europe_thumb.jpg",
+    "publisher": "Days of Wonder",
+    "releaseYear": 2004,
+    "minPlayers": 2, "maxPlayers": 5, "playTimeMinutes": 60,
+    "createdAt": { "_seconds": 1777888800, "_nanoseconds": 0 }
+  }
+  ```
+- **Files:** production data only — no app code change.
+
+### D14 (guide 7). A failed catalog load renders as "No games found", with no Retry — **S3** — ✅ FIXED 2026-08-01
+
+> **Fixed.** Dropped the `&& games == null` guard in both consumers, and `_doSearch` now carries
+> `error` across an empty query so clearing the search box cannot hide a failed preload. Seen on
+> the simulator by forcing `fetchInitialGames` to throw: Browse now shows **"Could not load
+> games" + RETRY**, and RETRY re-attempts cleanly instead of spinning. Two regression tests, each
+> verified meaningful against its half of the fix.
+
+- **What's wrong:** `GameCatalogNotifier._preload()`'s catch sets `games: const []` **and**
+  `error`, but both consumers gate the error UI on `error != null && games == null`. `games` is
+  never null after a failure, so the Retry branch is unreachable and the user gets the ordinary
+  empty state with no way to recover.
+- **Repro / evidence:** hit accidentally at the start of this session — the simulator was signed
+  in as `testmain@gameshelf.test` (an emulator-only account) whose token production rejects. Every
+  catalog read failed (`WatchStream ... 'Unknown: An internal error has occurred'` in the device
+  log) and Browse Games showed **"No games found"** for both an empty query and "lost", with no
+  error and no Retry. Signing in properly fixed it, confirming the reads were the failure.
+- **Fix:** drop the `&& games == null` guard, or don't set `games` in the catch.
+- **Files:** `lib/shared/providers/game_catalog_provider.dart:84-92`,
+  `lib/features/library/catalog_browse_screen.dart:98`,
+  `lib/shared/widgets/game_picker_sheet.dart:138`.
+
+### D17 (guide 3). Score fields accept letters and silently score them 0 — **S4** — ✅ FIXED 2026-08-01
+
+> **Fixed.** `ScoreInputRow` now carries `inputFormatters`: `digitsOnly` normally, and a small
+> `_SignedIntegerFormatter` (`^-?\d*$`) for the `signed: true` rows so Point Salad, Sushi Go and
+> 7 Wonders' military keep their minus. On device: `abc` no longer reaches the field, `12a3`
+> becomes **123**, and Sushi Go −6 / Point Salad 16 still work. 5 regression tests.
+
+- **What's wrong:** `ScoreInputRow` sets a numeric `keyboardType` but no `inputFormatters`, so
+  the keyboard is the only thing keeping non-digits out. Anything that bypasses it — a hardware
+  or Bluetooth keyboard, or a paste — lands in the field, and `int.tryParse` then yields null,
+  which `_valueOf` turns into 0.
+- **Repro / evidence:** typed `abc` into Wingspan "Bird cards VP", Azul "Board placement score",
+  and Patchwork "Buttons". Each field displays **abc** while the total reads **0**. No crash.
+- **Why only S4:** on an unmodified iPhone the numeric keypad cannot produce letters, so this
+  needs an external keyboard or a paste to reach.
+- **Fix:** add `inputFormatters: [FilteringTextInputFormatter.digitsOnly]` (or a signed variant
+  for the `signed: true` rows) — the Terraforming Mars stepper already does exactly this.
+- **Files:** `lib/features/tools/presentation/widgets/calculator_widgets.dart:131`.
