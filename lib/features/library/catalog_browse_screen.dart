@@ -95,7 +95,10 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
       );
     }
 
-    if (catalog.error != null && catalog.games == null) {
+    // Not `&& games == null`: a failed preload sets games to an empty list as
+    // well as error, so that guard made this branch unreachable and a failure
+    // rendered as the ordinary "no games found" empty state with no Retry.
+    if (catalog.error != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

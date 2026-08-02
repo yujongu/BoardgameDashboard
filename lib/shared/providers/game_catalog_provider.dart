@@ -115,7 +115,13 @@ class GameCatalogNotifier extends StateNotifier<GameCatalogState> {
 
     if (query.isEmpty) {
       if (mounted) {
-        state = GameCatalogState(games: _allGames, loading: false);
+        // Carry `error` over: clearing the field must not hide a failed
+        // preload behind the empty state. Only reload() clears it.
+        state = GameCatalogState(
+          games: _allGames,
+          loading: false,
+          error: state.error,
+        );
       }
       return;
     }

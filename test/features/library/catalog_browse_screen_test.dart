@@ -11,11 +11,15 @@ import 'package:board_game_dashboard/shared/repositories/game_catalog_repository
 
 /// Fake catalog repo — only the two methods the notifier calls are answered.
 class _FakeCatalogRepo implements GameCatalogRepository {
-  _FakeCatalogRepo(this.games);
+  _FakeCatalogRepo(this.games, {this.throwOnLoad = false});
   final List<CatalogGame> games;
+  final bool throwOnLoad;
 
   @override
-  Future<List<CatalogGame>> fetchInitialGames() async => games;
+  Future<List<CatalogGame>> fetchInitialGames() async {
+    if (throwOnLoad) throw Exception('network down');
+    return games;
+  }
 
   @override
   Future<List<CatalogGame>> searchRemote(String query) async => const [];
@@ -24,17 +28,20 @@ class _FakeCatalogRepo implements GameCatalogRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-Widget _wrap(List<CatalogGame> games) => ProviderScope(
-  overrides: [
-    gameCatalogRepositoryProvider.overrideWithValue(_FakeCatalogRepo(games)),
-  ],
-  child: MaterialApp(
-    theme: buildDarkTheme(),
-    localizationsDelegates: AppStrings.localizationsDelegates,
-    supportedLocales: AppStrings.supportedLocales,
-    home: const CatalogBrowseScreen(),
-  ),
-);
+Widget _wrap(List<CatalogGame> games, {bool throwOnLoad = false}) =>
+    ProviderScope(
+      overrides: [
+        gameCatalogRepositoryProvider.overrideWithValue(
+          _FakeCatalogRepo(games, throwOnLoad: throwOnLoad),
+        ),
+      ],
+      child: MaterialApp(
+        theme: buildDarkTheme(),
+        localizationsDelegates: AppStrings.localizationsDelegates,
+        supportedLocales: AppStrings.supportedLocales,
+        home: const CatalogBrowseScreen(),
+      ),
+    );
 
 void main() {
   testWidgets('lists catalog games with player ranges', (tester) async {
@@ -64,5 +71,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No games found'), findsOneWidget);
+  });
+
+  // D14: the preload's catch sets `games` to an empty list as well as `error`,
+  // so gating the error UI on `games == null` made it unreachable and a failed
+  // load was indistinguishable from a genuinely empty catalog.
+  testWidgets('a failed load shows the error and Retry, not the empty state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(const [], throwOnLoad: true));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not load games'), findsOneWidget);
+    expect(find.text('RETRY'), findsOneWidget);
+    expect(find.text('No games found'), findsNothing);
+  });
+
+  testWidgets('the error survives clearing the search field', (tester) async {
+    await tester.pumpWidget(_wrap(const [], throwOnLoad: true));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'azul');
+    await tester.pumpAndSettle(const Duration(milliseconds: 400));
+    await tester.enterText(find.byType(TextField), '');
+    await tester.pumpAndSettle(const Duration(milliseconds: 400));
+
+    expect(find.text('Could not load games'), findsOneWidget);
+    expect(find.text('No games found'), findsNothing);
   });
 }

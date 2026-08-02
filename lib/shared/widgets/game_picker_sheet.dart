@@ -135,7 +135,9 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
       );
     }
 
-    if (catalog.error != null && catalog.games == null) {
+    // See catalog_browse_screen.dart: `games` is non-null after a failed
+    // preload, so gating on it hid this branch entirely.
+    if (catalog.error != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

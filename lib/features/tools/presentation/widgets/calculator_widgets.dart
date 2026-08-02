@@ -1,7 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../shared/theme/app_colors.dart';
+
+/// Accepts an optional leading minus followed by digits, and nothing else.
+/// The numeric keyboard alone does not keep letters out — a hardware keyboard
+/// or a paste reaches the field, and `int.tryParse` then silently scores 0.
+class _SignedIntegerFormatter extends TextInputFormatter {
+  static final _allowed = RegExp(r'^-?\d*$');
+
+  const _SignedIntegerFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) => _allowed.hasMatch(newValue.text) ? newValue : oldValue;
+}
 
 /// Horizontal row of selectable chips with a leading caption label.
 class SelectorChipRow extends StatelessWidget {
@@ -134,6 +150,12 @@ class ScoreInputRow extends StatelessWidget {
               decimal: false,
               signed: signed,
             ),
+            inputFormatters: [
+              if (signed)
+                const _SignedIntegerFormatter()
+              else
+                FilteringTextInputFormatter.digitsOnly,
+            ],
             textAlign: TextAlign.center,
             style: GoogleFonts.newsreader(
               color: context.colors.onSurface,

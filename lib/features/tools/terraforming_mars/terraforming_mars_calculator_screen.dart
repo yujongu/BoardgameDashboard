@@ -405,6 +405,11 @@ class _StepperControlState extends State<_StepperControl> {
               isDense: true,
               contentPadding: EdgeInsets.zero,
             ),
+            // iOS does not unfocus a field when you tap outside it, and the
+            // number pad has no Return key to fire onSubmitted — without this
+            // the typed value stays visible but uncommitted and the total is
+            // silently stale. Unfocusing routes through _onFocusChange.
+            onTapOutside: (_) => _focusNode.unfocus(),
             onSubmitted: (_) {
               _commit();
               _focusNode.unfocus();

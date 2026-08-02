@@ -58,4 +58,33 @@ void main() {
     );
     expect(find.text('TERRAFORMING MARS'), findsOneWidget);
   });
+
+  // D16: the stepper committed only on focus loss, and iOS does not unfocus on
+  // an outside tap, so a typed value stayed visible while the total ignored it.
+  testWidgets('a typed stepper value commits when you tap outside it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildDarkTheme(),
+        localizationsDelegates: AppStrings.localizationsDelegates,
+        supportedLocales: AppStrings.supportedLocales,
+        home: TerraformingMarsCalculatorScreen(),
+      ),
+    );
+
+    // Card VP is the last row — the one a user types then stops.
+    final cardVp = find.byType(TextField).last;
+    await tester.tap(cardVp);
+    await tester.pump();
+    await tester.enterText(cardVp, '12');
+    await tester.pump();
+
+    // Tap the row's own label — inside the card, outside the field.
+    await tester.tap(find.text('Card VP'));
+    await tester.pumpAndSettle();
+
+    // TR starts at 20, so the total must now read 32 — not the stale 20.
+    expect(find.text('32'), findsOneWidget);
+  });
 }
