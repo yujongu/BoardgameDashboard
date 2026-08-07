@@ -1,3 +1,87 @@
+# Handover — 2026-08-07 (session: Korean localization — `app_ko.arb`)
+
+## Current Milestone
+
+**Added a Korean translation of all 440 UI strings** as `lib/l10n/app_ko.arb`, making the app
+bilingual (en/ko) off the device locale.
+
+Status: **translation DONE, UI NOT visually verified.** `flutter gen-l10n` regenerated cleanly,
+`flutter analyze` clean, `flutter test` **318 pass**. Key/placeholder parity with `app_en.arb`
+was checked programmatically: 440/440 keys present, zero missing, zero extra, zero placeholder
+mismatches.
+
+**Only `app_ko.arb` is source.** `lib/l10n/app_localizations*.dart` is gitignored
+(`.gitignore:37`), so the generated `app_localizations_ko.dart` is deliberately *not* in the
+commit — anyone cloning must run `flutter gen-l10n` to produce it.
+(`macos/Flutter/GeneratedPluginRegistrant.swift` was already dirty at session start, is
+unrelated, and was left out.)
+
+## Context & Decisions (this session)
+
+- **No code change was needed.** `main.dart:123-124` already passed
+  `AppStrings.localizationsDelegates` / `supportedLocales`, and `gen-l10n` picks new locales up
+  from the arb directory automatically — it added `Locale('ko')` to `supportedLocales` and a
+  `case 'ko'` to the delegate on its own. Every call site (`AppStrings.of(context).foo`) is
+  untouched.
+- **Plurals were collapsed, not translated branch-for-branch.** Korean has a single CLDR plural
+  category, so the 7 plural messages are `{count, plural, other{…}}` with no `=1` arm. The one
+  exception is `crewTriesCount`, which keeps its `=0{아직 시도 없음}` arm — that is an explicit
+  value match, not a plural category, so it is still valid in Korean.
+- **Game titles were deliberately left in English** (`AZUL`, `WINGSPAN`, `TICKET TO RIDE`, …),
+  and their score-category labels translated. Reason: the game catalog is Firestore data seeded
+  by `functions/seed-board-games.js` in English, so transliterating the tool titles (아줄, 윙스팬)
+  would make the tool header disagree with the game name on the row that opened it. Consistency
+  won over full localization. **This is reversible and is a product call** — if the catalog is
+  ever localized, the `*Title` keys should move with it.
+- **"VP" is rendered 점 / 승점**, not "VP", throughout the calculator labels.
+- Ambiguous keys were resolved by reading their call sites rather than guessing:
+  `campaignCorrectStage` wraps an already-formatted `stageLabelNumbered` ("Mission 3" → "미션 3
+  수정"); `calcShowing` is a `SelectorChipRow` label; `participantAddGuestPrefix` is a `TextSpan`
+  concatenated with a quoted query.
+
+## The 'Gravel'
+
+- **UI NOT visually confirmed — no mobile simulator on this box.** `flutter devices` offers only
+  Windows desktop, Chrome and Edge; there is no iOS simulator (Windows host) and no Android AVD
+  running. Nothing has been *seen* rendered in Korean. This is the same standing limitation
+  noted in the 2026-07-30 and 2026-07-29 sessions.
+- **Fonts are the real open risk, and they are a code change, not an arb change.** The UI hard-codes
+  `GoogleFonts.newsreader`, `workSans` and `spaceGrotesk` at ~40 call sites across
+  `lib/features/`. **None of the three ship Hangul glyphs**, so every Korean string will fall back
+  to the platform default (Apple SD Gothic Neo / Noto Sans CJK KR) while surrounding Latin text
+  keeps the intended face. The typographic design will not survive the switch until a
+  Hangul-capable pairing is chosen and selected by locale.
+- **iOS will not advertise Korean.** `ios/Runner/Info.plist` has no `CFBundleLocalizations` key
+  (verified absent). Without adding `["en", "ko"]`, the App Store listing and iOS Settings won't
+  show the app as Korean-capable even though the strings are there.
+- **`participantAddGuestPrefix` is a concatenation, not a placeholder message.** It renders as
+  prefix + `"query"` in a `RichText` (`participant_list_section.dart:426-436`), so Korean cannot
+  reorder the name ahead of the verb. Translated as `"게스트로 추가 "` to read acceptably in
+  prefix position. The clean fix is to convert it to a `{name}` placeholder message, which needs
+  a widget change.
+- **Layout overflow is unverified and is where problems will show up.** Korean tends to run
+  shorter than English in labels but longer in sentences; the caps-styled keys are the ones to
+  watch, because Hangul has no case, so `PLAYS`/`WINS`/`WIN RATE`-style emphasis flattens into
+  plain text and those tiles lose their visual rhythm.
+- **`flutter gen-l10n` must be re-run after any `app_ko.arb` edit** — same trap the 2026-07-29
+  session hit with `app_en.arb`. The resulting `undefined_getter` errors on `AppStrings` look
+  like source errors but are stale generated output.
+- Note `flutter gen-l10n` prints "Because l10n.yaml exists, the options defined there will be
+  used instead" and exits 0. **That is not an error** — it is the normal message for this repo.
+
+## Next Immediate Step
+
+**See it rendered before trusting it**: launch on a device/simulator with the system
+language set to Korean (or temporarily hard-code `locale: const Locale('ko')` on the
+`MaterialApp` in `lib/main.dart`) and walk Home → Library → a calculator → Add Play. The two
+things to look for are **font fallback** (does Hangul render in a different face than the
+surrounding Latin?) and **overflow** in the stat tiles and save bar.
+
+The font decision is the blocking one for shipping Korean; the `Info.plist` key is a one-line
+follow-up.
+
+---
+
 # Handover — 2026-08-02 (session: remove `minInstances: 1` to cut GCP idle CPU cost)
 
 ## Current Milestone
