@@ -1,3 +1,91 @@
+# Handover — 2026-08-08 (session: Hangul font fallback — Gothic A1)
+
+## Current Milestone
+
+**Closed the font gap left open by the Korean translation session.** Bundled Gothic A1 as an
+explicit Hangul fallback so Korean text renders in a face we control, identically on iOS and
+Android, instead of falling through to whatever the platform supplies.
+
+Status: **DONE, UI still NOT visually verified.** `flutter analyze` clean, `flutter test`
+**318 → 323**, `flutter build apk --debug` succeeds, and the four TTFs are confirmed present
+inside the APK under family `GothicA1` in `FontManifest.json`.
+
+**Committed and pushed to `main`.** `macos/Flutter/GeneratedPluginRegistrant.swift` was already
+dirty before this session, is unrelated, and was left out again.
+
+## Context & Decisions (this session)
+
+- **Owner picked "bundle Gothic A1 as fallback"** from three options (the others were: do
+  nothing and accept the platform face; or a full locale-scoped Korean type system). The
+  deciding factors were identical rendering across platforms and leaving the English design
+  completely untouched — Latin never reaches the fallback.
+- **Gothic A1 was chosen on size.** At 4 weights: Gothic A1 **5.0 MB**, IBM Plex Sans KR 9.2 MB,
+  Noto Sans KR 23.5 MB, Noto Serif KR 53.6 MB. Korean fonts are enormous because of the syllable
+  count; Noto Serif KR alone would have roughly doubled the app.
+- **The fonts came from gstatic, not the GitHub `google/fonts` repo.** The GitHub originals are
+  2.29 MB/weight; the files google_fonts serves are 1.25 MB/weight for the same faces. Each
+  download was **verified by SHA-256** against the hash google_fonts records, so the bundled
+  bytes are exactly what the package would have fetched at runtime. Hashes are in
+  `google_fonts_parts/*.g.dart` under `gothicA1`; the URL form is
+  `https://fonts.gstatic.com/s/a/<sha256>.ttf`.
+- **Why an extension and not an `AppFonts` wrapper.** `google_fonts` **overwrites**
+  `fontFamilyFallback` with `[family]` on the way out (`google_fonts_base.dart:116`), so a
+  fallback passed *into* `GoogleFonts.x(...)` is silently discarded. It has to be applied to the
+  returned style. Wrapping all three families would have meant ~180 lines forwarding 19
+  parameters each; the `TextStyle.kr` / `TextTheme.kr` extension in
+  `lib/shared/theme/app_fonts.dart` is 4 lines of logic and makes the call-site diff a bare
+  `+.kr`.
+- **The 340 call sites were converted by script, not by hand** — a Dart-aware paren matcher that
+  skips strings, comments and `${}` interpolation, then inserts the relative import in sorted
+  position. Counts reconcile exactly: 211 spaceGrotesk + 116 newsreader + 12 workSans + 1
+  workSansTextTheme = 340, across 62 files.
+- **Weight coverage was checked against actual usage** before picking which TTFs to bundle: the
+  app uses only w400 (×1), w500 (×55), w600 (×93) and w700 (×88). All four are bundled; nothing
+  else is referenced.
+
+## The 'Gravel'
+
+- **UI STILL NOT visually confirmed.** Same standing limitation — `flutter devices` on this
+  Windows box offers only Windows desktop, Chrome and Edge. Nothing has been *seen* rendered in
+  Korean, in either face. The APK build proves the assets bundle; it does not prove they look
+  right.
+- **Italic is the known cosmetic casualty, and it is unavoidable.** `displayLarge` and the app
+  bar title are Newsreader *italic*. No Korean font has a true italic, Gothic A1 included, so
+  Hangul in those two places renders **upright next to italic Latin**. The app bar title is the
+  most visible text in the app. This was flagged before the option was chosen and is inherent to
+  the fallback approach — the only escape is the locale-scoped option, which would need a
+  different emphasis device for Korean.
+- **The failure mode is silent, which is why there is a test for it.** If `kKoreanFontFamily`
+  and the `family:` line in `pubspec.yaml` ever drift apart, nothing throws — Korean just
+  quietly goes back to the platform face. `test/shared/theme/app_fonts_test.dart` reads
+  `pubspec.yaml` and asserts they match, and asserts the four asset files exist. Verified
+  meaningful by renaming the constant to `GothicA2`: that test fails, the others do not.
+- **New `GoogleFonts.*` call sites will not get the fallback automatically.** Anyone adding one
+  must append `.kr`. There is no lint enforcing this. Worth a grep
+  (`grep -rn "GoogleFonts\.\w*(" lib | grep -v "\.kr"`) if Korean text ever looks wrong again.
+- **`.kr` sits directly on the `GoogleFonts.x(...)` call, before any `.copyWith`.** That is
+  deliberate and safe — `copyWith` preserves `fontFamilyFallback` unless a caller sets it
+  explicitly, and none do. Only one site chains at all (`app_colors.dart:195`).
+- The `assets/` directory previously held only `icon/app_icon.png`; `assets/fonts/` is new and
+  **is not gitignored**, so the 5.1 MB of TTFs go into the repo. `assets/fonts/OFL.txt` is the
+  SIL OFL 1.1 licence and must stay — bundling Gothic A1 requires shipping it.
+
+## Next Immediate Step
+
+**The visual pass is now the only thing standing between this and shipping Korean** — and it
+covers two things at once: whether Hangul renders in Gothic A1 (not the
+platform face), and whether anything overflows.
+
+Force the locale with `locale: const Locale('ko')` on the `MaterialApp` in `lib/main.dart`, or
+set the device language, and walk Home → Library → a calculator → Add Play. The specific things
+to look at: the **app bar title** (upright Hangul beside italic Latin — is it acceptable?), the
+**stat tiles** on Home (PLAYS / WINS / WIN RATE lose their all-caps rhythm in Korean), and the
+**save bar** on Add Play, which carries the longest interpolated strings.
+
+Everything below this line predates the font work.
+
+---
+
 # Handover — 2026-08-07 (session: Korean localization — `app_ko.arb`)
 
 ## Current Milestone

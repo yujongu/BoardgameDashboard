@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../auth/profile_screen.dart';
 import '../friends/friends_screen.dart';
 import '../home/home_tab.dart';
@@ -184,7 +185,7 @@ class _NavItem extends StatelessWidget {
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
-              ),
+              ).kr,
             ),
           ],
         ),

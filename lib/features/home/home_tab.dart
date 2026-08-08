@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../../shared/widgets/profile_app_bar.dart';
 import '../plays/play_detail_page.dart';
 import '../plays/play_history_page.dart';
@@ -198,7 +199,7 @@ class _StatCell extends StatelessWidget {
               color: context.colors.primary,
               fontSize: 24,
               fontWeight: FontWeight.w700,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 2),
           Text(
@@ -208,7 +209,7 @@ class _StatCell extends StatelessWidget {
               fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.4,
-            ),
+            ).kr,
           ),
         ],
       ),
@@ -307,7 +308,7 @@ class _LeaderboardRow extends StatelessWidget {
                   color: context.colors.onSurface,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                ),
+                ).kr,
               ),
               const SizedBox(height: 6),
               // Relative play-volume bar (mirrors library_tab's win-rate bar).
@@ -340,7 +341,7 @@ class _LeaderboardRow extends StatelessWidget {
             color: context.colors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
-          ),
+          ).kr,
         ),
       ],
     );
@@ -372,7 +373,7 @@ class _SectionHeader extends StatelessWidget {
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
-              ),
+              ).kr,
             ),
             if (onSeeAll != null)
               GestureDetector(
@@ -388,7 +389,7 @@ class _SectionHeader extends StatelessWidget {
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 1.5,
-                        ),
+                        ).kr,
                       ),
                     const SizedBox(width: 4),
                     Icon(
@@ -407,7 +408,7 @@ class _SectionHeader extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
           ],
         ),
@@ -483,7 +484,7 @@ class _PlayCard extends StatelessWidget {
                       color: context.colors.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                    ),
+                    ).kr,
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -492,7 +493,7 @@ class _PlayCard extends StatelessWidget {
                       color: context.colors.outline,
                       fontSize: 11,
                       letterSpacing: 0.3,
-                    ),
+                    ).kr,
                   ),
                 ],
               ),
@@ -504,7 +505,7 @@ class _PlayCard extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
-              ),
+              ).kr,
             ),
           ],
         ),
@@ -538,7 +539,7 @@ class _EmptyPlaysView extends StatelessWidget {
               color: context.colors.onSurfaceVariant,
               fontSize: 18,
               fontStyle: FontStyle.italic,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 6),
           Text(
@@ -546,7 +547,7 @@ class _EmptyPlaysView extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 12,
-            ),
+            ).kr,
           ),
         ],
       ),
@@ -575,7 +576,7 @@ class _ErrorView extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 12,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 20),
           GestureDetector(
@@ -587,7 +588,7 @@ class _ErrorView extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ),
         ],

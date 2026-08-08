@@ -8,6 +8,7 @@ import '../../shared/models/catalog_game.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/services/analytics_service.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
 import '../library/campaign_record_section.dart';
 import '../library/campaign_registry.dart';
@@ -321,7 +322,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
         SnackBar(
           content: Text(
             AppStrings.of(context).addPlaySaveFailed,
-            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface).kr,
           ),
           backgroundColor: context.colors.surfaceHigh,
         ),
@@ -367,7 +368,7 @@ class _AddPlayScreenState extends ConsumerState<AddPlayScreen> {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -485,7 +486,7 @@ class _SectionLabel extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w600,
             letterSpacing: 2,
-          ),
+          ).kr,
         ),
         const SizedBox(height: 6),
         Container(height: 1, color: context.colors.amberBorder),
@@ -514,7 +515,7 @@ class _PlayersSectionHeader extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 2,
-              ),
+              ).kr,
             ),
             Text(
               countText,
@@ -522,7 +523,7 @@ class _PlayersSectionHeader extends StatelessWidget {
                 color: context.colors.outline,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-              ),
+              ).kr,
             ),
           ],
         ),
@@ -566,12 +567,12 @@ class _GamePicker extends StatelessWidget {
                         color: context.colors.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                      )
+                      ).kr
                     : GoogleFonts.newsreader(
                         color: context.colors.outline,
                         fontSize: 16,
                         fontStyle: FontStyle.italic,
-                      ),
+                      ).kr,
               ),
             ),
             Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
@@ -630,7 +631,7 @@ class _DateRow extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.onSurface,
                 fontSize: 14,
-              ),
+              ).kr,
             ),
             const Spacer(),
             Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
@@ -678,13 +679,13 @@ class _StyledField extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.onSurface,
                 fontSize: 14,
-              ),
+              ).kr,
               decoration: InputDecoration.collapsed(
                 hintText: hint,
                 hintStyle: GoogleFonts.spaceGrotesk(
                   color: context.colors.outline,
                   fontSize: 14,
-                ),
+                ).kr,
               ),
             ),
           ),
@@ -740,13 +741,13 @@ class _PlayerRow extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.onSurface,
                 fontSize: 14,
-              ),
+              ).kr,
               decoration: InputDecoration.collapsed(
                 hintText: AppStrings.of(context).addPlayPlayerNameHint,
                 hintStyle: GoogleFonts.spaceGrotesk(
                   color: context.colors.outline,
                   fontSize: 14,
-                ),
+                ).kr,
               ),
             ),
           ),
@@ -805,13 +806,13 @@ class _ScoreField extends StatelessWidget {
         style: GoogleFonts.spaceGrotesk(
           color: context.colors.onSurface,
           fontSize: 14,
-        ),
+        ).kr,
         decoration: InputDecoration.collapsed(
           hintText: AppStrings.of(context).scoreHint,
           hintStyle: GoogleFonts.spaceGrotesk(
             color: context.colors.outline,
             fontSize: 14,
-          ),
+          ).kr,
         ),
       ),
     );
@@ -853,7 +854,7 @@ class _AddParticipantButton extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.5,
-            ),
+            ).kr,
           ),
         ),
       ),
@@ -909,7 +910,7 @@ class _SaveBar extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2,
-                      ),
+                      ).kr,
                     ),
             ),
           ),
@@ -1091,7 +1092,7 @@ class _CurrentMissionAttempt extends StatelessWidget {
               color: context.colors.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.w600,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 12),
           _OutcomeRow(
@@ -1189,7 +1190,7 @@ class _MissionRecordRow extends StatelessWidget {
                   color: context.colors.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                ),
+                ).kr,
               ),
             ),
             Text(
@@ -1197,7 +1198,7 @@ class _MissionRecordRow extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.outline,
                 fontSize: 12,
-              ),
+              ).kr,
             ),
             const SizedBox(width: 8),
             Icon(Icons.edit_outlined, color: context.colors.outline, size: 14),
@@ -1244,7 +1245,7 @@ class _OutcomeButton extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w700,
               letterSpacing: 2,
-            ),
+            ).kr,
           ),
         ),
       ),
@@ -1291,12 +1292,12 @@ class _TablePickerRow extends StatelessWidget {
                         color: context.colors.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                      )
+                      ).kr
                     : GoogleFonts.newsreader(
                         color: context.colors.outline,
                         fontSize: 16,
                         fontStyle: FontStyle.italic,
-                      ),
+                      ).kr,
               ),
             ),
             Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
@@ -1349,14 +1350,14 @@ class _TablePickerSheet extends StatelessWidget {
                     style: GoogleFonts.newsreader(
                       color: context.colors.onSurface,
                       fontSize: 16,
-                    ),
+                    ).kr,
                   ),
                   subtitle: Text(
                     s.campaignStageProgress(c.completedCount, spec.stageCount),
                     style: GoogleFonts.spaceGrotesk(
                       color: context.colors.outline,
                       fontSize: 12,
-                    ),
+                    ).kr,
                   ),
                   onTap: () => Navigator.of(context).pop(_PickExisting(c)),
                 ),
@@ -1369,7 +1370,7 @@ class _TablePickerSheet extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
-                  ),
+                  ).kr,
                 ),
                 onTap: () => Navigator.of(context).pop(const _PickNew()),
               ),

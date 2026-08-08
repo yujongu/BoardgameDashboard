@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../models/catalog_game.dart';
 import '../providers/game_catalog_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_fonts.dart';
 
 class GamePickerSheet extends ConsumerStatefulWidget {
   final void Function(CatalogGame game) onSelect;
@@ -67,7 +68,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 2,
-                ),
+                ).kr,
               ),
             ),
             Container(height: 1, color: context.colors.amberBorder),
@@ -94,13 +95,13 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
                         style: GoogleFonts.spaceGrotesk(
                           color: context.colors.onSurface,
                           fontSize: 14,
-                        ),
+                        ).kr,
                         decoration: InputDecoration.collapsed(
                           hintText: s.gamePickerSearchHint,
                           hintStyle: GoogleFonts.spaceGrotesk(
                             color: context.colors.outline,
                             fontSize: 14,
-                          ),
+                          ).kr,
                         ),
                       ),
                     ),
@@ -156,7 +157,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
                 style: GoogleFonts.spaceGrotesk(
                   color: context.colors.outline,
                   fontSize: 12,
-                ),
+                ).kr,
               ),
               const SizedBox(height: 16),
               GestureDetector(
@@ -168,7 +169,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
-                  ),
+                  ).kr,
                 ),
               ),
             ],
@@ -186,7 +187,7 @@ class _GamePickerSheetState extends ConsumerState<GamePickerSheet> {
             color: context.colors.onSurfaceVariant,
             fontSize: 16,
             fontStyle: FontStyle.italic,
-          ),
+          ).kr,
         ),
       );
     }
@@ -224,7 +225,7 @@ class _GameTile extends StatelessWidget {
             color: context.colors.onSurface,
             fontSize: 16,
             fontWeight: FontWeight.w500,
-          ),
+          ).kr,
         ),
       ),
     );

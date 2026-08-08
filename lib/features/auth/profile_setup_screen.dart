@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -84,7 +85,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       fontWeight: FontWeight.w600,
                       fontStyle: FontStyle.italic,
                       letterSpacing: 1,
-                    ),
+                    ).kr,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
@@ -102,7 +103,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       color: context.colors.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
-                    ),
+                    ).kr,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -168,7 +169,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         textStyle: GoogleFonts.workSans(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                        ),
+                        ).kr,
                       ),
                       child: _isLoading
                           ? SizedBox(

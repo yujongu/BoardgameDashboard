@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../friends/friends_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -96,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -120,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: context.colors.onSurface,
                     fontSize: 26,
                     fontWeight: FontWeight.w500,
-                  ),
+                  ).kr,
                 ),
                 const SizedBox(width: 6),
                 GestureDetector(
@@ -139,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: GoogleFonts.workSans(
                 color: context.colors.onSurfaceVariant,
                 fontSize: 14,
-              ),
+              ).kr,
             ),
             const SizedBox(height: 40),
             Container(height: 1, color: context.colors.outlineVariant),
@@ -164,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: context.colors.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                        ),
+                        ).kr,
                       ),
                     ),
                     Icon(
@@ -198,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: context.colors.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                        ),
+                        ).kr,
                       ),
                     ),
                     Icon(
@@ -228,7 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   textStyle: GoogleFonts.workSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                  ),
+                  ).kr,
                 ),
               ),
             ),
@@ -301,7 +302,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
           color: context.colors.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w500,
-        ),
+        ).kr,
       ),
       content: Form(
         key: widget.formKey,
@@ -346,7 +347,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           child: Text(
             s.commonCancel,
-            style: GoogleFonts.workSans(color: context.colors.onSurfaceVariant),
+            style: GoogleFonts.workSans(color: context.colors.onSurfaceVariant).kr,
           ),
         ),
         ElevatedButton(
@@ -363,7 +364,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
             textStyle: GoogleFonts.workSans(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-            ),
+            ).kr,
           ),
           child: _isLoading
               ? SizedBox(
@@ -406,7 +407,7 @@ class _Avatar extends StatelessWidget {
             color: context.colors.primary,
             fontSize: 28,
             fontWeight: FontWeight.w600,
-          ),
+          ).kr,
         ),
       ),
     );

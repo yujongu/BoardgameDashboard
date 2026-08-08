@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
 import '../presentation/widgets/calculator_widgets.dart';
 
 /// Score for one player: the sum of the scoring point tokens collected from
@@ -143,7 +144,7 @@ class _PhotosynthesisCalculatorScreenState
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         actions: [
           Padding(
@@ -157,7 +158,7 @@ class _PhotosynthesisCalculatorScreenState
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
             ),
           ),

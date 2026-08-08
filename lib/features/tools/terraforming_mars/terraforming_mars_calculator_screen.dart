@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
 
 /// Final score for one player: Terraform Rating + 5 VP per claimed milestone +
 /// award VP + greenery tiles (1 VP each) + city-adjacency VP + card VP.
@@ -89,7 +90,7 @@ class _TerraformingMarsCalculatorScreenState
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 2,
-          ),
+          ).kr,
         ),
         actions: [
           Padding(
@@ -103,7 +104,7 @@ class _TerraformingMarsCalculatorScreenState
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
             ),
           ),
@@ -200,7 +201,7 @@ class _TerraformingMarsCalculatorScreenState
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 2,
-                  ),
+                  ).kr,
                 ),
                 Text(
                   '$_total',
@@ -208,7 +209,7 @@ class _TerraformingMarsCalculatorScreenState
                     color: context.colors.primary,
                     fontSize: 38,
                     fontWeight: FontWeight.w600,
-                  ),
+                  ).kr,
                 ),
               ],
             ),
@@ -262,7 +263,7 @@ class _ScoreRow extends StatelessWidget {
                     color: context.colors.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                  ),
+                  ).kr,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -271,7 +272,7 @@ class _ScoreRow extends StatelessWidget {
                     color: context.colors.outline,
                     fontSize: 10,
                     letterSpacing: 0.3,
-                  ),
+                  ).kr,
                 ),
               ],
             ),
@@ -285,7 +286,7 @@ class _ScoreRow extends StatelessWidget {
                 color: vp > 0 ? color : context.colors.outline,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-              ),
+              ).kr,
             ),
           ),
           const SizedBox(width: 8),
@@ -399,7 +400,7 @@ class _StepperControlState extends State<_StepperControl> {
               color: context.colors.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.w500,
-            ),
+            ).kr,
             decoration: const InputDecoration(
               border: InputBorder.none,
               isDense: true,

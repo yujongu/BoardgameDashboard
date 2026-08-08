@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
 import 'score_row.dart';
 
 /// Category VP plus floored coin VP for one player.
@@ -184,7 +185,7 @@ class _SevenWondersDuelCalculatorScreenState
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         actions: [
           Padding(
@@ -198,7 +199,7 @@ class _SevenWondersDuelCalculatorScreenState
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
             ),
           ),
@@ -283,7 +284,7 @@ class _TotalsBar extends StatelessWidget {
                   color: context.colors.primary,
                   fontSize: 38,
                   fontWeight: FontWeight.w600,
-                ),
+                ).kr,
               ),
               Text(
                 s.calcTotal,
@@ -292,7 +293,7 @@ class _TotalsBar extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 2,
-                ),
+                ).kr,
               ),
               Text(
                 total2.toString(),
@@ -300,7 +301,7 @@ class _TotalsBar extends StatelessWidget {
                   color: context.colors.primary,
                   fontSize: 38,
                   fontWeight: FontWeight.w600,
-                ),
+                ).kr,
               ),
             ],
           ),
@@ -312,7 +313,7 @@ class _TotalsBar extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-            ),
+            ).kr,
           ),
         ],
       ),

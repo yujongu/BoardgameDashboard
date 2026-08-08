@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/theme/app_fonts.dart';
 
 /// Accepts an optional leading minus followed by digits, and nothing else.
 /// The numeric keyboard alone does not keep letters out — a hardware keyboard
@@ -47,7 +48,7 @@ class SelectorChipRow extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 1,
-            ),
+            ).kr,
           ),
         ),
         Expanded(
@@ -106,7 +107,7 @@ class _Chip extends StatelessWidget {
                 : context.colors.onSurfaceVariant,
             fontSize: 12,
             fontWeight: FontWeight.w600,
-          ),
+          ).kr,
         ),
       ),
     );
@@ -139,7 +140,7 @@ class ScoreInputRow extends StatelessWidget {
               color: context.colors.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w500,
-            ),
+            ).kr,
           ),
         ),
         Expanded(
@@ -161,14 +162,14 @@ class ScoreInputRow extends StatelessWidget {
               color: context.colors.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w500,
-            ),
+            ).kr,
             decoration: InputDecoration(
               isDense: true,
               hintText: '0',
               hintStyle: GoogleFonts.newsreader(
                 color: context.colors.outline,
                 fontSize: 18,
-              ),
+              ).kr,
               contentPadding: const EdgeInsets.symmetric(
                 vertical: 8,
                 horizontal: 8,
@@ -224,7 +225,7 @@ class CalculatorTotalsBar extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 2,
-                ),
+                ).kr,
               ),
               Text(
                 total.toString(),
@@ -232,7 +233,7 @@ class CalculatorTotalsBar extends StatelessWidget {
                   color: context.colors.primary,
                   fontSize: 38,
                   fontWeight: FontWeight.w600,
-                ),
+                ).kr,
               ),
             ],
           ),
@@ -245,7 +246,7 @@ class CalculatorTotalsBar extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ],
         ],

@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import 'play_detail_page.dart';
 
 /// Full, paginated history of the caller's plays (newest first), backed by the
@@ -117,7 +118,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -187,7 +188,7 @@ class _PlayHistoryPageState extends ConsumerState<PlayHistoryPage> {
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ),
         ),
@@ -263,7 +264,7 @@ class _PlayRow extends StatelessWidget {
                       color: context.colors.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                    ),
+                    ).kr,
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -272,7 +273,7 @@ class _PlayRow extends StatelessWidget {
                       color: context.colors.outline,
                       fontSize: 11,
                       letterSpacing: 0.3,
-                    ),
+                    ).kr,
                   ),
                 ],
               ),
@@ -284,7 +285,7 @@ class _PlayRow extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
-              ),
+              ).kr,
             ),
           ],
         ),
@@ -309,7 +310,7 @@ class _EmptyView extends StatelessWidget {
             color: context.colors.onSurfaceVariant,
             fontSize: 18,
             fontStyle: FontStyle.italic,
-          ),
+          ).kr,
         ),
       ),
     );
@@ -337,7 +338,7 @@ class _ErrorView extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.outline,
                 fontSize: 13,
-              ),
+              ).kr,
             ),
             const SizedBox(height: 20),
             GestureDetector(
@@ -349,7 +350,7 @@ class _ErrorView extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
             ),
           ],

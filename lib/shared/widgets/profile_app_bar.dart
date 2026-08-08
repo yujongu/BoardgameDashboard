@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_fonts.dart';
 
 class ProfileAppBar extends StatelessWidget {
   final String displayName;
@@ -62,7 +63,7 @@ class ProfileAppBar extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       fontStyle: FontStyle.italic,
                       letterSpacing: 4,
-                    ),
+                    ).kr,
                   ),
                 ),
                 ?trailing,
@@ -100,7 +101,7 @@ class _ProfileAvatar extends StatelessWidget {
             color: context.colors.primary.withAlpha(180),
             fontSize: 13,
             fontWeight: FontWeight.w600,
-          ),
+          ).kr,
         ),
       ),
     );

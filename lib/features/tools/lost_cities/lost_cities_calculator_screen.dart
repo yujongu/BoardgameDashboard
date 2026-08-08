@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
 import 'expedition_column.dart';
 
 class LostCitiesCalculatorScreen extends StatefulWidget {
@@ -103,7 +104,7 @@ class _LostCitiesCalculatorScreenState
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         actions: [
           Padding(
@@ -117,7 +118,7 @@ class _LostCitiesCalculatorScreenState
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
             ),
           ),
@@ -194,7 +195,7 @@ class _LostCitiesCalculatorScreenState
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 2,
-                  ),
+                  ).kr,
                 ),
                 Text(
                   _grandTotal.toString(),
@@ -204,7 +205,7 @@ class _LostCitiesCalculatorScreenState
                         : Theme.of(context).colorScheme.error,
                     fontSize: 38,
                     fontWeight: FontWeight.w600,
-                  ),
+                  ).kr,
                 ),
               ],
             ),

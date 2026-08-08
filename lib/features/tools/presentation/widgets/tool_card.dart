@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/theme/app_fonts.dart';
 import '../../domain/models/game_tool.dart';
 
 class ToolCard extends StatelessWidget {
@@ -50,7 +51,7 @@ class ToolCard extends StatelessWidget {
                         color: context.colors.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                      ),
+                      ).kr,
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -59,7 +60,7 @@ class ToolCard extends StatelessWidget {
                         color: context.colors.outline,
                         fontSize: 11,
                         letterSpacing: 0.3,
-                      ),
+                      ).kr,
                     ),
                   ],
                 ),

@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/campaign.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import 'campaign_registry.dart';
 import 'edit_mission_dialog.dart';
 import 'new_table_sheet.dart';
@@ -124,7 +125,7 @@ class _CampaignSectionState extends ConsumerState<CampaignSection> {
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
-              ),
+              ).kr,
             ),
             GestureDetector(
               onTap: _newTable,
@@ -139,7 +140,7 @@ class _CampaignSectionState extends ConsumerState<CampaignSection> {
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.5,
-                    ),
+                    ).kr,
                   ),
                 ],
               ),
@@ -171,7 +172,7 @@ class _CampaignSectionState extends ConsumerState<CampaignSection> {
                 color: context.colors.outline,
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
-              ),
+              ).kr,
             ),
           )
         else
@@ -204,7 +205,7 @@ class _LoadErrorRow extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 13,
-            ),
+            ).kr,
           ),
         ),
         GestureDetector(
@@ -216,7 +217,7 @@ class _LoadErrorRow extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-            ),
+            ).kr,
           ),
         ),
       ],
@@ -330,7 +331,7 @@ class CampaignCard extends StatelessWidget {
                 color: context.colors.outline,
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
-              ),
+              ).kr,
             )
           else
             Wrap(
@@ -375,14 +376,14 @@ class CampaignCard extends StatelessWidget {
                           color: context.colors.primary,
                           fontSize: 38,
                           fontWeight: FontWeight.w600,
-                        ),
+                        ).kr,
                       ),
                       Text(
                         s.crewMissionDenominator(spec.stageCount),
                         style: GoogleFonts.newsreader(
                           color: context.colors.outline,
                           fontSize: 18,
-                        ),
+                        ).kr,
                       ),
                     ],
                   ),
@@ -416,7 +417,7 @@ class CampaignCard extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.2,
-                ),
+                ).kr,
               ),
             ),
         ],
@@ -439,7 +440,7 @@ class _CaptionLabel extends StatelessWidget {
         fontSize: 11,
         fontWeight: FontWeight.w700,
         letterSpacing: 1,
-      ),
+      ).kr,
     );
   }
 }
@@ -467,7 +468,7 @@ class _MemberChip extends StatelessWidget {
               color: context.colors.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w600,
-            ),
+            ).kr,
           ),
         ],
       ),
@@ -511,7 +512,7 @@ class _TextInputDialogState extends State<_TextInputDialog> {
         style: GoogleFonts.newsreader(
           color: context.colors.onSurface,
           fontSize: 20,
-        ),
+        ).kr,
       ),
       content: TextField(
         controller: _controller,
@@ -525,13 +526,13 @@ class _TextInputDialogState extends State<_TextInputDialog> {
         style: GoogleFonts.spaceGrotesk(
           color: context.colors.onSurface,
           fontSize: 15,
-        ),
+        ).kr,
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: GoogleFonts.spaceGrotesk(
             color: context.colors.outline,
             fontSize: 15,
-          ),
+          ).kr,
           enabledBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: context.colors.outlineVariant),
           ),
@@ -551,7 +552,7 @@ class _TextInputDialogState extends State<_TextInputDialog> {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-            ),
+            ).kr,
           ),
         ),
         TextButton(
@@ -563,7 +564,7 @@ class _TextInputDialogState extends State<_TextInputDialog> {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-            ),
+            ).kr,
           ),
         ),
       ],

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/campaign.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../plays/participant_picker_sheet.dart';
 
 /// Collects the complete seat list for a new table.
@@ -102,7 +103,7 @@ class _NewTableSheetState extends State<_NewTableSheet> {
               color: context.colors.onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w700,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 6),
           Text(
@@ -110,7 +111,7 @@ class _NewTableSheetState extends State<_NewTableSheet> {
             style: GoogleFonts.newsreader(
               color: context.colors.outline,
               fontSize: 14,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 16),
           Flexible(
@@ -173,7 +174,7 @@ class _SeatRow extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.onSurface,
                 fontSize: 15,
-              ),
+              ).kr,
             ),
           ),
           if (member.isGuest)
@@ -185,7 +186,7 @@ class _SeatRow extends StatelessWidget {
                   color: context.colors.outline,
                   fontSize: 11,
                   letterSpacing: 1,
-                ),
+                ).kr,
               ),
             ),
           if (onRemove != null)

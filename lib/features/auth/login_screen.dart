@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/services/analytics_service.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -211,7 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             fontWeight: FontWeight.w600,
             fontStyle: FontStyle.italic,
             letterSpacing: 1,
-          ),
+          ).kr,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -356,7 +357,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             fontSize: 15,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
-          ),
+          ).kr,
         ),
         child: _isLoading
             ? SizedBox(
@@ -442,7 +443,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           textStyle: GoogleFonts.workSans(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-          ),
+          ).kr,
         ),
         child: Text(AppStrings.of(context).authContinueWithGoogle),
       ),

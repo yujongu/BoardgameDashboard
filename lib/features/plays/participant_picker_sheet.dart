@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import 'participant_list_section.dart';
 import 'participant_picker_controller.dart';
 import 'participant_search_section.dart';
@@ -93,7 +94,7 @@ class _ParticipantPickerBottomSheetState
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.5,
-                  ),
+                  ).kr,
                 ),
               ),
             Expanded(
@@ -135,7 +136,7 @@ class _ParticipantPickerBottomSheetState
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 2,
-        ),
+        ).kr,
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
 
 int calculateExpeditionScore(List<int> selectedNumbers, int handshakeCount) {
   if (selectedNumbers.isEmpty && handshakeCount == 0) return 0;
@@ -121,7 +122,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                       color: color,
                       fontSize: 24,
                       fontWeight: FontWeight.w500,
-                    ),
+                    ).kr,
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -132,7 +133,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                         style: GoogleFonts.spaceGrotesk(
                           color: context.colors.outline,
                           fontSize: 12,
-                        ),
+                        ).kr,
                       ),
                       Text(
                         _isStarted ? _currentScore.toString() : s.scoreHint,
@@ -144,7 +145,7 @@ class _ExpeditionColumnState extends State<ExpeditionColumn>
                               : context.colors.outline,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                        ),
+                        ).kr,
                       ),
                     ],
                   ),
@@ -321,7 +322,7 @@ class _NumberButtonState extends State<_NumberButton> {
                 : context.colors.onSurface,
             fontSize: 26,
             fontWeight: FontWeight.w500,
-          ),
+          ).kr,
         ),
       ),
     );

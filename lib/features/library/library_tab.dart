@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../../shared/widgets/profile_app_bar.dart';
 import 'catalog_browse_screen.dart';
 import 'game_detail_page.dart';
@@ -137,7 +138,7 @@ class _SectionHeader extends StatelessWidget {
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
-              ),
+              ).kr,
             ),
             Text(
               s.gamesCount(count),
@@ -146,7 +147,7 @@ class _SectionHeader extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ],
         ),
@@ -279,7 +280,7 @@ class _LibraryCard extends StatelessWidget {
                               color: context.colors.onSurface,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
-                            ),
+                            ).kr,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -289,7 +290,7 @@ class _LibraryCard extends StatelessWidget {
                             color: context.colors.primary,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                          ),
+                          ).kr,
                         ),
                       ],
                     ),
@@ -323,14 +324,14 @@ class _LibraryCard extends StatelessWidget {
                             color: context.colors.primary,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                          ),
+                          ).kr,
                         ),
                         Text(
                           s.libraryPlaysSuffix(entry.playCount),
                           style: GoogleFonts.spaceGrotesk(
                             color: context.colors.outline,
                             fontSize: 10,
-                          ),
+                          ).kr,
                         ),
                         if (lastPlayed != null) ...[
                           const Spacer(),
@@ -340,7 +341,7 @@ class _LibraryCard extends StatelessWidget {
                               color: context.colors.outlineVariant,
                               fontSize: 9,
                               letterSpacing: 0.3,
-                            ),
+                            ).kr,
                           ),
                         ],
                       ],
@@ -381,7 +382,7 @@ class _EmptyLibraryView extends StatelessWidget {
               color: context.colors.onSurfaceVariant,
               fontSize: 18,
               fontStyle: FontStyle.italic,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 6),
           Text(
@@ -389,7 +390,7 @@ class _EmptyLibraryView extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 12,
-            ),
+            ).kr,
           ),
         ],
       ),
@@ -418,7 +419,7 @@ class _ErrorView extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 12,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 20),
           GestureDetector(
@@ -430,7 +431,7 @@ class _ErrorView extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ),
         ],

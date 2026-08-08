@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
 import '../presentation/widgets/calculator_widgets.dart';
 
 /// Grand total for one player: the in-game points track plus the three
@@ -136,7 +137,7 @@ class _StoneAgeCalculatorScreenState extends State<StoneAgeCalculatorScreen> {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         actions: [
           Padding(
@@ -150,7 +151,7 @@ class _StoneAgeCalculatorScreenState extends State<StoneAgeCalculatorScreen> {
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
             ),
           ),

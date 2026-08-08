@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/catalog_game.dart';
 import '../../shared/providers/game_catalog_provider.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import 'game_detail_page.dart';
 
 /// Browse/search the full board-game catalog (not just games you've logged) and
@@ -68,7 +69,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -117,7 +118,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                 style: GoogleFonts.spaceGrotesk(
                   color: context.colors.outline,
                   fontSize: 12,
-                ),
+                ).kr,
               ),
               const SizedBox(height: 16),
               GestureDetector(
@@ -129,7 +130,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
-                  ),
+                  ).kr,
                 ),
               ),
             ],
@@ -147,7 +148,7 @@ class _CatalogBrowseScreenState extends ConsumerState<CatalogBrowseScreen> {
             color: context.colors.onSurfaceVariant,
             fontSize: 16,
             fontStyle: FontStyle.italic,
-          ),
+          ).kr,
         ),
       );
     }
@@ -191,13 +192,13 @@ class _SearchField extends StatelessWidget {
                 style: GoogleFonts.spaceGrotesk(
                   color: context.colors.onSurface,
                   fontSize: 14,
-                ),
+                ).kr,
                 decoration: InputDecoration.collapsed(
                   hintText: AppStrings.of(context).gamePickerSearchHint,
                   hintStyle: GoogleFonts.spaceGrotesk(
                     color: context.colors.outline,
                     fontSize: 14,
-                  ),
+                  ).kr,
                 ),
               ),
             ),
@@ -276,7 +277,7 @@ class _GameTile extends StatelessWidget {
                       color: context.colors.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                    ),
+                    ).kr,
                   ),
                   if (range != null) ...[
                     const SizedBox(height: 2),
@@ -285,7 +286,7 @@ class _GameTile extends StatelessWidget {
                       style: GoogleFonts.spaceGrotesk(
                         color: context.colors.outline,
                         fontSize: 11,
-                      ),
+                      ).kr,
                     ),
                   ],
                 ],

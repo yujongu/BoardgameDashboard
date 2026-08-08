@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
 
 enum SevenWondersCategory {
   civilian,
@@ -38,7 +39,7 @@ class ScoreHeaderRow extends StatelessWidget {
       fontSize: 12,
       fontWeight: FontWeight.w700,
       letterSpacing: 1,
-    );
+    ).kr;
     return Row(
       children: [
         Expanded(flex: 4, child: Text(s.calcCategory, style: style)),
@@ -80,7 +81,7 @@ class ScoreRow extends StatelessWidget {
               color: context.colors.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w500,
-            ),
+            ).kr,
           ),
         ),
         Expanded(flex: 3, child: _ScoreField(controller: controller1)),
@@ -106,14 +107,14 @@ class _ScoreField extends StatelessWidget {
         color: context.colors.onSurface,
         fontSize: 18,
         fontWeight: FontWeight.w500,
-      ),
+      ).kr,
       decoration: InputDecoration(
         isDense: true,
         hintText: '0',
         hintStyle: GoogleFonts.newsreader(
           color: context.colors.outline,
           fontSize: 18,
-        ),
+        ).kr,
         contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         filled: true,
         fillColor: context.colors.surfaceHigh,

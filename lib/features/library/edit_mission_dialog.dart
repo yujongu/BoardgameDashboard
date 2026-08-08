@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 
 /// Result of [EditMissionDialog]: the corrected tries count and passed flag.
 class MissionEdit {
@@ -66,7 +67,7 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
         style: GoogleFonts.newsreader(
           color: context.colors.onSurface,
           fontSize: 18,
-        ),
+        ).kr,
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -79,13 +80,13 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.onSurface,
               fontSize: 15,
-            ),
+            ).kr,
             decoration: InputDecoration(
               labelText: s.crewTriesLabel,
               labelStyle: GoogleFonts.spaceGrotesk(
                 color: context.colors.outline,
                 fontSize: 13,
-              ),
+              ).kr,
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: context.colors.outlineVariant),
               ),
@@ -104,7 +105,7 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
                 style: GoogleFonts.spaceGrotesk(
                   color: context.colors.onSurface,
                   fontSize: 14,
-                ),
+                ).kr,
               ),
               Switch(
                 value: _passed,
@@ -125,7 +126,7 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-            ),
+            ).kr,
           ),
         ),
         TextButton(
@@ -137,7 +138,7 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-            ),
+            ).kr,
           ),
         ),
       ],

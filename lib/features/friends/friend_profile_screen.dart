@@ -10,6 +10,7 @@ import '../../shared/models/play.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../plays/play_detail_page.dart';
 
 class FriendProfileScreen extends ConsumerStatefulWidget {
@@ -53,28 +54,28 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
         backgroundColor: context.colors.surfaceHigh,
         title: Text(
           s.friendUnfriendTitle(widget.friendName),
-          style: GoogleFonts.newsreader(color: context.colors.onSurface),
+          style: GoogleFonts.newsreader(color: context.colors.onSurface).kr,
         ),
         content: Text(
           s.friendUnfriendBody,
           style: GoogleFonts.spaceGrotesk(
             color: context.colors.onSurfaceVariant,
             fontSize: 14,
-          ),
+          ).kr,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
               s.commonCancel,
-              style: GoogleFonts.spaceGrotesk(color: context.colors.outline),
+              style: GoogleFonts.spaceGrotesk(color: context.colors.outline).kr,
             ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
               s.friendUnfriendAction,
-              style: GoogleFonts.spaceGrotesk(color: Colors.redAccent),
+              style: GoogleFonts.spaceGrotesk(color: Colors.redAccent).kr,
             ),
           ),
         ],
@@ -102,7 +103,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
         SnackBar(
           content: Text(
             AppStrings.of(context).friendUnfriendFailed,
-            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface).kr,
           ),
           backgroundColor: context.colors.surfaceHigh,
         ),
@@ -129,7 +130,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -159,7 +160,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
                 style: GoogleFonts.spaceGrotesk(
                   color: context.colors.outline,
                   fontSize: 14,
-                ),
+                ).kr,
               ),
             );
           }
@@ -217,7 +218,7 @@ class _ProfileBody extends StatelessWidget {
               color: context.colors.onSurface,
               fontSize: 24,
               fontWeight: FontWeight.w600,
-            ),
+            ).kr,
           ),
         ),
         if (profile.lastPlayedAt != null) ...[
@@ -228,7 +229,7 @@ class _ProfileBody extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.outline,
                 fontSize: 12,
-              ),
+              ).kr,
             ),
           ),
         ],
@@ -290,7 +291,7 @@ class _ProfileBody extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
             child: unfriending
                 ? const SizedBox(
@@ -324,7 +325,7 @@ class _SectionLabel extends StatelessWidget {
         fontSize: 10,
         fontWeight: FontWeight.w600,
         letterSpacing: 2,
-      ),
+      ).kr,
     );
   }
 }
@@ -351,7 +352,7 @@ class _StatCard extends StatelessWidget {
               color: context.colors.primary,
               fontSize: 22,
               fontWeight: FontWeight.w600,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 2),
           Text(
@@ -361,7 +362,7 @@ class _StatCard extends StatelessWidget {
               fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.5,
-            ),
+            ).kr,
           ),
         ],
       ),
@@ -392,7 +393,7 @@ class _GameRow extends StatelessWidget {
                 color: context.colors.onSurface,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-              ),
+              ).kr,
             ),
           ),
           Text(
@@ -402,7 +403,7 @@ class _GameRow extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 11,
-            ),
+            ).kr,
           ),
         ],
       ),
@@ -442,7 +443,7 @@ class _SharedPlays extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 13,
-            ),
+            ).kr,
           );
         }
         final plays = snapshot.data!;
@@ -453,7 +454,7 @@ class _SharedPlays extends StatelessWidget {
               color: context.colors.outline,
               fontSize: 15,
               fontStyle: FontStyle.italic,
-            ),
+            ).kr,
           );
         }
         return Column(
@@ -467,7 +468,7 @@ class _SharedPlays extends StatelessWidget {
                   color: context.colors.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                ),
+                ).kr,
               ),
             ),
             ...plays.map((p) => _SharedPlayRow(play: p)),
@@ -529,7 +530,7 @@ class _SharedPlayRow extends StatelessWidget {
                       color: context.colors.onSurface,
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                    ),
+                    ).kr,
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -537,7 +538,7 @@ class _SharedPlayRow extends StatelessWidget {
                     style: GoogleFonts.spaceGrotesk(
                       color: context.colors.outline,
                       fontSize: 11,
-                    ),
+                    ).kr,
                   ),
                 ],
               ),
@@ -547,7 +548,7 @@ class _SharedPlayRow extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.outline,
                 fontSize: 11,
-              ),
+              ).kr,
             ),
             const SizedBox(width: 8),
             Icon(
@@ -586,7 +587,7 @@ class _Avatar extends StatelessWidget {
           color: context.colors.primary,
           fontSize: 32,
           fontWeight: FontWeight.w600,
-        ),
+        ).kr,
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../plays/play_detail_page.dart';
 import '../tools/presentation/widgets/tool_card.dart';
 import 'campaign_registry.dart';
@@ -118,7 +119,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
                 style: GoogleFonts.spaceGrotesk(
                   color: context.colors.outline,
                   fontSize: 13,
-                ),
+                ).kr,
               ),
               const SizedBox(height: 24),
               GestureDetector(
@@ -130,7 +131,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
-                  ),
+                  ).kr,
                 ),
               ),
             ],
@@ -176,7 +177,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
                       fontWeight: FontWeight.w700,
                       fontStyle: FontStyle.italic,
                       letterSpacing: 2,
-                    ),
+                    ).kr,
                   ),
                 ),
               ),
@@ -262,7 +263,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
           fontWeight: FontWeight.w700,
           fontStyle: FontStyle.italic,
           letterSpacing: 2,
-        ),
+        ).kr,
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
@@ -296,7 +297,7 @@ class _StatsBox extends StatelessWidget {
               color: context.colors.primary,
               fontSize: 32,
               fontWeight: FontWeight.w700,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 2),
           Text(
@@ -306,7 +307,7 @@ class _StatsBox extends StatelessWidget {
               fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.4,
-            ),
+            ).kr,
           ),
         ],
       ),
@@ -338,7 +339,7 @@ class _SectionHeader extends StatelessWidget {
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
-              ),
+              ).kr,
             ),
             if (count > 0)
               Text(
@@ -348,7 +349,7 @@ class _SectionHeader extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
           ],
         ),
@@ -436,7 +437,7 @@ class _PlayRow extends StatelessWidget {
                       color: context.colors.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                    ),
+                    ).kr,
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -445,7 +446,7 @@ class _PlayRow extends StatelessWidget {
                       color: context.colors.outline,
                       fontSize: 11,
                       letterSpacing: 0.3,
-                    ),
+                    ).kr,
                   ),
                 ],
               ),
@@ -487,7 +488,7 @@ class _EmptyView extends StatelessWidget {
               color: context.colors.onSurfaceVariant,
               fontSize: 18,
               fontStyle: FontStyle.italic,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 6),
           Text(
@@ -495,7 +496,7 @@ class _EmptyView extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 12,
-            ),
+            ).kr,
           ),
         ],
       ),
@@ -520,7 +521,7 @@ class _ToolsSectionHeader extends StatelessWidget {
             fontSize: 22,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.3,
-          ),
+          ).kr,
         ),
         const SizedBox(height: 10),
         Container(height: 1, color: context.colors.amberBorder),
@@ -547,7 +548,7 @@ class _ToolsContent extends StatelessWidget {
           style: GoogleFonts.spaceGrotesk(
             color: context.colors.outline,
             fontSize: 13,
-          ),
+          ).kr,
         ),
       );
     }

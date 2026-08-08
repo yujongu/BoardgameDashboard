@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 
 class ParticipantSearchField extends StatelessWidget {
   final TextEditingController controller;
@@ -31,13 +32,13 @@ class ParticipantSearchField extends StatelessWidget {
                 style: GoogleFonts.spaceGrotesk(
                   color: context.colors.onSurface,
                   fontSize: 14,
-                ),
+                ).kr,
                 decoration: InputDecoration.collapsed(
                   hintText: AppStrings.of(context).participantSearchHint,
                   hintStyle: GoogleFonts.spaceGrotesk(
                     color: context.colors.outline,
                     fontSize: 14,
-                  ),
+                  ).kr,
                 ),
               ),
             ),

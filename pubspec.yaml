@@ -76,6 +76,23 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # Hangul fallback face. The Latin fonts (Newsreader, Space Grotesk, Work Sans)
+  # ship no Korean glyphs, so `TextStyle.kr` in lib/shared/theme/app_fonts.dart
+  # points every text style at this family for anything they can't render.
+  # Bundled rather than fetched via google_fonts so Korean renders identically on
+  # iOS and Android and works offline. Licence: assets/fonts/OFL.txt (SIL OFL 1.1).
+  fonts:
+    - family: GothicA1
+      fonts:
+        - asset: assets/fonts/GothicA1-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/GothicA1-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/GothicA1-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/GothicA1-Bold.ttf
+          weight: 700
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

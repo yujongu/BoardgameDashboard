@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/providers/theme_mode_provider.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 
 /// App version shown in the About section. Kept in sync with `pubspec.yaml`.
 const String kAppVersion = '1.0.0';
@@ -34,7 +35,7 @@ class SettingsScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -78,7 +79,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: GoogleFonts.workSans(
                       color: c.onSurface,
                       fontSize: 16,
-                    ),
+                    ).kr,
                   ),
                 ),
                 Text(
@@ -86,7 +87,7 @@ class SettingsScreen extends ConsumerWidget {
                   style: GoogleFonts.workSans(
                     color: c.onSurfaceVariant,
                     fontSize: 15,
-                  ),
+                  ).kr,
                 ),
               ],
             ),
@@ -113,7 +114,7 @@ class _SectionHeader extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w600,
           letterSpacing: 1.5,
-        ),
+        ).kr,
       ),
     );
   }
@@ -159,7 +160,7 @@ class _ThemeOption extends StatelessWidget {
                   color: c.onSurface,
                   fontSize: 16,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                ),
+                ).kr,
               ),
             ),
             if (selected) Icon(Icons.check, color: c.primary, size: 20),

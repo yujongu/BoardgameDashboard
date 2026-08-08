@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'app_fonts.dart';
 import 'app_theme.dart';
 
 /// Theme-aware semantic colors. Read them off a [BuildContext] via
@@ -191,30 +192,30 @@ ThemeData _buildTheme({required AppColors c, required Brightness brightness}) {
     scaffoldBackgroundColor: c.background,
     colorScheme: scheme,
     extensions: [c],
-    textTheme: GoogleFonts.workSansTextTheme(baseText).copyWith(
+    textTheme: GoogleFonts.workSansTextTheme(baseText).kr.copyWith(
       displayLarge: GoogleFonts.newsreader(
         color: c.primary,
         fontSize: 32,
         fontWeight: FontWeight.w600,
         fontStyle: FontStyle.italic,
         letterSpacing: 0.5,
-      ),
+      ).kr,
       headlineMedium: GoogleFonts.newsreader(
         color: c.onSurface,
         fontSize: 22,
         fontWeight: FontWeight.w500,
-      ),
+      ).kr,
       headlineSmall: GoogleFonts.newsreader(
         color: c.onSurface,
         fontSize: 18,
         fontWeight: FontWeight.w500,
-      ),
+      ).kr,
       labelSmall: GoogleFonts.spaceGrotesk(
         color: c.onSurfaceVariant,
         fontSize: 11,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
-      ),
+      ).kr,
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: c.appBarBackground,
@@ -226,7 +227,7 @@ ThemeData _buildTheme({required AppColors c, required Brightness brightness}) {
         fontWeight: FontWeight.w700,
         fontStyle: FontStyle.italic,
         letterSpacing: 3,
-      ),
+      ).kr,
       systemOverlayStyle: isDark
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,

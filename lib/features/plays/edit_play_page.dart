@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
 import 'participant_picker_sheet.dart';
 
@@ -225,7 +226,7 @@ class _EditPlayPageState extends State<EditPlayPage> {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -312,7 +313,7 @@ class _SectionLabel extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w600,
             letterSpacing: 2,
-          ),
+          ).kr,
         ),
         const SizedBox(height: 6),
         Container(height: 1, color: context.colors.amberBorder),
@@ -353,7 +354,7 @@ class _GamePicker extends StatelessWidget {
                   color: context.colors.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                ),
+                ).kr,
               ),
             ),
             Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
@@ -412,7 +413,7 @@ class _DateRow extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.onSurface,
                 fontSize: 14,
-              ),
+              ).kr,
             ),
             const Spacer(),
             Icon(Icons.chevron_right, color: context.colors.outline, size: 20),
@@ -463,13 +464,13 @@ class _PlayerRow extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.onSurface,
                 fontSize: 14,
-              ),
+              ).kr,
               decoration: InputDecoration.collapsed(
                 hintText: AppStrings.of(context).addPlayPlayerNameHint,
                 hintStyle: GoogleFonts.spaceGrotesk(
                   color: context.colors.outline,
                   fontSize: 14,
-                ),
+                ).kr,
               ),
             ),
           ),
@@ -546,13 +547,13 @@ class _StyledField extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.onSurface,
                 fontSize: 14,
-              ),
+              ).kr,
               decoration: InputDecoration.collapsed(
                 hintText: hint,
                 hintStyle: GoogleFonts.spaceGrotesk(
                   color: context.colors.outline,
                   fontSize: 14,
-                ),
+                ).kr,
               ),
             ),
           ),
@@ -581,13 +582,13 @@ class _ScoreField extends StatelessWidget {
         style: GoogleFonts.spaceGrotesk(
           color: context.colors.onSurface,
           fontSize: 14,
-        ),
+        ).kr,
         decoration: InputDecoration.collapsed(
           hintText: AppStrings.of(context).scoreHint,
           hintStyle: GoogleFonts.spaceGrotesk(
             color: context.colors.outline,
             fontSize: 14,
-          ),
+          ).kr,
         ),
       ),
     );
@@ -621,7 +622,7 @@ class _AddPlayerButton extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ],
         ),
@@ -676,7 +677,7 @@ class _SaveBar extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2,
-                      ),
+                      ).kr,
                     ),
             ),
           ),

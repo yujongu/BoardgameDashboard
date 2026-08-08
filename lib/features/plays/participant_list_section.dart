@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import 'add_play_notifier.dart';
 import 'participant_picker_controller.dart';
 
@@ -118,7 +119,7 @@ class ParticipantListSection extends ConsumerWidget {
                 color: context.colors.outline,
                 fontSize: 16,
                 fontStyle: FontStyle.italic,
-              ),
+              ).kr,
             ),
           ),
 
@@ -187,7 +188,7 @@ class _FriendsErrorPanel extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 color: context.colors.outline,
                 fontSize: 13,
-              ),
+              ).kr,
             ),
             const SizedBox(height: 16),
             GestureDetector(
@@ -199,7 +200,7 @@ class _FriendsErrorPanel extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
-                ),
+                ).kr,
               ),
             ),
           ],
@@ -225,7 +226,7 @@ class _SectionHeader extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w600,
           letterSpacing: 2,
-        ),
+        ).kr,
       ),
     );
   }
@@ -276,7 +277,7 @@ class FriendListItem extends StatelessWidget {
                       : context.colors.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                ),
+                ).kr,
               ),
             ),
             if (isSelected)
@@ -291,7 +292,7 @@ class FriendListItem extends StatelessWidget {
                       color: context.colors.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                    ),
+                    ).kr,
                   ),
                 ],
               )
@@ -349,7 +350,7 @@ class UserListItem extends StatelessWidget {
                       : context.colors.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                ),
+                ).kr,
               ),
             ),
             Icon(
@@ -412,7 +413,7 @@ class GuestListItem extends StatelessWidget {
                         color: context.colors.outlineVariant,
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
-                      ),
+                      ).kr,
                     )
                   : RichText(
                       text: TextSpan(
@@ -421,7 +422,7 @@ class GuestListItem extends StatelessWidget {
                               ? context.colors.outlineVariant
                               : context.colors.outline,
                           fontSize: 13,
-                        ),
+                        ).kr,
                         children: [
                           TextSpan(text: s.participantAddGuestPrefix),
                           TextSpan(
@@ -432,7 +433,7 @@ class GuestListItem extends StatelessWidget {
                                   : context.colors.onSurface,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                            ),
+                            ).kr,
                           ),
                         ],
                       ),
@@ -470,7 +471,7 @@ class _Avatar extends StatelessWidget {
           color: context.colors.onSurfaceVariant,
           fontSize: 14,
           fontWeight: FontWeight.w600,
-        ),
+        ).kr,
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/friend_request.dart';
 import '../../shared/providers/friend_provider.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 
 class FriendRequestsScreen extends ConsumerStatefulWidget {
   const FriendRequestsScreen({super.key});
@@ -48,7 +49,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
       SnackBar(
         content: Text(
           message,
-          style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
+          style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface).kr,
         ),
         backgroundColor: context.colors.surfaceHigh,
       ),
@@ -80,7 +81,7 @@ class _FriendRequestsScreenState extends ConsumerState<FriendRequestsScreen> {
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.italic,
             letterSpacing: 3,
-          ),
+          ).kr,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -154,7 +155,7 @@ class _SectionLabel extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w600,
           letterSpacing: 2,
-        ),
+        ).kr,
       ),
     );
   }
@@ -198,14 +199,14 @@ class _IncomingRow extends StatelessWidget {
                     color: context.colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                  ),
+                  ).kr,
                 ),
                 Text(
                   _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
                     color: context.colors.outline,
                     fontSize: 11,
-                  ),
+                  ).kr,
                 ),
               ],
             ),
@@ -228,7 +229,7 @@ class _IncomingRow extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
-                ),
+                ).kr,
               ),
             ),
           ),
@@ -242,7 +243,7 @@ class _IncomingRow extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
-              ),
+              ).kr,
             ),
           ),
         ],
@@ -284,14 +285,14 @@ class _OutgoingRow extends StatelessWidget {
                     color: context.colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                  ),
+                  ).kr,
                 ),
                 Text(
                   _timeAgo(s, request.createdAt),
                   style: GoogleFonts.spaceGrotesk(
                     color: context.colors.outline,
                     fontSize: 11,
-                  ),
+                  ).kr,
                 ),
               ],
             ),
@@ -305,7 +306,7 @@ class _OutgoingRow extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
-              ),
+              ).kr,
             ),
           ),
         ],
@@ -351,7 +352,7 @@ class _MessageTile extends StatelessWidget {
         style: GoogleFonts.spaceGrotesk(
           color: context.colors.outline,
           fontSize: 13,
-        ),
+        ).kr,
       ),
     );
   }
@@ -384,7 +385,7 @@ class _Avatar extends StatelessWidget {
           color: context.colors.onSurfaceVariant,
           fontSize: 14,
           fontWeight: FontWeight.w600,
-        ),
+        ).kr,
       ),
     );
   }

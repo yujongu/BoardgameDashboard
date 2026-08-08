@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_fonts.dart';
 import '../library/campaign_record_section.dart';
 import '../library/campaign_registry.dart';
 import 'edit_play_page.dart';
@@ -42,7 +43,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
         SnackBar(
           content: Text(
             AppStrings.of(context).playDetailSaveFailed,
-            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface).kr,
           ),
           backgroundColor: context.colors.surfaceHigh,
         ),
@@ -72,14 +73,14 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
             color: context.colors.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.w600,
-          ),
+          ).kr,
         ),
         content: Text(
           s.playDeleteBody,
           style: GoogleFonts.spaceGrotesk(
             color: context.colors.outline,
             fontSize: 14,
-          ),
+          ).kr,
         ),
         actions: [
           TextButton(
@@ -91,7 +92,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ),
           TextButton(
@@ -103,7 +104,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ),
         ],
@@ -126,7 +127,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
         SnackBar(
           content: Text(
             s.playDeleteFailed,
-            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface),
+            style: GoogleFonts.spaceGrotesk(color: context.colors.onSurface).kr,
           ),
           backgroundColor: context.colors.surfaceHigh,
         ),
@@ -218,7 +219,7 @@ class _PlayDetailPageState extends ConsumerState<PlayDetailPage> {
                         fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.italic,
                         letterSpacing: 2,
-                      ),
+                      ).kr,
                     ),
                   ),
                 ),
@@ -330,7 +331,7 @@ class _CoopResultBanner extends StatelessWidget {
                 color: win ? context.colors.primary : context.colors.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-              ),
+              ).kr,
             ),
           ),
         ],
@@ -416,7 +417,7 @@ class _InfoRow extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.onSurface,
               fontSize: 14,
-            ),
+            ).kr,
           ),
         ),
       ],
@@ -447,7 +448,7 @@ class _SectionHeader extends StatelessWidget {
                 color: context.colors.primary,
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
-              ),
+              ).kr,
             ),
             Text(
               AppStrings.of(context).playersCountCaps(count),
@@ -456,7 +457,7 @@ class _SectionHeader extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ],
         ),
@@ -564,7 +565,7 @@ class _ParticipantsError extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: context.colors.outline,
               fontSize: 12,
-            ),
+            ).kr,
           ),
           const SizedBox(height: 12),
           GestureDetector(
@@ -576,7 +577,7 @@ class _ParticipantsError extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
-              ),
+              ).kr,
             ),
           ),
         ],
@@ -649,7 +650,7 @@ class _ParticipantCard extends StatelessWidget {
                         : context.colors.onSurface,
                     fontSize: 16,
                     fontWeight: isWinner ? FontWeight.w600 : FontWeight.w500,
-                  ),
+                  ).kr,
                 ),
                 if (participant.score != null) ...[
                   const SizedBox(height: 2),
@@ -658,7 +659,7 @@ class _ParticipantCard extends StatelessWidget {
                     style: GoogleFonts.spaceGrotesk(
                       color: context.colors.outline,
                       fontSize: 11,
-                    ),
+                    ).kr,
                   ),
                 ],
               ],
@@ -698,7 +699,7 @@ class _Badge extends StatelessWidget {
           fontSize: 9,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
-        ),
+        ).kr,
       ),
     );
   }
