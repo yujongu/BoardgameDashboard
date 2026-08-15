@@ -1,3 +1,101 @@
+# Handover — 2026-08-15 (session: security audit — deps, input bounds, font egress)
+
+## Current Milestone
+
+**Answered "is anything in this project malicious?" — no — and fixed the three real issues the
+audit turned up.** Four commits on `main`, none pushed yet.
+
+Status: **DONE and verified.** `flutter analyze` clean, `flutter test` **323 passing**,
+`functions` **165 passing / 9 suites** (was 156/8), `npm audit` **0 findings** (was 18), app runs
+on an iPhone 17 Pro simulator with zero font-load errors.
+
+**The audit found no malicious code.** All 99 Dart packages resolve from `pub.dev` and all 511 npm
+packages from `registry.npmjs.org` — no git/path/file/alternate-registry overrides anywhere. Only
+one npm `postinstall` exists (`protobufjs`, legitimate); everything else is `prepare`, which never
+runs from a registry tarball. No secrets have ever been committed. No hardcoded URLs in `lib/` or
+`functions/src` outside test fixtures. No cleartext-traffic flag, no `NSAllowsArbitraryLoads`, no
+extra Android permissions, one URL scheme (standard Google Sign-In). All 16 callables check
+`request.auth` first; there are no `onRequest` endpoints and no CORS config.
+
+## Context & Decisions (this session)
+
+- **`npm audit fix` alone cleared 17 of 18 advisories** — including the critical
+  `websocket-driver` — with **zero changes to `functions/package.json`**. Every patched version
+  happened to satisfy the existing `^` ranges (`websocket-driver` 0.7.4→0.7.5 via faye-websocket's
+  `>=0.5.1`; `@grpc/grpc-js` 1.14.3→1.14.4 under `^1.12.6`; `protobufjs` 7.5.6→7.6.5 under
+  `^7.5.4`). Verified each before running anything.
+- **`firebase-admin` 12→14 was a bigger change than expected.** The plan assumed the API surface
+  was stable; it is not. v14 **removes the namespaced root API at runtime**, not just from the
+  types — `admin.apps`, `admin.app()`, `admin.firestore()`, `admin.auth()` are all gone from the
+  export. Migrated 6 files to the modular entry points. Fixing `src/shared/db.ts` alone cleared
+  20 `tsc` errors: the 18 implicit-any reports were all cascading from `db` losing its type.
+- **Owner chose to DROP the participant-identity check.** The original plan added
+  `assertKnownParticipants` (friends-only). Mid-implementation it turned out
+  `participant_list_section.dart:141-151` has a "Users" section that deliberately filters search
+  results down to **non-friends** and lets you add them — so logging a play with a non-friend is
+  an intended flow, and a friends-only server check would have broken it. Only the **size/length
+  bounds** shipped. The stats-pollution vector is therefore still open, by decision.
+- **Owner chose to bundle the Latin fonts** rather than keep runtime fetching.
+- **Fonts are `assets:`, not a `fonts:` family.** `loadFontIfNecessary` checks the asset manifest
+  *before* the network (`google_fonts_base.dart:146-157`) and matches on the filename
+  `<Family>-<Variant>.ttf`, so bundling needed **zero changes to the ~340 call sites**. Declaring
+  a `fonts:` family would have required rewriting every one of them.
+- **The 13 variants were derived, not guessed** — a balanced-paren parse of every `GoogleFonts.*`
+  call in `lib/`, each request then run through google_fonts' own closest-match scoring against
+  the variant table in `google_fonts_parts/*.g.dart`. Same gstatic + SHA-256 verification
+  technique as the Gothic A1 session (f27f075).
+
+## The 'Gravel' (non-obvious)
+
+- **`pubspec.lock` is permanently dirty and it is not from this session.** Any `flutter pub get`
+  in this environment re-pins `meta` 1.18.0→1.17.0 and `test_api` 0.7.11→0.7.10 to the versions
+  the installed Flutter SDK bundles. Reverting it works until the next pub get. Left out of all
+  four commits deliberately.
+- **`jose` breaks the jest suite under firebase-admin 14.** v14 pulls `jose` 6 via `jwks-rsa`;
+  jose 6 is pure ESM with no CJS build, so requiring it from the CJS suite is a SyntaxError the
+  moment any test imports `firebase-functions/v2/https`. Mapped to a **throwing** stub via
+  `moduleNameMapper` (`functions/test/joseStub.js`). Safe because no test verifies a JWT —
+  callables are invoked directly with hand-built auth contexts. The stub throws rather than
+  returns so a future JWT test fails loudly instead of passing against a fake verifier.
+- **A `bundled_fonts_test.dart` guard was written and then deleted.** It could not be made to
+  fail: `rootBundle` in `flutter test` served a *deleted* font from a stale build cache, so the
+  test passed with the file removed. It would only have caught a never-existed font, and since it
+  checked a hardcoded list it would not have noticed a new call site either. Not worth the false
+  confidence. The real guard is `allowRuntimeFetching = false` (console error at runtime) plus the
+  comment in `pubspec.yaml`.
+- **`integration_test/` does not exist**, despite `CLAUDE.md` documenting
+  `flutter test integration_test`.
+- **Simulator taps could not be scripted** — `osascript` lacks assistive access on this machine,
+  so only the home screen was visually confirmed. Coverage for the rest rests on the exhaustive
+  static enumeration plus zero `unable to load font` lines in the run log.
+- `clear-firestore.js` was executed once during the v14 migration check. It targeted the **local
+  emulator** (`FIRESTORE_EMULATOR_HOST` was set, no production credentials in the shell) and the
+  emulator is ephemeral, so nothing real was touched — but it is a destructive script and should
+  not be invoked casually.
+
+## Known-but-unaddressed (deliberate)
+
+- **No App Check** anywhere in app or functions, so the public Firebase config is the only gate in
+  front of Firestore and the callables. Owner scoped it out.
+- **`userSearch` is world-readable to any signed-in user** (`firestore.rules:53-56`), making the
+  full user directory (name + photo URL) enumerable. It is what participant search needs.
+- **Stats pollution**: any signed-in user can still name any uid in a play and write to that
+  user's `stats`, `gameStats` and `library`. Open by decision — see above.
+- Dart majors left alone: `firebase_core` 3→4, `google_sign_in` 6→7, `riverpod` 2→3,
+  `google_fonts` 6→8.
+- `functions/node_modules/` was committed in early history (`f251739`) — harmless, but bloats the
+  clone.
+
+## Next Immediate Step
+
+Nothing is blocked. If picking this up: decide whether the stats-pollution vector needs a
+different mitigation now that friends-only is off the table — the natural one is requiring the
+other participants to confirm a play before it lands in their stats, rather than gating on
+friendship. Start at `functions/src/plays/createPlay.ts` phase 2, where the per-participant
+`stats`/`gameStats`/`library` writes happen.
+
+---
+
 # Handover — 2026-08-08 (session: Hangul font fallback — Gothic A1)
 
 ## Current Milestone
