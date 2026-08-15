@@ -93,6 +93,28 @@ flutter:
         - asset: assets/fonts/GothicA1-Bold.ttf
           weight: 700
 
+  # The Latin faces are bundled as plain ASSETS, not as `fonts:` families above.
+  # google_fonts checks the asset manifest before the network and matches on the
+  # filename `<Family>-<Variant>.ttf` (GoogleFontsFamilyWithVariant
+  # .toApiFilenamePrefix), so every existing `GoogleFonts.newsreader(...)` call
+  # site keeps working untouched and simply loads from disk instead of fetching
+  # from fonts.gstatic.com. Declaring them as `fonts:` families would instead
+  # require rewriting all ~340 call sites.
+  #
+  # These are the exact files google_fonts would have downloaded: each was
+  # fetched from its fonts.gstatic.com URL and verified against the SHA-256 the
+  # package has compiled in, so rendering is byte-identical to before.
+  #
+  # main.dart sets GoogleFonts.config.allowRuntimeFetching = false, which turns
+  # any variant missing from this folder into a loud console error instead of a
+  # silent network call. If you add a new weight or style at a call site, add
+  # the matching .ttf here too.
+  #
+  # Licences (all SIL OFL 1.1): OFL-Newsreader.txt, OFL-SpaceGrotesk.txt,
+  # OFL-WorkSans.txt. OFL.txt covers GothicA1 above.
+  assets:
+    - assets/fonts/
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

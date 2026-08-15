@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
@@ -27,6 +28,12 @@ const bool _useEmulators = bool.fromEnvironment('USE_EMULATORS');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Every Latin face is bundled under assets/fonts (see pubspec.yaml), so
+  // google_fonts must never reach fonts.gstatic.com. Turning fetching off makes
+  // a missing variant a loud console error instead of a silent network call —
+  // it is the only thing keeping the asset list honest as call sites change.
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
