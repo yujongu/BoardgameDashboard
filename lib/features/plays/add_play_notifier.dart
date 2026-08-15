@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -63,7 +65,12 @@ class AddPlayState {
   });
 
   int get _effectiveMin => selectedGame?.minPlayers ?? 1;
-  int get _effectiveMax => selectedGame?.maxPlayers ?? 99;
+
+  /// The game's own maximum, clamped to the platform ceiling the server
+  /// enforces — a game whose cap is above it (or no game picked yet, which
+  /// falls back to 99) must not let the UI build a play createPlay rejects.
+  int get _effectiveMax =>
+      math.min(selectedGame?.maxPlayers ?? 99, kMaxParticipantsPerPlay);
 
   bool get canAddParticipant => participants.length < _effectiveMax;
 

@@ -138,6 +138,38 @@ void main() {
       expect(notifier.state.canAddParticipant, isFalse);
     });
 
+    // The server rejects a play above kMaxParticipantsPerPlay, so the UI must
+    // stop there even when the game (or the no-game-selected fallback of 99)
+    // would allow more — otherwise the user builds a play that fails to save.
+    test(
+      'canAddParticipant stops at the platform cap with no game selected',
+      () {
+        for (var i = 0; i < kMaxParticipantsPerPlay; i++) {
+          notifier.addParticipant();
+        }
+
+        expect(notifier.state.participants.length, kMaxParticipantsPerPlay);
+        expect(notifier.state.canAddParticipant, isFalse);
+      },
+    );
+
+    test('canAddParticipant stops at the platform cap for a larger game', () {
+      const bigGame = CatalogGame(
+        gameId: 'party',
+        name: 'Big Party Game',
+        minPlayers: 2,
+        maxPlayers: 40,
+      );
+      notifier.onGameSelected(bigGame);
+
+      for (var i = 0; i < kMaxParticipantsPerPlay; i++) {
+        notifier.addParticipant();
+      }
+
+      expect(notifier.state.canAddParticipant, isFalse);
+      expect(notifier.state.aboveMaxPlayers, isFalse);
+    });
+
     test('canAddParticipant is true when below maxPlayers', () {
       notifier.onGameSelected(game3to6);
 

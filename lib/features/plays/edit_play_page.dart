@@ -160,9 +160,12 @@ class _EditPlayPageState extends State<EditPlayPage> {
               .where((p) => p.userId != null)
               .map((p) => p.userId!)
               .toSet(),
-          // Edit does not carry the game's player limits (only gameId/gameName),
-          // so it cannot evaluate the cap here. Tracked in docs/defects.md D5.
-          atMax: false,
+          // Edit carries only gameId/gameName, not the game's min/max, so the
+          // game-specific cap still cannot be evaluated here (docs/defects.md
+          // D5). The platform ceiling can be, and it is the one the server
+          // enforces — without it the picker happily builds a play that
+          // updatePlay then rejects.
+          atMax: _players.length >= kMaxParticipantsPerPlay,
         ),
       ),
     );

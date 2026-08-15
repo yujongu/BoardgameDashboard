@@ -1,3 +1,11 @@
+/// Hard ceiling on participants in one play, independent of the game.
+///
+/// Mirrors `MAX_PARTICIPANTS` in `functions/src/shared/auth.ts`: createPlay and
+/// updatePlay reject anything above it, so letting the UI go past this point
+/// only produces a failed save. Every game in the catalog tops out at or below
+/// this, so in practice the game's own maximum is what the user runs into.
+const int kMaxParticipantsPerPlay = 20;
+
 class ParticipantInput {
   const ParticipantInput({
     required this.userId,

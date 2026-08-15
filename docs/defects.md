@@ -157,10 +157,18 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 > Participants are deliberately **not** pruned on game switch — an existing test pins that
 > behaviour, and silently deleting players the user entered is worse than blocking the save.
 >
-> **Residual, tracked here:** Edit Play carries only `gameId`/`gameName`, not the game's
-> min/max, so it cannot evaluate the cap; it passes `atMax: false` to the picker. Editing an
-> existing play can therefore still exceed the maximum. Fixing it means resolving the catalog
-> game in `EditPlayPage` — deliberately out of scope for this pass.
+> **Partly closed on Edit Play (2026-08-15).** Edit Play now passes
+> `atMax: _players.length >= kMaxParticipantsPerPlay` instead of a flat `false`, so it can no
+> longer build a play that `updatePlay` rejects outright. `AddPlayNotifier._effectiveMax` is
+> clamped to the same ceiling, which also covers the no-game-selected fallback of 99.
+> `kMaxParticipantsPerPlay` lives in `lib/shared/models/play.dart` and mirrors
+> `MAX_PARTICIPANTS` in `functions/src/shared/auth.ts`.
+>
+> **Residual, still tracked here:** that is the *platform* ceiling, not the *game's*. Edit Play
+> still carries only `gameId`/`gameName`, so a 4-player game can still be edited up to 20.
+> Closing that means resolving the catalog game in `EditPlayPage` — there is no by-id lookup on
+> `GameCatalogRepository` today, and neither `PlayDetail` nor `LibraryEntry` carries min/max, so
+> it needs new data plumbing. Still out of scope.
 
 
 - **What's wrong:** `AddPlayState.canSave` checks `_effectiveMin` but never `_effectiveMax`,
