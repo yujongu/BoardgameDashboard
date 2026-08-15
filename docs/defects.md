@@ -150,25 +150,33 @@ Severity key: **S1** data loss / security · **S2** wrong data · **S3** wrong U
 - **Files:** `lib/features/plays/edit_play_page.dart`, the participant picker sheet,
   `functions/src/plays/updatePlay.ts`, `functions/src/plays/createPlay.ts:180-207`.
 
-### D5 (plan 1.6). A play can exceed the game's maximum player count — **S2** — ✅ FIXED (Add Play)
+### D5 (plan 1.6). A play can exceed the game's maximum player count — **S2** — ✅ FIXED
 
 > **Fixed for Add Play.** `canSave` now rejects `participants.length > _effectiveMax`, and a
 > new `aboveMaxPlayers` flag drives a save-bar label ("Remove N to fit M players").
 > Participants are deliberately **not** pruned on game switch — an existing test pins that
 > behaviour, and silently deleting players the user entered is worse than blocking the save.
 >
-> **Partly closed on Edit Play (2026-08-15).** Edit Play now passes
-> `atMax: _players.length >= kMaxParticipantsPerPlay` instead of a flat `false`, so it can no
-> longer build a play that `updatePlay` rejects outright. `AddPlayNotifier._effectiveMax` is
-> clamped to the same ceiling, which also covers the no-game-selected fallback of 99.
-> `kMaxParticipantsPerPlay` lives in `lib/shared/models/play.dart` and mirrors
-> `MAX_PARTICIPANTS` in `functions/src/shared/auth.ts`.
+> **Closed on Edit Play (2026-08-15).** The residual was that Edit Play carries only
+> `gameId`/`gameName`, so it could not evaluate the cap and passed a flat `atMax: false`.
+> `GameCatalogRepository.fetchGameById` now resolves the catalog game on open, and switching
+> games reuses the `CatalogGame` the picker already hands over, so no second read. Edit Play
+> gained `_effectiveMax` / `_aboveMax` mirroring Add Play, `_canSave` rejects an over-capacity
+> play, and the save bar shows the same "Remove N to fit M players" caption instead of greying
+> out with no explanation.
 >
-> **Residual, still tracked here:** that is the *platform* ceiling, not the *game's*. Edit Play
-> still carries only `gameId`/`gameName`, so a 4-player game can still be edited up to 20.
-> Closing that means resolving the catalog game in `EditPlayPage` — there is no by-id lookup on
-> `GameCatalogRepository` today, and neither `PlayDetail` nor `LibraryEntry` carries min/max, so
-> it needs new data plumbing. Still out of scope.
+> Both screens also clamp to `kMaxParticipantsPerPlay` (`lib/shared/models/play.dart`), which
+> mirrors `MAX_PARTICIPANTS` in `functions/src/shared/auth.ts` — this covers Add Play's
+> no-game-selected fallback of 99 and any future game seeded above the server's ceiling.
+>
+> Two deliberate edge behaviours: while the catalog read is in flight (and for a play whose game
+> has left the catalog) the limit falls back to the platform ceiling alone; and participants are
+> never pruned automatically, matching Add Play — silently deleting players is worse than
+> blocking the save.
+>
+> **Not covered by tests.** `EditPlayPage` reaches `FirebaseAuth.instance` in `initState` and
+> the project has no Firestore/Auth fake, so it has never been widget-testable. The Add Play
+> clamp is tested in `add_play_notifier_test.dart`.
 
 
 - **What's wrong:** `AddPlayState.canSave` checks `_effectiveMin` but never `_effectiveMax`,

@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../shared/models/play.dart';
+import '../../shared/repositories/game_catalog_repository.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../shared/theme/app_fonts.dart';
 import '../../shared/widgets/game_picker_sheet.dart';
@@ -54,6 +57,14 @@ class _EditPlayPageState extends State<EditPlayPage> {
   final List<_PlayerEntry> _players = [];
   String? _currentUserId;
 
+  /// The selected game's own maximum, resolved from the catalog.
+  ///
+  /// A play stores only gameId/gameName, so this is loaded asynchronously on
+  /// open and refreshed from the CatalogGame when the game is switched. Stays
+  /// null while loading, and for a play whose game is no longer in the catalog;
+  /// [_effectiveMax] falls back to the platform ceiling in both cases.
+  int? _gameMaxPlayers;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +82,15 @@ class _EditPlayPageState extends State<EditPlayPage> {
       entry.nameController.addListener(() => setState(() {}));
       _players.add(entry);
     }
+
+    _loadGameLimits();
+  }
+
+  Future<void> _loadGameLimits() async {
+    final game = await GameCatalogRepository.instance.fetchGameById(_gameId);
+    // The page can be popped while the read is in flight.
+    if (!mounted) return;
+    setState(() => _gameMaxPlayers = game?.maxPlayers);
   }
 
   @override
@@ -83,8 +103,25 @@ class _EditPlayPageState extends State<EditPlayPage> {
     super.dispose();
   }
 
+  /// The game's own maximum, clamped to the platform ceiling the server
+  /// enforces. Falls back to the ceiling alone while the catalog read is in
+  /// flight or when the game is not in the catalog.
+  int get _effectiveMax => math.min(
+    _gameMaxPlayers ?? kMaxParticipantsPerPlay,
+    kMaxParticipantsPerPlay,
+  );
+
+  /// True when the play holds more players than the game allows.
+  ///
+  /// Reachable two ways: switching to a game with a smaller maximum, and
+  /// opening a play that already exceeded it (older plays predate this check).
+  /// Participants are deliberately not pruned automatically — same reasoning as
+  /// Add Play, silently deleting a user's players is worse than blocking save.
+  bool get _aboveMax => _players.length > _effectiveMax;
+
   bool get _canSave =>
       _players.isNotEmpty &&
+      !_aboveMax &&
       _players.any((p) => p.nameController.text.trim().isNotEmpty) &&
       _players.any(
         (p) => p.isWinner && p.nameController.text.trim().isNotEmpty,
@@ -100,6 +137,9 @@ class _EditPlayPageState extends State<EditPlayPage> {
           setState(() {
             _gameId = game.gameId;
             _gameName = game.name;
+            // The picker hands over a full CatalogGame, so the new limits are
+            // already here — no second catalog read needed.
+            _gameMaxPlayers = game.maxPlayers;
           });
           Navigator.of(context).pop();
         },
@@ -160,12 +200,7 @@ class _EditPlayPageState extends State<EditPlayPage> {
               .where((p) => p.userId != null)
               .map((p) => p.userId!)
               .toSet(),
-          // Edit carries only gameId/gameName, not the game's min/max, so the
-          // game-specific cap still cannot be evaluated here (docs/defects.md
-          // D5). The platform ceiling can be, and it is the one the server
-          // enforces — without it the picker happily builds a play that
-          // updatePlay then rejects.
-          atMax: _players.length >= kMaxParticipantsPerPlay,
+          atMax: _players.length >= _effectiveMax,
         ),
       ),
     );
@@ -193,6 +228,7 @@ class _EditPlayPageState extends State<EditPlayPage> {
 
     if (participants.isEmpty) return;
     if (!participants.any((p) => p.isWinner)) return;
+    if (_aboveMax) return;
 
     final location = _locationController.text.trim();
     final notes = _notesController.text.trim();
@@ -290,7 +326,17 @@ class _EditPlayPageState extends State<EditPlayPage> {
               ),
             ),
           ),
-          _SaveBar(enabled: _canSave, loading: false, onTap: _save),
+          _SaveBar(
+            enabled: _canSave,
+            loading: false,
+            onTap: _save,
+            label: _aboveMax
+                ? s.maxPlayersExceeded(
+                    _players.length - _effectiveMax,
+                    _effectiveMax,
+                  )
+                : null,
+          ),
         ],
       ),
     );
@@ -639,10 +685,15 @@ class _SaveBar extends StatelessWidget {
   final bool loading;
   final VoidCallback onTap;
 
+  /// Overrides the default "Save changes" caption. Used to say *why* saving is
+  /// blocked, so an over-capacity play does not just grey out silently.
+  final String? label;
+
   const _SaveBar({
     required this.enabled,
     required this.loading,
     required this.onTap,
+    this.label,
   });
 
   @override
@@ -672,7 +723,7 @@ class _SaveBar extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      AppStrings.of(context).editPlaySaveChanges,
+                      label ?? AppStrings.of(context).editPlaySaveChanges,
                       style: GoogleFonts.spaceGrotesk(
                         color: enabled
                             ? context.colors.onPrimary

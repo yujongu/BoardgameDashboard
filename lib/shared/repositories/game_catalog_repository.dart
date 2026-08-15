@@ -41,10 +41,25 @@ class GameCatalogRepository {
     return qs.docs.map(_fromDoc).toList();
   }
 
-  static CatalogGame _fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+  /// Resolves a single catalog game by id.
+  ///
+  /// Edit Play stores only `gameId`/`gameName` on the play, so this is how it
+  /// recovers the player limits it needs to enforce the maximum. Returns null
+  /// when the game is not in the catalog (a play can outlive its game doc).
+  Future<CatalogGame?> fetchGameById(String gameId) async {
+    final doc = await _db.collection('boardGames').doc(gameId).get();
     final data = doc.data();
+    if (!doc.exists || data == null) return null;
+    return _fromData(doc.id, data);
+  }
+
+  static CatalogGame _fromDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) => _fromData(doc.id, doc.data());
+
+  static CatalogGame _fromData(String id, Map<String, dynamic> data) {
     return CatalogGame(
-      gameId: doc.id,
+      gameId: id,
       name: data['name'] as String,
       // Fall back to computing nameLower if the field is absent (legacy docs).
       nameLower: data['name_lower'] as String?,
