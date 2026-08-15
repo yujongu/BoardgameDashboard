@@ -1,7 +1,11 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../shared/db";
-import { assertNoDuplicateParticipants } from "../shared/auth";
+import {
+  assertFieldLengths,
+  assertNoDuplicateParticipants,
+  assertParticipantLimit,
+} from "../shared/auth";
 import {
   gameStatsRef,
   incrementCoopPlays,
@@ -65,6 +69,8 @@ function validate(data: CreatePlayData): void {
   if (!Array.isArray(data.participants) || data.participants.length === 0) {
     throw new HttpsError("invalid-argument", "participants must not be empty.");
   }
+  assertParticipantLimit(data.participants);
+  assertFieldLengths(data);
   for (const p of data.participants) {
     if (!p.name?.trim()) {
       throw new HttpsError(

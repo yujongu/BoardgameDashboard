@@ -63,3 +63,69 @@ export function assertNoDuplicateParticipants(
     );
   }
 }
+
+// ─── INPUT BOUNDS ────────────────────────────────────────────────────────────
+//
+// Type-checking an input answers "is this the right shape?", never "is this a
+// reasonable size?". Every field below is attacker-controlled and fans out into
+// writes: each participant costs ~5 writes across the play doc, its participants
+// subcollection, stats, gameStats and library, so an unbounded array turns one
+// call into an unbounded, billable write amplification. Unbounded strings ride
+// into Firestore up to the 1 MB document ceiling.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Upper bound on players in a single play. Well above any real table. */
+export const MAX_PARTICIPANTS = 20;
+
+export const MAX_GAME_NAME_LENGTH = 100;
+export const MAX_PLAYER_NAME_LENGTH = 50;
+export const MAX_LOCATION_LENGTH = 100;
+export const MAX_NOTES_LENGTH = 2000;
+
+/**
+ * Throws `invalid-argument` when [participants] exceeds [MAX_PARTICIPANTS].
+ *
+ * Sized off the Firestore transaction write budget rather than any game rule —
+ * the cap exists to bound cost, not to model how many people can play.
+ */
+export function assertParticipantLimit(
+  participants: readonly unknown[]
+): void {
+  if (participants.length > MAX_PARTICIPANTS) {
+    throw new HttpsError(
+      "invalid-argument",
+      `A play may have at most ${MAX_PARTICIPANTS} participants.`
+    );
+  }
+}
+
+/**
+ * Throws `invalid-argument` when any free-text field exceeds its cap.
+ *
+ * Applied to the fields a caller can set directly. Lengths are measured after
+ * no trimming, so trailing whitespace counts against the budget exactly as it
+ * would against the stored document.
+ */
+export function assertFieldLengths(data: {
+  gameName: string;
+  participants: readonly { name: string }[];
+  location?: string;
+  notes?: string;
+}): void {
+  const check = (value: string | undefined, max: number, label: string) => {
+    if (value !== undefined && value.length > max) {
+      throw new HttpsError(
+        "invalid-argument",
+        `${label} must be at most ${max} characters.`
+      );
+    }
+  };
+
+  check(data.gameName, MAX_GAME_NAME_LENGTH, "gameName");
+  check(data.location, MAX_LOCATION_LENGTH, "location");
+  check(data.notes, MAX_NOTES_LENGTH, "notes");
+  for (const p of data.participants) {
+    check(p.name, MAX_PLAYER_NAME_LENGTH, "Participant name");
+  }
+}

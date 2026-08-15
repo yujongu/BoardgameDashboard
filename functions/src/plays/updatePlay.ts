@@ -8,7 +8,12 @@ import {
 } from "firebase-admin/firestore";
 import { db } from "../shared/db";
 import { gameStatsRef, statsRef, userLibraryRef } from "../shared/helpers";
-import { assertParticipant, assertNoDuplicateParticipants } from "../shared/auth";
+import {
+  assertParticipant,
+  assertNoDuplicateParticipants,
+  assertFieldLengths,
+  assertParticipantLimit,
+} from "../shared/auth";
 import { ParticipantDocument, PlayDocument, UserLibraryDocument } from "../shared/types";
 
 // ─── Input / output types ─────────────────────────────────────────────────────
@@ -255,6 +260,8 @@ function validate(data: UpdatePlayData): void {
   if (!Array.isArray(data.participants) || data.participants.length === 0) {
     throw new HttpsError("invalid-argument", "participants must not be empty.");
   }
+  assertParticipantLimit(data.participants);
+  assertFieldLengths(data);
   if (!data.participants.some((p) => p.isWinner)) {
     throw new HttpsError(
       "invalid-argument",
