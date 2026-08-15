@@ -8,13 +8,14 @@
  *   node clear-firestore.js
  */
 
-const admin = require('firebase-admin');
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 const PROJECT_ID = 'gameshelf-283dc';
 const PROTECTED = new Set(['boardGames']);
 
-admin.initializeApp({ projectId: PROJECT_ID });
-const db = admin.firestore();
+initializeApp({ projectId: PROJECT_ID });
+const db = getFirestore();
 
 async function clear() {
   const collections = await db.listCollections();

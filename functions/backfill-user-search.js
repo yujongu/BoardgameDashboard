@@ -17,21 +17,23 @@
  *   gcloud auth application-default login  → then run without GOOGLE_APPLICATION_CREDENTIALS
  */
 
-const admin = require('firebase-admin');
+const { initializeApp, getApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getAuth } = require('firebase-admin/auth');
 
 const PROJECT_ID = 'gameshelf-283dc';
 const BATCH_SIZE = 500;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-admin.initializeApp({ projectId: PROJECT_ID });
-const db = admin.firestore();
-const auth = admin.auth();
+initializeApp({ projectId: PROJECT_ID });
+const db = getFirestore();
+const auth = getAuth();
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('Project:', admin.app().options.projectId);
+  console.log('Project:', getApp().options.projectId);
   console.log('Emulator host:', process.env.FIRESTORE_EMULATOR_HOST ?? '(none)');
 
   // Collect all Auth users via paginated listUsers.

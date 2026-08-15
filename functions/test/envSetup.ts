@@ -19,10 +19,10 @@ process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 
 // 2. Load firebase-admin only after the env var is in place.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const admin = require("firebase-admin") as typeof import("firebase-admin");
+const app = require("firebase-admin/app") as typeof import("firebase-admin/app");
 
-// 3. Pre-initialise so db.ts's guard (`if (!admin.apps.length)`) skips its own
+// 3. Pre-initialise so db.ts's guard (`if (!getApps().length)`) skips its own
 //    initializeApp() call and never attempts ADC.
-if (!admin.apps.length) {
-  admin.initializeApp({ projectId: "demo-boardgame-test" });
+if (!app.getApps().length) {
+  app.initializeApp({ projectId: "demo-boardgame-test" });
 }

@@ -23,12 +23,13 @@
  *   gcloud auth application-default login  → then run without GOOGLE_APPLICATION_CREDENTIALS
  */
 
-const admin = require('firebase-admin');
+const { initializeApp, getApp } = require('firebase-admin/app');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 
 const PROJECT_ID = 'gameshelf-283dc';
 
-admin.initializeApp({ projectId: PROJECT_ID });
-const db = admin.firestore();
+initializeApp({ projectId: PROJECT_ID });
+const db = getFirestore();
 
 async function gameNameFor(gameId) {
   const snap = await db.collection('boardGames').doc(gameId).get();
@@ -44,7 +45,7 @@ function buildStages(currentMission) {
 }
 
 async function main() {
-  console.log('Project:', admin.app().options.projectId);
+  console.log('Project:', getApp().options.projectId);
   console.log('Emulator host:', process.env.FIRESTORE_EMULATOR_HOST ?? '(none)');
 
   // collectionGroup('campaigns') matches BOTH the new root `campaigns` and the
@@ -91,8 +92,8 @@ async function main() {
       stages: buildStages(currentMission),
       createdBy: uid,
       migratedFrom: legacyPath,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
     migrated++;
     console.log(`  [OK] ${legacyPath} → campaigns (mission ${currentMission}, ${roster.length} crew)`);

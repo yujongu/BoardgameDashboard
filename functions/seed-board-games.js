@@ -12,7 +12,8 @@
  *   gcloud auth application-default login  → then run without GOOGLE_APPLICATION_CREDENTIALS
  */
 
-const admin = require('firebase-admin');
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 const fs    = require('fs');
 const path  = require('path');
 
@@ -22,8 +23,8 @@ const BATCH_SIZE = 500; // Firestore max per batch
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-admin.initializeApp({ projectId: PROJECT_ID });
-const db = admin.firestore();
+initializeApp({ projectId: PROJECT_ID });
+const db = getFirestore();
 
 // ─── CLI arg ──────────────────────────────────────────────────────────────────
 
@@ -49,7 +50,7 @@ function buildDoc(game) {
   if (game.maxPlayers      != null) doc.maxPlayers      = game.maxPlayers;
   if (game.playTimeMinutes != null) doc.playTimeMinutes = game.playTimeMinutes;
   if (game.createdAt       != null) {
-    doc.createdAt = admin.firestore.Timestamp.fromDate(new Date(game.createdAt));
+    doc.createdAt = Timestamp.fromDate(new Date(game.createdAt));
   }
 
   return doc;
