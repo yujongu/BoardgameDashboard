@@ -86,6 +86,39 @@ extra Android permissions, one URL scheme (standard Google Sign-In). All 16 call
 - `functions/node_modules/` was committed in early history (`f251739`) — harmless, but bloats the
   clone.
 
+## Follow-up in the same session: participant caps (D5 fully closed)
+
+Two further commits after the audit work, prompted by "keep the guest player feature":
+
+- **`ec8fcf9`** — the client could build a play the server rejects. Edit Play passed a flat
+  `atMax: false`; Add Play's `_effectiveMax` fell back to **99** with no game selected and took
+  a game's own maximum at face value. Both now clamp to `kMaxParticipantsPerPlay`
+  (`lib/shared/models/play.dart`), mirroring `MAX_PARTICIPANTS` in `functions/src/shared/auth.ts`.
+- **`fcfcbba`** — closed D5's residual properly. `GameCatalogRepository.fetchGameById` resolves
+  the game on Edit Play open (the game picker already hands over a full `CatalogGame`, so a game
+  switch needs no second read). Edit Play now mirrors Add Play with `_effectiveMax` / `_aboveMax`,
+  a `_canSave` guard, and the "Remove N to fit M players" save-bar caption.
+
+**Guest players were never at risk** — they are not gated on identity and count toward the cap
+exactly as before. Verified by diffing all commits against `functions/src/plays/`: zero
+`userId`/guest lines changed, and the existing guest tests are untouched.
+
+## The 'Gravel' from the follow-up
+
+- **A negative test gave a false pass.** Proving the Add Play clamp tests were real, the first
+  revert script silently no-op'd because the formatter had reflowed `_effectiveMax` onto two
+  lines and the literal no longer matched. Always `assert old in s` before rewriting source in a
+  verification script. Redone: both tests fail `Expected: false / Actual: <true>` without the
+  clamp.
+- **`EditPlayPage` has no tests and cannot easily get them** — it calls `FirebaseAuth.instance`
+  in `initState` (pre-existing) and there is no mockito / fake_cloud_firestore in
+  `dev_dependencies`. The Edit Play cap is therefore verified only by analyze + a clean
+  simulator run. Add Play's clamp *is* tested (`add_play_notifier_test.dart`).
+- **The at-cap UI was never seen.** Reaching it needs 20 taps and `osascript` has no assistive
+  access on this machine, so only the home screen was visually confirmed across the session.
+- Edit Play's limit falls back to the platform ceiling while the catalog read is in flight, so
+  for a moment after opening, a 2-player game's picker allows more than 2. Self-correcting.
+
 ## Next Immediate Step
 
 Nothing is blocked. If picking this up: decide whether the stats-pollution vector needs a
@@ -93,6 +126,9 @@ different mitigation now that friends-only is off the table — the natural one 
 other participants to confirm a play before it lands in their stats, rather than gating on
 friendship. Start at `functions/src/plays/createPlay.ts` phase 2, where the per-participant
 `stats`/`gameStats`/`library` writes happen.
+
+Second candidate: make `EditPlayPage` testable by injecting auth/catalog rather than reaching
+for singletons — that is what blocks coverage on both caps above.
 
 ---
 
